@@ -60,7 +60,7 @@ func InterfaceStatusString(status int) string {
 	return "unkown(" + strconv.FormatInt(int64(status), 10) + ")"
 }
 
-func NewSnmp(dev *ds.NetworkDevice) (*snmpclient2.SNMP, error) {
+func NewSnmp(dev *ds.NetworkDevice, isWrite bool) (*snmpclient2.SNMP, error) {
 	params, err := dev.SnmpParams()
 	if err != nil {
 		return nil, err
@@ -99,12 +99,17 @@ func NewSnmp(dev *ds.NetworkDevice) (*snmpclient2.SNMP, error) {
 		return nil, err
 	}
 
+	community := params.ReadCommunity
+	if isWrite {
+		community = params.WriteCommunity
+	}
+
 	args := snmpclient2.Arguments{
 		Version:          version, // SNMP version to use
 		Timeout:          20 * time.Second,
 		Retries:          3,
 		MessageMaxSize:   params.MaxMsgSize,
-		Community:        params.ReadCommunity,
+		Community:        community,
 		UserName:         params.SecName,
 		SecurityLevel:    secLevel,           // Security level (V3 specific)
 		AuthPassword:     params.AuthPass,    // Authentication protocol pass phrase (V3 specific)
@@ -122,17 +127,18 @@ type InterfaceStatus struct {
 	Name  string `json:"if_name"`
 	Descr string `json:"if_descr"`
 
-	AdminStatus       int64  `json:"-"`
-	AdminStatusString string `json:"if_admin_status"`
-	OpStatus          int64  `json:"-"`
-	OpStatusString    string `json:"if_oper_status"`
+	AdminStatus       int64  `json:"if_admin_status"`
+	AdminStatusString string `json:"if_admin_status_label"`
+	OpStatus          int64  `json:"if_oper_status"`
+	OpStatusString    string `json:"if_oper_status_label"`
 }
 
 func ReadInterfaceStatus(dev *ds.NetworkDevice, ifIndex int) (*InterfaceStatus, error) {
-	snmp, err := NewSnmp(dev)
+	snmp, err := NewSnmp(dev, false)
 	if err != nil {
 		return nil, err
 	}
+	defer snmp.Close()
 
 	ifDescr := Concat(IfDescr, ifIndex)
 	ifAdminStatus := Concat(IfAdminStatus, ifIndex)
@@ -154,7 +160,6 @@ func ReadInterfaceStatus(dev *ds.NetworkDevice, ifIndex int) (*InterfaceStatus, 
 			"failed to get system information - %s(%d)", pdu.ErrorStatus(), pdu.ErrorIndex())
 	}
 
-	fmt.Println(pdu.VariableBindings())
 	vb := pdu.VariableBindings()
 	descr := vb.MatchOid(ifDescr)
 	admStatus := vb.MatchOid(ifAdminStatus)
@@ -163,10 +168,10 @@ func ReadInterfaceStatus(dev *ds.NetworkDevice, ifIndex int) (*InterfaceStatus, 
 
 	var status = &InterfaceStatus{}
 	if descr != nil {
-		status.Descr = descr.Variable.ToString()
+		status.Descr, _ = snmpclient2.AsString(descr.Variable)
 	}
 	if name != nil {
-		status.Name = name.Variable.ToString()
+		status.Name, _ = snmpclient2.AsString(name.Variable)
 	}
 	if admStatus != nil {
 		status.AdminStatus = admStatus.Variable.Int()
@@ -177,4 +182,36 @@ func ReadInterfaceStatus(dev *ds.NetworkDevice, ifIndex int) (*InterfaceStatus, 
 		status.OpStatusString = InterfaceStatusString(int(status.OpStatus))
 	}
 	return status, nil
+}
+
+func setInterfaceStatus(dev *ds.NetworkDevice, ifIndex, status int) error {
+	snmp, err := NewSnmp(dev, true)
+	if err != nil {
+		return err
+	}
+	defer snmp.Close()
+
+	ifAdminStatus := Concat(IfAdminStatus, ifIndex)
+
+	pdu, err := snmp.SetRequest([]snmpclient2.VariableBinding{
+		{Oid: ifAdminStatus, Variable: snmpclient2.NewInteger(int32(status))},
+	})
+	if err != nil {
+		return err
+	}
+
+	if pdu.ErrorStatus() != snmpclient2.NoError {
+		return fmt.Errorf(
+			"failed to get system information - %s(%d)", pdu.ErrorStatus(), pdu.ErrorIndex())
+	}
+
+	fmt.Println(pdu.VariableBindings())
+	return nil
+}
+
+func CloseInterface(dev *ds.NetworkDevice, ifIndex int) error {
+	return setInterfaceStatus(dev, ifIndex, IF_STATUS_DOWN)
+}
+func OpenInterface(dev *ds.NetworkDevice, ifIndex int) error {
+	return setInterfaceStatus(dev, ifIndex, IF_STATUS_UP)
 }
