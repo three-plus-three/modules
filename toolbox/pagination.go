@@ -23,6 +23,7 @@ import (
 	"strconv"
 )
 
+// DEFAULT_SIZE_PER_PAGE 缺省每页记录数
 const DEFAULT_SIZE_PER_PAGE = 12
 
 func toInt(value interface{}) (d int, err error) {
@@ -50,6 +51,7 @@ type Paginator struct {
 	pageIndex int
 }
 
+// NeedPaginated wh.
 func (p *Paginator) NeedPaginated() bool {
 	return p.PageNums() > 1
 }
@@ -67,12 +69,12 @@ func (p *Paginator) PageNums() int {
 	return p.pageNums
 }
 
-// Nums Returns the total number of items (e.g. from doing SQL count).
+// TotalNums Returns the total number of items (e.g. from doing SQL count).
 func (p *Paginator) TotalNums() int {
 	return p.nums
 }
 
-// SetNums Sets the total number of items.
+// SetTotalNums Sets the total number of items.
 func (p *Paginator) SetTotalNums(nums interface{}) {
 	p.nums, _ = toInt(nums)
 }
@@ -172,9 +174,8 @@ func (p *Paginator) PageLinkFirst() (link string) {
 func (p *Paginator) PageLinkLast() (link string) {
 	if p.PageNums() == 0 {
 		return p.PageLink(0)
-	} else {
-		return p.PageLink(p.PageNums() - 1)
 	}
+	return p.PageLink(p.PageNums() - 1)
 }
 
 // HasPrev Returns true if the current page has a predecessor.
