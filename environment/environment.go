@@ -1,8 +1,6 @@
 package environment
 
 import (
-	"bytes"
-	"cn/com/hengwei/commons/as"
 	"container/list"
 	"errors"
 	"flag"
@@ -22,6 +20,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/kardianos/osext"
+	"github.com/three-plus-three/modules/as"
 	commons_cfg "github.com/three-plus-three/modules/cfg"
 	"github.com/three-plus-three/modules/urlutil"
 )
@@ -662,49 +661,6 @@ func (self *Config) DurationWithDefault(key string, defValue time.Duration) time
 
 func (self *Config) Set(key string, value interface{}) {
 	self.settings[key] = fmt.Sprint(value)
-}
-
-func LookupModelsFile(config_name, origin_name string, is_dir bool) (string, error) {
-	files := []string{
-		"../meta/" + origin_name,
-		"../../meta/" + origin_name,
-		"../../../meta/" + origin_name,
-		"../../../../meta/" + origin_name,
-		config_name,
-		filepath.Join("..", config_name),
-		origin_name,
-		filepath.Join("..", origin_name),
-		"conf/" + origin_name,
-		"etc/" + origin_name,
-		"../conf/" + origin_name,
-		"../etc/" + origin_name,
-		"lib/models/" + origin_name,
-		"../lib/models/" + origin_name}
-
-	for _, file := range files {
-		info, err := os.Stat(file)
-		if err != nil {
-			continue
-		}
-
-		if is_dir {
-			if info.IsDir() {
-				return file, nil
-			}
-		} else {
-			if !info.IsDir() {
-				return file, nil
-			}
-		}
-	}
-
-	var buf bytes.Buffer
-	buf.WriteString("search path is:")
-	for _, file := range files {
-		buf.WriteString("\r\n    ")
-		buf.WriteString(file)
-	}
-	return "", errors.New(buf.String())
 }
 
 func FileExists(dir string) bool {
