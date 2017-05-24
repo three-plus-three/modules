@@ -10,19 +10,18 @@ import (
 	_ "github.com/three-plus-three/modules/bind"
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/toolbox"
-	"github.com/three-plus-three/modules/urlutil"
 	"github.com/three-plus-three/sessions"
 	sso "github.com/three-plus-three/sso/client"
 )
 
 var lifecycleData *Lifecycle
 
-func Init(projectName, projectTitle, projectURL string,
+func Init(projectName, projectTitle, projectContext string,
 	cb func(*Lifecycle) error,
 	createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
 
-	if projectURL == "" {
-		projectURL = projectName
+	if projectContext == "" {
+		projectContext = projectName
 	}
 
 	// Filters is the default set of global filters.
@@ -65,7 +64,18 @@ func Init(projectName, projectTitle, projectURL string,
 		}
 
 		lifecycle.URLPrefix = env.DaemonUrlPath
+		lifecycle.ApplicationContext = env.DaemonUrlPath
+		lifecycle.URLRoot = env.DaemonUrlPath + projectContext
+		lifecycle.ApplicationRoot = env.DaemonUrlPath + projectContext
+
 		lifecycle.Variables = ReadVariables(env, projectTitle)
+
+		lifecycle.Variables["urlPrefix"] = lifecycle.URLPrefix
+		lifecycle.Variables["url_prefix"] = lifecycle.URLPrefix
+		lifecycle.Variables["application_context"] = lifecycle.ApplicationContext
+		lifecycle.Variables["url_root"] = lifecycle.URLRoot
+		lifecycle.Variables["application_root"] = lifecycle.ApplicationRoot
+
 		lifecycle.CheckUser = initSSO(env)
 
 		if revel.DevMode {
@@ -78,9 +88,10 @@ func Init(projectName, projectTitle, projectURL string,
 			os.Exit(-1)
 			return
 		}
+
 		lifecycleData = lifecycle
 
-		revel.AppRoot = urlutil.Join("/", env.Config.StringWithDefault("daemon.urlpath", "hengwei"), projectURL)
+		revel.AppRoot = lifecycle.ApplicationRoot
 
 		//revel.Config.SetOption("app.secret", Env.Config.StringWithDefault("app.secret", ""))
 		revel.Config.SetOption("cookie.prefix", "PLAY")

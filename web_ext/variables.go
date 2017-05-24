@@ -17,8 +17,6 @@ func ReadVariables(env *environment.Environment, title string) map[string]interf
 	}
 
 	variables := map[string]interface{}{
-		"urlPrefix":           env.DaemonUrlPath,
-		"application_context": env.DaemonUrlPath,
 		"application_catalog": env.Config.StringWithDefault("application.catalog", "all"),
 		"head_title_text": ReadFileWithDefault([]string{
 			env.Fs.FromDataConfig("resources/profiles/header.txt"),

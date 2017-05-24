@@ -2,6 +2,7 @@ package web_ext
 
 import (
 	"fmt"
+	"html/template"
 	"strings"
 
 	"github.com/revel/revel"
@@ -75,8 +76,8 @@ func initTemplateFuncs(env *environment.Environment) {
 		return append(items, map[string]interface{}{id: id, "class": class, "label": label})
 	}
 
-	revel.TemplateFuncs["urlPrefix"] = func() string {
-		return revel.AppRoot
+	revel.TemplateFuncs["urlPrefix"] = func() template.JS {
+		return template.JS(revel.AppRoot)
 	}
 
 	funcs := functions.HtmlFuncMap()
