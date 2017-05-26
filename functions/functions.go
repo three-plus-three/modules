@@ -292,6 +292,7 @@ var genericMap = map[string]interface{}{
 	"quote":     quote,
 	"squote":    squote,
 	"cat":       cat,
+	"concat":    cat,
 	"indent":    indent,
 	"replace":   replace,
 	"plural":    plural,
@@ -336,32 +337,28 @@ var genericMap = map[string]interface{}{
 
 	// string slices. Note that we reverse the order b/c that's better
 	// for template processing.
-	"join": func(sep string, ss []string) string { return strings.Join(ss, sep) },
+	"join":          func(sep string, ss ...string) string { return strings.Join(ss, sep) },
+	"joinWithArray": func(sep string, ss []string) string { return strings.Join(ss, sep) },
 
 	"strIn": func(value string, values []string) bool {
-		fmt.Println(value, values)
-		valueStr := fmt.Sprint(value)
-
 		for _, v := range values {
-			if fmt.Sprint(v) == valueStr {
-				fmt.Println("OK")
+			if fmt.Sprint(v) == value {
 				return true
 			}
 		}
 		return false
 	},
 	"in": func(value interface{}, values []interface{}) bool {
-		fmt.Println(value, values)
 		valueStr := fmt.Sprint(value)
-
 		for _, v := range values {
 			if fmt.Sprint(v) == valueStr {
-				fmt.Println("OK")
 				return true
 			}
 		}
 		return false
 	},
+
+	"toString": strval,
 
 	// Defaults
 	"default": dfault,

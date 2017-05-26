@@ -1,7 +1,6 @@
 package web_ext
 
 import (
-	"fmt"
 	"html/template"
 	"strings"
 
@@ -40,16 +39,6 @@ func initTemplateFuncs(env *environment.Environment) {
 		return value
 	}
 
-	revel.TemplateFuncs["tostring"] = func(value interface{}) interface{} {
-		if nil == value {
-			return ""
-		}
-		if s, ok := value.(string); ok {
-			return s
-		}
-		return fmt.Sprint(value)
-	}
-
 	revel.TemplateFuncs["args"] = func() map[string]interface{} {
 		return map[string]interface{}{}
 	}
@@ -86,7 +75,8 @@ func initTemplateFuncs(env *environment.Environment) {
 			revel.TemplateFuncs[k] = v
 		}
 	}
-	for _, alias := range [][2]string{{"sum", "add"}} {
+	for _, alias := range [][2]string{{"sum", "add"},
+		{"tostring", "toString"}} {
 		if _, ok := revel.TemplateFuncs[alias[0]]; !ok {
 			revel.TemplateFuncs[alias[0]] = funcs[alias[1]]
 		}
