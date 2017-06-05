@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -117,6 +118,86 @@ func Array(value interface{}) ([]interface{}, error) {
 		return res, nil
 	}
 	return nil, errType(value, "array")
+}
+
+func Strings(value interface{}) ([]string, error) {
+	if value == nil {
+		return nil, ErrValueNull
+	}
+	switch vv := value.(type) {
+	case []string:
+		return vv, nil
+	case []interface{}:
+		results := make([]string, 0, len(vv))
+		for _, v := range vv {
+			s, e := String(v)
+			if e != nil {
+				return nil, e
+			}
+			results = append(results, s)
+		}
+		return results, nil
+	}
+
+	return nil, errType(value, "string array")
+}
+
+func IntsWithDefault(value interface{}, defValue []int) []int {
+	if value == nil {
+		return defValue
+	}
+	switch vv := value.(type) {
+	case []int:
+		return vv
+	case []interface{}:
+		results := make([]int, 0, len(vv))
+		for _, v := range vv {
+			s, e := Int(v)
+			if e != nil {
+				return defValue
+			}
+			results = append(results, s)
+		}
+		return results
+	default:
+		rValue := reflect.ValueOf(value)
+
+		if rValue.Kind() == reflect.Slice {
+			results := make([]int, 0, rValue.Len())
+			for idx := 0; idx < rValue.Len(); idx++ {
+				s, e := Int(rValue.Index(idx).Interface())
+				if e != nil {
+					return defValue
+				}
+				results = append(results, s)
+			}
+			return results
+		}
+	}
+
+	return defValue
+}
+
+func StringsWithDefault(value interface{}, defValue []string) []string {
+	if value == nil {
+		return defValue
+	}
+	switch vv := value.(type) {
+	case []string:
+		return vv
+	case []interface{}:
+		results := make([]string, 0, len(vv))
+		for _, v := range vv {
+			s, e := String(v)
+			if e != nil {
+				return defValue
+			}
+			results = append(results, s)
+		}
+		return results
+	}
+
+	return defValue
 }
 
 func Ints(value interface{}) ([]int, error) {
@@ -493,6 +574,10 @@ func Float32(value interface{}) (float32, error) {
 
 // String type AsSerts to `string`
 func String(value interface{}) (string, error) {
+	if nil == value {
+		return "", ErrValueNull
+	}
+
 	switch v := value.(type) {
 	case string:
 		return v, nil
@@ -529,9 +614,7 @@ func String(value interface{}) (string, error) {
 			return "false", nil
 		}
 	}
-	if nil == value {
-		return "", ErrValueNull
-	}
+
 	return "", errType(value, "string")
 }
 
