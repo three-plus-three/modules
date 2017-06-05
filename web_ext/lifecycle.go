@@ -2,10 +2,29 @@ package web_ext
 
 import (
 	"github.com/go-xorm/xorm"
+	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/sso/client/revel_sso"
 )
+
+type User interface {
+	Name() string
+
+	Data(key string) interface{}
+}
+
+type user struct {
+	name string
+}
+
+func (u *user) Name() string {
+	return u.name
+}
+
+func (u *user) Data(key string) interface{} {
+	return nil
+}
 
 // Lifecycle 表示一个运行周期，它包含了所有业务相关的对象
 type Lifecycle struct {
@@ -19,8 +38,9 @@ type Lifecycle struct {
 	ApplicationContext string
 	ApplicationRoot    string
 
-	CheckUser revel_sso.CheckFunc
-	MenuList  []toolbox.Menu
+	CurrentUser func(c *revel.Controller) User
+	CheckUser   revel_sso.CheckFunc
+	MenuList    []toolbox.Menu
 }
 
 // NewLifecycle 创建一个生命周期
