@@ -58,6 +58,7 @@ const (
 	ENV_CMDB_PROXY_ID
 	ENV_ASSET_MANAGE_PROXY_ID
 	ENV_NSM_PROXY_ID
+	ENV_MINIO_PROXY_ID
 	ENV_MAX_PROXY_ID
 
 	ENV_MIN_PROXY_ID = ENV_REDIS_PROXY_ID
@@ -104,6 +105,7 @@ var (
 		{Id: ENV_CMDB_PROXY_ID, Name: "cmdb", Host: "127.0.0.1", Port: "37091"},
 		{Id: ENV_ASSET_MANAGE_PROXY_ID, Name: "am", Host: "127.0.0.1", Port: "37092"},
 		{Id: ENV_NSM_PROXY_ID, Name: "nsm", Host: "127.0.0.1", Port: "37093"},
+		{Id: ENV_MINIO_PROXY_ID, Name: "minio", Host: "127.0.0.1", Port: "37094"},
 	}
 )
 
@@ -661,6 +663,12 @@ func (self *Config) DurationWithDefault(key string, defValue time.Duration) time
 
 func (self *Config) Set(key string, value interface{}) {
 	self.settings[key] = fmt.Sprint(value)
+}
+
+func (self *Config) ForEach(cb func(key string, value interface{})) {
+	for k, v := range self.settings {
+		cb(k, v)
+	}
 }
 
 func FileExists(dir string) bool {
