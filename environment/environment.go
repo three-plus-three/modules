@@ -660,6 +660,10 @@ func (self *Config) Set(key string, value interface{}) {
 	self.settings[key] = value
 }
 
+func (self *Config) Get(key string) interface{} {
+	return self.settings[key]
+}
+
 func (self *Config) ForEach(cb func(key string, value interface{})) {
 	for k, v := range self.settings {
 		cb(k, v)
