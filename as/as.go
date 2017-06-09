@@ -647,6 +647,27 @@ func Duration(v interface{}) (time.Duration, error) {
 	return 0, errType(v, "duration")
 }
 
+func DurationWithDefault(v interface{}, defValue time.Duration) time.Duration {
+	if t, ok := v.(time.Duration); ok {
+		return t
+	}
+
+	if i, e := Int64(v); nil == e {
+		return time.Duration(i)
+	}
+
+	s, ok := v.(string)
+	if !ok {
+		return defValue
+	}
+
+	m, e := time.ParseDuration(s)
+	if nil == e {
+		return m
+	}
+	return defValue
+}
+
 func Time(v interface{}) (time.Time, error) {
 	if t, ok := v.(time.Time); ok {
 		return t, nil
@@ -667,6 +688,28 @@ func Time(v interface{}) (time.Time, error) {
 		return m, nil
 	}
 	return time.Time{}, errType(v, "Time")
+}
+
+func TimeWithDefault(v interface{}, defValue time.Time) time.Time {
+	if t, ok := v.(time.Time); ok {
+		return t
+	}
+
+	s, ok := v.(string)
+	if !ok {
+		return defValue
+	}
+
+	m, e := time.Parse(time.RFC3339, s)
+	if nil == e {
+		return m
+	}
+
+	m, e = time.Parse(time.RFC3339Nano, s)
+	if nil == e {
+		return m
+	}
+	return defValue
 }
 
 func BoolWithDefault(v interface{}, defaultValue bool) bool {

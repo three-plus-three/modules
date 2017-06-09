@@ -470,7 +470,10 @@ func NewEnvironment(opt Options) (*Environment, error) {
 		//rootDir: opt.rootDir,
 		Fs:     fs,
 		Name:   opt.Name,
-		Config: Config{settings: cfg},
+		Config: Config{settings: map[string]interface{}{}},
+	}
+	for k, v := range cfg {
+		env.Config.Set(k, v)
 	}
 	env.Db.Models = ReadDbConfig("models.", cfg, db_defaults)
 	env.Db.Data = ReadDbConfig("data.", cfg, db_defaults)
@@ -528,6 +531,9 @@ func NewEnvironment(opt Options) (*Environment, error) {
 		}
 	}
 
+	if minioConfig := loadMinioConfig(env.Fs); minioConfig != nil {
+		env.Config.Set("minio", minioConfig)
+	}
 	for _, nm := range []string{env.Fs.FromWebConfig("application.conf"),
 		env.Fs.FromDataConfig("web/application.conf"),
 		env.Fs.FromInstallRoot("web/conf/application.conf")} {
@@ -551,7 +557,7 @@ func NewEnvironment(opt Options) (*Environment, error) {
 		env.DaemonUrlPath = env.DaemonUrlPath + "/"
 	}
 
-	env.Engine = loadEngineRegistry(env.Config.settings)
+	env.Engine = loadEngineRegistry(&env.Config)
 	return env, nil
 }
 
@@ -576,12 +582,12 @@ func loadServiceConfig(cfg map[string]string, so ServiceOption, sc *ServiceConfi
 	return sc
 }
 
-func loadEngineRegistry(cfg map[string]string) EngineConfig {
-	return EngineConfig{IsEnabled: boolWith(cfg, "engine.is_enabled", false),
-		Name:            strings.TrimSpace(stringWith(cfg, "engine.name", "default")),
-		IsRemoteBlocked: boolWith(cfg, "engine.remote_blocked", false),
-		RemoteHost:      strings.TrimSpace(stringWith(cfg, "engine.remote_host", "127.0.0.1")),
-		RemotePort:      strings.TrimSpace(stringWith(cfg, "engine.remote_port", ""))}
+func loadEngineRegistry(cfg *Config) EngineConfig {
+	return EngineConfig{IsEnabled: cfg.BoolWithDefault("engine.is_enabled", false),
+		Name:            strings.TrimSpace(cfg.StringWithDefault("engine.name", "default")),
+		IsRemoteBlocked: cfg.BoolWithDefault("engine.remote_blocked", false),
+		RemoteHost:      strings.TrimSpace(cfg.StringWithDefault("engine.remote_host", "127.0.0.1")),
+		RemotePort:      strings.TrimSpace(cfg.StringWithDefault("engine.remote_port", ""))}
 }
 
 func boolWith(cfg map[string]string, key string, value bool) bool {
@@ -612,57 +618,46 @@ func portWith(cfg map[string]string, key, value string) string {
 }
 
 type Config struct {
-	settings map[string]string
+	settings map[string]interface{}
 }
 
 func (self *Config) PasswordWithDefault(key, defValue string) string {
 	if s, ok := self.settings[key]; ok {
-		return s
+		return as.StringWithDefault(s, defValue)
 	}
 	return defValue
 }
 
 func (self *Config) StringWithDefault(key, defValue string) string {
 	if s, ok := self.settings[key]; ok {
-		return s
+		return as.StringWithDefault(s, defValue)
 	}
 	return defValue
 }
 
 func (self *Config) IntWithDefault(key string, defValue int) int {
 	if s, ok := self.settings[key]; ok {
-		i, err := strconv.Atoi(s)
-		if err != nil {
-			return defValue
-		}
-		return i
+		return as.IntWithDefault(s, defValue)
 	}
 	return defValue
 }
 
 func (self *Config) BoolWithDefault(key string, defValue bool) bool {
 	if s, ok := self.settings[key]; ok {
-		if s == "true" || s == "True" || s == "TRUE" {
-			return true
-		}
-		return strings.ToLower(s) == "true"
+		return as.BoolWithDefault(s, defValue)
 	}
 	return defValue
 }
 
 func (self *Config) DurationWithDefault(key string, defValue time.Duration) time.Duration {
 	if s, ok := self.settings[key]; ok {
-		duration, err := time.ParseDuration(s)
-		if err != nil {
-			return defValue
-		}
-		return duration
+		return as.DurationWithDefault(s, defValue)
 	}
 	return defValue
 }
 
 func (self *Config) Set(key string, value interface{}) {
-	self.settings[key] = fmt.Sprint(value)
+	self.settings[key] = value
 }
 
 func (self *Config) ForEach(cb func(key string, value interface{})) {
