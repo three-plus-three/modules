@@ -660,8 +660,52 @@ func (self *Config) Set(key string, value interface{}) {
 	self.settings[key] = value
 }
 
-func (self *Config) Get(key string) interface{} {
-	return self.settings[key]
+func (self *Config) Get(key string, subKeys ...string) interface{} {
+	o := self.settings[key]
+	if len(subKeys) == 0 {
+		return o
+	}
+
+	if o == nil {
+		return nil
+	}
+
+	for _, subKey := range subKeys {
+		m, ok := o.(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		o = m[subKey]
+		if o == nil {
+			return nil
+		}
+	}
+	return o
+}
+
+func (self *Config) GetAsString(keys []string, defaultValue string) string {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.StringWithDefault(o, defaultValue)
+}
+
+func (self *Config) GetAsInt(keys []string, defaultValue int) int {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.IntWithDefault(o, defaultValue)
+}
+
+func (self *Config) GetAsBool(keys []string, defaultValue bool) bool {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.BoolWithDefault(o, defaultValue)
+}
+
+func (self *Config) GetAsDuration(keys []string, defaultValue time.Duration) time.Duration {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.DurationWithDefault(o, defaultValue)
+}
+
+func (self *Config) GetAsTime(keys []string, defaultValue time.Time) time.Time {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.TimeWithDefault(o, defaultValue)
 }
 
 func (self *Config) ForEach(cb func(key string, value interface{})) {
