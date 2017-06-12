@@ -532,7 +532,7 @@ func NewEnvironment(opt Options) (*Environment, error) {
 	}
 
 	if minioConfig := loadMinioConfig(env.Fs); minioConfig != nil {
-		env.Config.Set("minio", minioConfig)
+		env.Config.Set("minio_config", minioConfig)
 	}
 	for _, nm := range []string{env.Fs.FromWebConfig("application.conf"),
 		env.Fs.FromDataConfig("web/application.conf"),
