@@ -342,7 +342,7 @@ var genericMap = map[string]interface{}{
 
 	"strIn": func(value string, values []string) bool {
 		for _, v := range values {
-			if fmt.Sprint(v) == value {
+			if v == value {
 				return true
 			}
 		}
