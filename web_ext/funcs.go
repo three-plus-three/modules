@@ -1,12 +1,10 @@
 package web_ext
 
 import (
-	"html/template"
 	"strings"
 
 	"github.com/revel/revel"
 	"github.com/three-plus-three/forms"
-	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/functions"
 	"github.com/three-plus-three/modules/urlutil"
 )
@@ -15,19 +13,18 @@ func ResourcesURLFor(s string) string {
 	return urlutil.Join(revel.AppRoot, "/internal/custom_resources/", s)
 }
 
-func initTemplateFuncs(env *environment.Environment) {
+func initTemplateFuncs(lifecycle *Lifecycle) {
 	revel.TemplateFuncs["assets"] = func(value string) string {
-		return urlutil.Join(revel.AppRoot, "assets", value)
+		return urlutil.Join(lifecycle.URLPrefix, "assets", value)
 	}
-
 	revel.TemplateFuncs["custom_resources_assets"] = func(value string) string {
 		return ResourcesURLFor(value)
 	}
 	revel.TemplateFuncs["mc_assets"] = func(url string) string {
-		return urlutil.Join(revel.AppRoot, url)
+		return urlutil.Join(lifecycle.URLRoot, "assets", url)
 	}
 	revel.TemplateFuncs["tpt_assets"] = func(value string) string {
-		return urlutil.Join(revel.AppRoot, "tpt_assets", value)
+		return urlutil.Join(lifecycle.URLPrefix, "tpt_assets", value)
 	}
 	revel.TemplateFuncs["default"] = func(value, defvalue interface{}) interface{} {
 		if nil == value {
@@ -65,8 +62,8 @@ func initTemplateFuncs(env *environment.Environment) {
 		return append(items, map[string]interface{}{id: id, "class": class, "label": label})
 	}
 
-	revel.TemplateFuncs["urlPrefix"] = func() template.JS {
-		return template.JS(revel.AppRoot)
+	revel.TemplateFuncs["urlPrefix"] = func(s ...string) string {
+		return urlutil.JoinWith(lifecycle.ApplicationContext, s)
 	}
 
 	funcs := functions.HtmlFuncMap()

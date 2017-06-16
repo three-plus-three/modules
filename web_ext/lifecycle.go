@@ -29,12 +29,13 @@ func (u *user) Data(key string) interface{} {
 // Lifecycle 表示一个运行周期，它包含了所有业务相关的对象
 type Lifecycle struct {
 	environment.Base
-	Env                *environment.Environment
-	ModelEngine        *xorm.Engine
-	DataEngine         *xorm.Engine
-	Variables          map[string]interface{}
-	URLPrefix          string
-	URLRoot            string
+	Env         *environment.Environment
+	ModelEngine *xorm.Engine
+	DataEngine  *xorm.Engine
+	Variables   map[string]interface{}
+	URLPrefix   string
+	URLRoot     string
+
 	ApplicationContext string
 	ApplicationRoot    string
 

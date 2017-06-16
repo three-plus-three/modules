@@ -64,16 +64,17 @@ func Init(projectName, projectTitle, projectContext string,
 		}
 
 		lifecycle.URLPrefix = env.DaemonUrlPath
-		lifecycle.ApplicationContext = env.DaemonUrlPath
-		lifecycle.URLRoot = env.DaemonUrlPath + projectContext
+		lifecycle.URLRoot = env.DaemonUrlPath
+		lifecycle.ApplicationContext = env.DaemonUrlPath + projectContext
 		lifecycle.ApplicationRoot = env.DaemonUrlPath + projectContext
 
 		lifecycle.Variables = ReadVariables(env, projectTitle)
 
 		lifecycle.Variables["urlPrefix"] = lifecycle.URLPrefix
 		lifecycle.Variables["url_prefix"] = lifecycle.URLPrefix
-		lifecycle.Variables["application_context"] = lifecycle.ApplicationContext
 		lifecycle.Variables["url_root"] = lifecycle.URLRoot
+
+		lifecycle.Variables["application_context"] = lifecycle.ApplicationContext
 		lifecycle.Variables["application_root"] = lifecycle.ApplicationRoot
 
 		lifecycle.CurrentUser = func(c *revel.Controller) User {
@@ -108,7 +109,7 @@ func Init(projectName, projectTitle, projectContext string,
 		GlobalSessionFilter = sessions.SessionFilter(sso.DefaultSessionKey,
 			env.RawDaemonUrlPath, sha1.New, secretKey)
 
-		initTemplateFuncs(env)
+		initTemplateFuncs(lifecycle)
 	}, 0)
 
 	revel.OnAppStart(func() {
