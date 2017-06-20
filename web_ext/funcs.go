@@ -9,8 +9,8 @@ import (
 	"github.com/three-plus-three/modules/urlutil"
 )
 
-func ResourcesURLFor(s string) string {
-	return urlutil.Join(revel.AppRoot, "/internal/custom_resources/", s)
+func ResourcesURLFor(s ...string) string {
+	return urlutil.JoinWith(urlutil.Join(lifecycleData.URLPrefix, "/internal/custom_resources/"), s)
 }
 
 func initTemplateFuncs(lifecycle *Lifecycle) {
