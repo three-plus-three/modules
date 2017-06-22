@@ -16,6 +16,10 @@ func (self *Queue) Close() error {
 	return self.consumer.Close()
 }
 
+func (q *Queue) Chan() chan<- Message {
+	return q.C
+}
+
 func (q *Queue) Send(msg Message) error {
 	q.C <- msg
 	q.consumer.addSuccess()

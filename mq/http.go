@@ -1,16 +1,41 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"log"
+	"math"
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/net/websocket"
 )
+
+func getRealIP(conn *websocket.Conn) string {
+	if nil != conn.Request() {
+		address := conn.Request().Header.Get("X-Real-IP")
+		if "" == address {
+			address = conn.Request().Header.Get("X-Forwarded-For")
+			if "" == address {
+				address = conn.Request().RemoteAddr
+			}
+		}
+		port := conn.Request().Header.Get("X-Real-Port")
+		if "" != port {
+			address += (":" + port)
+		}
+		return address
+	} else {
+		return "unknow"
+	}
+}
 
 type StandardEngine struct {
 	Server  *Server
@@ -212,4 +237,99 @@ func (se *StandardEngine) topicsIndex(w http.ResponseWriter, r *http.Request) {
 func (se *StandardEngine) clientsIndex(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(se.Server.GetClients())
+}
+
+func (se *StandardEngine) subscribe(ws *websocket.Conn, consumer *Consumer, c chan struct{}) {
+	var remoteAddr = getRealIP(ws)
+	defer func() {
+		if o := recover(); nil != o {
+			var buffer bytes.Buffer
+			buffer.WriteString("[panic] [broker] connection(write: ")
+			buffer.WriteString(remoteAddr)
+			buffer.WriteString(") \r\n")
+			buffer.Write(debug.Stack())
+			log.Println(buffer.String())
+		}
+		ws.Close()
+	}()
+
+	is_running := true
+	for is_running {
+		select {
+		case msg, ok := <-consumer.C:
+			if !ok {
+				is_running = false
+				log.Println("[broker] connection(write:", remoteAddr, ") is closed - queue is shutdown.")
+				break
+			}
+
+			if e := websocket.Message.Send(ws, msg.Bytes()); nil != e {
+				is_running = false
+
+				if strings.Contains(e.Error(), "use of closed network connection") {
+					log.Println("[broker] connection(write:", remoteAddr, ") is closed.")
+				} else {
+					log.Println("[broker] connection(write:", remoteAddr, ") is closed -", e)
+				}
+				consumer.Unread(msg)
+				break
+			}
+		case <-c:
+			is_running = false
+			log.Println("[broker] connection(write:", remoteAddr, ") is closed - queue is shutdown.")
+		}
+	}
+}
+
+func (se *StandardEngine) publish(ws *websocket.Conn, producer Producer, c chan struct{}) {
+	var remoteAddr = getRealIP(ws)
+	defer func() {
+		if o := recover(); nil != o {
+			var buffer bytes.Buffer
+			buffer.WriteString("[panic] [broker] connection(write: ")
+			buffer.WriteString(remoteAddr)
+			buffer.WriteString(") \r\n")
+			buffer.Write(debug.Stack())
+			log.Println(buffer.String())
+		}
+		ws.Close()
+	}()
+
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	const trySendCount = 2
+	is_running := true
+	for is_running {
+		var data []byte
+		if e := websocket.Message.Receive(ws, &data); nil != e {
+			if e == io.EOF {
+				log.Println("[broker] connection(read:", remoteAddr, ") is closed - peer is shutdown.")
+			} else if strings.Contains(e.Error(), "use of closed network connection") {
+				log.Println("[broker] connection(read:", remoteAddr, ") is closed.")
+			} else {
+				log.Println("[broker] connection(read:", remoteAddr, ") is closed -", e)
+			}
+			is_running = false
+			break
+		}
+
+		continueTick := 0
+		for continueTick < trySendCount {
+			select {
+			case producer.Chan() <- CreateDataMessage(data):
+				continueTick = math.MaxInt32
+			case <-ticker.C:
+				continueTick++
+				if continueTick >= trySendCount {
+					log.Println("[broker] connection(write:", remoteAddr, ") is closed - queue is overflow.")
+				}
+			case <-c:
+				log.Println("[broker] connection(write:", remoteAddr, ") is closed - queue is shutdown.")
+
+				continueTick = math.MaxInt32
+				is_running = false
+			}
+		}
+	}
 }

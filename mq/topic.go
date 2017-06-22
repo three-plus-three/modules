@@ -25,6 +25,10 @@ func (topic *Topic) Close() error {
 	return nil
 }
 
+func (topic *Topic) Chan() chan<- Message {
+	return nil
+}
+
 func (topic *Topic) Send(msg Message) error {
 	topic.channels_lock.RLock()
 	defer topic.channels_lock.RUnlock()

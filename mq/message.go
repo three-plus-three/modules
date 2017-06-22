@@ -32,6 +32,7 @@ func CreateDataMessage(bs []byte) Message {
 }
 
 type Producer interface {
+	Chan() chan<- Message
 	Send(msg Message) error
 	SendTimeout(msg Message, timeout time.Duration) error
 }
