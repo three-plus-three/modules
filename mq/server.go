@@ -100,6 +100,27 @@ func (self *Server) GetTopics() []string {
 	return results
 }
 
+type DisconnectFunc func()
+
+func (self *Server) Connect(client interface{}) DisconnectFunc {
+	var el *list.Element
+
+	self.clients_lock.Lock()
+	if self.clients == nil {
+		self.clients = list.New()
+	}
+	el = self.clients.PushBack(client)
+	self.clients_lock.Unlock()
+
+	return DisconnectFunc(func() {
+		self.clients_lock.Lock()
+		if self.clients != nil {
+			self.clients.Remove(el)
+		}
+		self.clients_lock.Unlock()
+	})
+}
+
 func (self *Server) GetClients() []map[string]interface{} {
 	self.clients_lock.Lock()
 	defer self.clients_lock.Unlock()

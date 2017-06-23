@@ -1,16 +1,14 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
-	"math"
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -18,16 +16,16 @@ import (
 	"golang.org/x/net/websocket"
 )
 
-func getRealIP(conn *websocket.Conn) string {
-	if nil != conn.Request() {
-		address := conn.Request().Header.Get("X-Real-IP")
+func getRealIP(req *http.Request) string {
+	if nil != req {
+		address := req.Header.Get("X-Real-IP")
 		if "" == address {
-			address = conn.Request().Header.Get("X-Forwarded-For")
+			address = req.Header.Get("X-Forwarded-For")
 			if "" == address {
-				address = conn.Request().RemoteAddr
+				address = req.RemoteAddr
 			}
 		}
-		port := conn.Request().Header.Get("X-Real-Port")
+		port := req.Header.Get("X-Real-Port")
 		if "" != port {
 			address += (":" + port)
 		}
@@ -44,6 +42,14 @@ type StandardEngine struct {
 
 func (se *StandardEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
+	case "/sendQueue", "/sendQueue/":
+		se.sendQueue(w, r)
+	case "/sendTopic", "/sendTopic/":
+		se.sendTopic(w, r)
+	case "/subscribeQueue", "/subscribeQueue/":
+		se.subscribeQueue(w, r)
+	case "/subscribeTopic", "/subscribeTopic/":
+		se.subscribeTopic(w, r)
 	case "/queues", "/queues/":
 		se.queuesIndex(w, r)
 	case "/topics", "/topics/":
@@ -239,97 +245,123 @@ func (se *StandardEngine) clientsIndex(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(se.Server.GetClients())
 }
 
-func (se *StandardEngine) subscribe(ws *websocket.Conn, consumer *Consumer, c chan struct{}) {
-	var remoteAddr = getRealIP(ws)
-	defer func() {
-		if o := recover(); nil != o {
-			var buffer bytes.Buffer
-			buffer.WriteString("[panic] [broker] connection(write: ")
-			buffer.WriteString(remoteAddr)
-			buffer.WriteString(") \r\n")
-			buffer.Write(debug.Stack())
-			log.Println(buffer.String())
+func (se *StandardEngine) subscribeQueue(w http.ResponseWriter, r *http.Request) {
+	se.subscribe(w, r, "queue", func(name string) *Consumer {
+		queue := se.Server.CreateQueueIfNotExists(name)
+		if queue == nil {
+			return nil
 		}
-		ws.Close()
-	}()
-
-	is_running := true
-	for is_running {
-		select {
-		case msg, ok := <-consumer.C:
-			if !ok {
-				is_running = false
-				log.Println("[broker] connection(write:", remoteAddr, ") is closed - queue is shutdown.")
-				break
-			}
-
-			if e := websocket.Message.Send(ws, msg.Bytes()); nil != e {
-				is_running = false
-
-				if strings.Contains(e.Error(), "use of closed network connection") {
-					log.Println("[broker] connection(write:", remoteAddr, ") is closed.")
-				} else {
-					log.Println("[broker] connection(write:", remoteAddr, ") is closed -", e)
-				}
-				consumer.Unread(msg)
-				break
-			}
-		case <-c:
-			is_running = false
-			log.Println("[broker] connection(write:", remoteAddr, ") is closed - queue is shutdown.")
-		}
-	}
+		return queue.ListenOn()
+	})
 }
 
-func (se *StandardEngine) publish(ws *websocket.Conn, producer Producer, c chan struct{}) {
-	var remoteAddr = getRealIP(ws)
-	defer func() {
-		if o := recover(); nil != o {
-			var buffer bytes.Buffer
-			buffer.WriteString("[panic] [broker] connection(write: ")
-			buffer.WriteString(remoteAddr)
-			buffer.WriteString(") \r\n")
-			buffer.Write(debug.Stack())
-			log.Println(buffer.String())
+func (se *StandardEngine) subscribeTopic(w http.ResponseWriter, r *http.Request) {
+	se.subscribe(w, r, "topic", func(name string) *Consumer {
+		queue := se.Server.CreateTopicIfNotExists(name)
+		if queue == nil {
+			return nil
 		}
-		ws.Close()
-	}()
+		return queue.ListenOn()
+	})
+}
 
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
+func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode string, cb func(name string) *Consumer) {
+	params := r.URL.Query()
 
-	const trySendCount = 2
-	is_running := true
-	for is_running {
-		var data []byte
-		if e := websocket.Message.Receive(ws, &data); nil != e {
-			if e == io.EOF {
-				log.Println("[broker] connection(read:", remoteAddr, ") is closed - peer is shutdown.")
-			} else if strings.Contains(e.Error(), "use of closed network connection") {
-				log.Println("[broker] connection(read:", remoteAddr, ") is closed.")
-			} else {
-				log.Println("[broker] connection(read:", remoteAddr, ") is closed -", e)
-			}
-			is_running = false
-			break
+	stub := &engineStub{
+		createdAt:  time.Now(),
+		remoteAddr: getRealIP(r),
+		mode:       mode,
+		role:       "subscriber",
+		name:       params.Get("name"),
+		c:          make(chan struct{})}
+	var consumer *Consumer
+
+	stub.srv.Handshake = func(config *websocket.Config, req *http.Request) (err error) {
+		config.Origin, err = websocket.Origin(config, req)
+		if err == nil && config.Origin == nil {
+			return fmt.Errorf("null origin")
 		}
-
-		continueTick := 0
-		for continueTick < trySendCount {
-			select {
-			case producer.Chan() <- CreateDataMessage(data):
-				continueTick = math.MaxInt32
-			case <-ticker.C:
-				continueTick++
-				if continueTick >= trySendCount {
-					log.Println("[broker] connection(write:", remoteAddr, ") is closed - queue is overflow.")
-				}
-			case <-c:
-				log.Println("[broker] connection(write:", remoteAddr, ") is closed - queue is shutdown.")
-
-				continueTick = math.MaxInt32
-				is_running = false
-			}
+		if stub.name == "" {
+			return errors.New("queue name is missing")
 		}
+		consumer = cb(stub.name)
+		if consumer == nil {
+			return errors.New("create queue fail")
+		}
+		return nil
 	}
+
+	stub.srv.Handler = websocket.Handler(func(conn *websocket.Conn) {
+		stub.conn = conn
+		defer stub.Close()
+
+		stub.disconnect = se.Server.Connect(stub)
+
+		go func() {
+			defer stub.Close()
+			for {
+				var data []byte
+				if e := websocket.Message.Receive(conn, &data); nil != e {
+					break
+				}
+			}
+		}()
+
+		stub.subscribe(consumer)
+	})
+
+	stub.srv.ServeHTTP(w, r)
+}
+
+func (se *StandardEngine) sendQueue(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+
+	stub := &engineStub{
+		createdAt:  time.Now(),
+		remoteAddr: getRealIP(r),
+		mode:       "queue",
+		role:       "pushlisher",
+		name:       params.Get("name"),
+		c:          make(chan struct{})}
+	var queue *Queue
+
+	stub.srv.Handshake = func(config *websocket.Config, req *http.Request) (err error) {
+		config.Origin, err = websocket.Origin(config, req)
+		if err == nil && config.Origin == nil {
+			return fmt.Errorf("null origin")
+		}
+		if stub.name == "" {
+			return errors.New("queue name is missing")
+		}
+		queue = se.Server.CreateQueueIfNotExists(stub.name)
+		if queue == nil {
+			return errors.New("create queue fail")
+		}
+		return nil
+	}
+
+	stub.srv.Handler = websocket.Handler(func(conn *websocket.Conn) {
+		stub.conn = conn
+		defer stub.Close()
+
+		stub.disconnect = se.Server.Connect(stub)
+
+		go func() {
+			defer stub.Close()
+			for {
+				var data []byte
+				if e := websocket.Message.Receive(conn, &data); nil != e {
+					break
+				}
+			}
+		}()
+
+		stub.publish(queue.C)
+	})
+
+	stub.srv.ServeHTTP(w, r)
+}
+
+func (se *StandardEngine) sendTopic(w http.ResponseWriter, r *http.Request) {
 }

@@ -32,7 +32,6 @@ func CreateDataMessage(bs []byte) Message {
 }
 
 type Producer interface {
-	Chan() chan<- Message
 	Send(msg Message) error
 	SendTimeout(msg Message, timeout time.Duration) error
 }
@@ -45,6 +44,15 @@ type Consumer struct {
 	C                <-chan Message
 	closed           int32
 	closer           func() error
+}
+
+func (consumer *Consumer) Unread(msg Message) bool {
+	select {
+	case consumer.send <- msg:
+		return true
+	default:
+		return false
+	}
 }
 
 func (consumer *Consumer) Success() uint64 {

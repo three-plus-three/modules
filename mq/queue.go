@@ -52,7 +52,7 @@ func (q *Queue) SendTimeout(msg Message, timeout time.Duration) error {
 
 func creatQueue(srv *Server, name string, capacity int) *Queue {
 	c := make(chan Message, capacity)
-	q := &Queue{name: name, C: c, consumer: Consumer{C: c}}
+	q := &Queue{name: name, C: c, consumer: Consumer{C: c, send: c}}
 
 	q.consumer.closer = func() error {
 		close(q.C)
