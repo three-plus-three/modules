@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"errors"
+	"time"
+)
 
 type Object struct {
 	ID        int64     `json:"id,omitempty" xorm:"id pk notnull"`
@@ -79,6 +83,36 @@ func (dev *NetworkLink) TableName() string {
 }
 
 var NetworkLinks = &NetworkLink{}
+
+type AccessParams struct {
+	ID              int64     `json:"id,omitempty" xorm:"id pk notnull"`
+	ManagedObjectID int64     `json:"managed_object_id,omitempty" xorm:"managed_object_id notnull"`
+	Type            string    `json:"type,omitempty" xorm:"type"`
+	Attributes      string    `json:"attributes,omitempty" xorm:"attributes"`
+	OutOfBand       bool      `json:"out_of_band,omitempty" xorm:"out_of_band"`
+	CreatedAt       time.Time `json:"created_at,omitempty" xorm:"created_at created"`
+	UpdatedAt       time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
+}
+
+func (ap *AccessParams) ToSnmpParams() (*SnmpParams, error) {
+	if ap.Type != "snmp_param" {
+		return nil, errors.New("access params isn't snmp params - " + ap.Type)
+	}
+
+	var snmp = &SnmpParams{}
+	if err := json.Unmarshal([]byte(ap.Attributes), snmp); err != nil {
+		return nil, errors.New("convert access params to snmp params fail, " + err.Error())
+	}
+	snmp.ID = ap.ID
+	snmp.ManagedObjectID = ap.ManagedObjectID
+	snmp.CreatedAt = ap.CreatedAt
+	snmp.UpdatedAt = ap.UpdatedAt
+	return snmp, nil
+}
+
+func (ap *AccessParams) TableName() string {
+	return "tpt_access_params"
+}
 
 type SnmpParams struct {
 	ID              int64     `json:"id,omitempty" xorm:"id pk notnull"`

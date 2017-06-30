@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -70,6 +71,26 @@ type NetworkDevice struct {
 	snmpParams atomic.Value
 }
 
+// accessParams 返回访问参数
+func (dev *NetworkDevice) accessParams(t string) (*models.AccessParams, error) {
+	var sp []*models.AccessParams
+	collection := orm.New(func() interface{} {
+		return &models.AccessParams{}
+	})(dev.mo.cache.Engine)
+
+	err := collection.Where(orm.Cond{"managed_object_id": dev.mo.ID, "type": t}).All(&sp)
+	if err != nil {
+		return nil, err
+	}
+	if len(sp) == 0 {
+		return nil, errors.New(t + " is empty.")
+	}
+	if len(sp) != 1 {
+		return nil, errors.New(t + " is muli choices.")
+	}
+	return sp[0], nil
+}
+
 // SnmpParams 返回 SNMP 访问参数
 func (dev *NetworkDevice) SnmpParams() (*models.SnmpParams, error) {
 	o := dev.snmpParams.Load()
@@ -85,6 +106,14 @@ func (dev *NetworkDevice) SnmpParams() (*models.SnmpParams, error) {
 
 	err := collection.Where(orm.Cond{"managed_object_id": dev.mo.ID}).All(&sp)
 	if err != nil {
+		if strings.Contains(err.Error(), `does not exist`) ||
+			strings.Contains(err.Error(), `不存在`) {
+			ap, err := dev.accessParams("snmp_param")
+			if err != nil {
+				return nil, err
+			}
+			return ap.ToSnmpParams()
+		}
 		return nil, err
 	}
 	if len(sp) == 0 {
