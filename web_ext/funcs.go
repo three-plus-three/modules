@@ -17,6 +17,7 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 	revel.TemplateFuncs["assets"] = func(value string) string {
 		return urlutil.Join(lifecycle.URLPrefix, "assets", value)
 	}
+
 	revel.TemplateFuncs["custom_resources_assets"] = func(value string) string {
 		return ResourcesURLFor(value)
 	}

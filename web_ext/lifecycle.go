@@ -9,16 +9,27 @@ import (
 )
 
 type User interface {
+	ID() int
+
 	Name() string
 
 	Data(key string) interface{}
 }
 
 type user struct {
-	name string
+	lifecycle *Lifecycle
+	name      string
+}
+
+func (u *user) ID() int {
+	return 1
 }
 
 func (u *user) Name() string {
+	if u.name == "" {
+		return "admin"
+	}
+
 	return u.name
 }
 
