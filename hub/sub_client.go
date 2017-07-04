@@ -1,4 +1,4 @@
-package client
+package hub
 
 import "golang.org/x/net/websocket"
 

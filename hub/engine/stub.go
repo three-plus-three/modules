@@ -1,4 +1,4 @@
-package mq
+package engine
 
 import (
 	"fmt"
@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/three-plus-three/modules/hub"
 
 	"golang.org/x/net/websocket"
 )
@@ -94,7 +96,7 @@ func (stub *engineStub) subscribe(consumer *Consumer) {
 	}
 }
 
-func (stub *engineStub) publish(producer chan<- Message) {
+func (stub *engineStub) publish(producer chan<- hub.Message) {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
@@ -114,7 +116,7 @@ func (stub *engineStub) publish(producer chan<- Message) {
 			break
 		}
 
-		msg := CreateDataMessage(data)
+		msg := hub.CreateDataMessage(data)
 
 		continueTick := 0
 		for continueTick < trySendCount {
@@ -155,9 +157,9 @@ func (stub *engineStub) sendToTopic(producer Producer) {
 			break
 		}
 
-		msg := CreateDataMessage(data)
+		msg := hub.CreateDataMessage(data)
 		rs, err := producer.SendWithContext(msg, ticker.C)
-		if err != ErrPartialSend {
+		if err != hub.ErrPartialSend {
 			stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is fail -", err)
 		} else {
 			rs.SendWithContext(msg, ticker.C)

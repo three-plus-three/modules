@@ -1,10 +1,14 @@
-package mq
+package engine
 
-import "time"
+import (
+	"time"
+
+	"github.com/three-plus-three/modules/hub"
+)
 
 type Queue struct {
 	name     string
-	C        chan Message
+	C        chan hub.Message
 	consumer Consumer
 }
 
@@ -16,25 +20,25 @@ func (q *Queue) Close() error {
 	return q.consumer.Close()
 }
 
-func (q *Queue) Send(msg Message) error {
+func (q *Queue) Send(msg hub.Message) error {
 	q.C <- msg
 	q.consumer.addSuccess()
 	return nil
 }
 
-func (q *Queue) SendWithContext(msg Message, ctx <-chan time.Time) (*RetrySender, error) {
+func (q *Queue) SendWithContext(msg hub.Message, ctx <-chan time.Time) (*RetrySender, error) {
 	select {
 	case q.C <- msg:
 		q.consumer.addSuccess()
 		return nil, nil
 	case <-ctx:
 		q.consumer.addDiscard()
-		return nil, ErrTimeout
+		return nil, hub.ErrTimeout
 	}
 }
 
 func creatQueue(srv *Core, name string, capacity int) *Queue {
-	c := make(chan Message, capacity)
+	c := make(chan hub.Message, capacity)
 	q := &Queue{name: name, C: c, consumer: Consumer{C: c, send: c}}
 
 	q.consumer.closer = func() error {

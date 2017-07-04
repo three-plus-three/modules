@@ -1,8 +1,10 @@
-package mq
+package engine
 
 import (
 	"sync"
 	"time"
+
+	"github.com/three-plus-three/modules/hub"
 )
 
 type Topic struct {
@@ -25,7 +27,7 @@ func (topic *Topic) Close() error {
 	return nil
 }
 
-func (topic *Topic) Send(msg Message) error {
+func (topic *Topic) Send(msg hub.Message) error {
 	topic.channels_lock.RLock()
 	defer topic.channels_lock.RUnlock()
 
@@ -40,7 +42,7 @@ func (topic *Topic) Send(msg Message) error {
 	return nil
 }
 
-func (topic *Topic) SendWithContext(msg Message, ctx <-chan time.Time) (*RetrySender, error) {
+func (topic *Topic) SendWithContext(msg hub.Message, ctx <-chan time.Time) (*RetrySender, error) {
 	var channels []*Consumer
 	func() {
 		topic.channels_lock.RLock()
@@ -62,14 +64,14 @@ func (topic *Topic) SendWithContext(msg Message, ctx <-chan time.Time) (*RetrySe
 
 	var rs = &RetrySender{consumers: channels}
 	if ctx == nil {
-		return rs, ErrPartialSend
+		return rs, hub.ErrPartialSend
 	}
 	err := rs.send(msg, ctx)
 	return rs, err
 }
 
 func (topic *Topic) ListenOn() *Consumer {
-	c := make(chan Message, topic.capacity)
+	c := make(chan hub.Message, topic.capacity)
 
 	listener := &Consumer{Topic: topic, send: c, C: c}
 

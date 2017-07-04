@@ -1,4 +1,4 @@
-package mq
+package engine
 
 import (
 	"encoding/json"
@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/three-plus-three/modules/hub"
 
 	"golang.org/x/net/websocket"
 )
@@ -142,8 +144,8 @@ func (se *StandardEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func readMore(c <-chan Message, msg Message) []Message {
-	results := append(make([]Message, 0, 12), msg)
+func readMore(c <-chan hub.Message, msg hub.Message) []hub.Message {
+	results := append(make([]hub.Message, 0, 12), msg)
 	for i := 0; i < 100; i++ {
 		select {
 		case m, ok := <-c:
@@ -224,7 +226,7 @@ func (se *StandardEngine) doPost(w http.ResponseWriter, r *http.Request,
 	r.Body.Close()
 
 	timeout := GetTimeout(query_params, 0)
-	msg := CreateDataMessage(bs)
+	msg := hub.CreateDataMessage(bs)
 	send := cb(urlPath)
 	if timeout == 0 {
 		err = send.Send(msg)

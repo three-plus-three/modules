@@ -1,39 +1,15 @@
-package mq
+package engine
 
 import (
-	"errors"
 	"sync/atomic"
 	"time"
+
+	"github.com/three-plus-three/modules/hub"
 )
-
-var (
-	ErrTimeout           = errors.New("timeout")
-	ErrAlreadyClosed     = errors.New("already closed.")
-	ErrMoreThanMaxRead   = errors.New("more than maximum read.")
-	ErrUnexceptedMessage = errors.New("recv a unexcepted message.")
-	ErrUnexceptedAck     = errors.New("recv a unexcepted ack message.")
-	ErrEmptyString       = errors.New("empty error message.")
-	ErrMagicNumber       = errors.New("magic number is error.")
-	ErrLengthExceed      = errors.New("message length is exceed.")
-	ErrLengthNotDigit    = errors.New("length field of message isn't number.")
-	ErrQueueFull         = errors.New("queue is full.")
-	ErrPartialSend       = errors.New("send is partial consumer.")
-	ErrHandlerType       = errors.New("handler isn't http.Handler.")
-)
-
-// Message - 一个消息的数据
-type Message []byte
-
-func (msg Message) Bytes() []byte {
-	return msg
-}
-func CreateDataMessage(bs []byte) Message {
-	return Message(bs)
-}
 
 type Producer interface {
-	Send(msg Message) error
-	SendWithContext(msg Message, ctx <-chan time.Time) (*RetrySender, error)
+	Send(msg hub.Message) error
+	SendWithContext(msg hub.Message, ctx <-chan time.Time) (*RetrySender, error)
 }
 
 type RetrySender struct {
@@ -47,7 +23,7 @@ func (rs *RetrySender) Close() error {
 	return nil
 }
 
-func (rs *RetrySender) send(msg Message, ctx <-chan time.Time) error {
+func (rs *RetrySender) send(msg hub.Message, ctx <-chan time.Time) error {
 	for idx, consumer := range rs.consumers {
 		select {
 		case consumer.send <- msg:
@@ -72,13 +48,13 @@ func (rs *RetrySender) send(msg Message, ctx <-chan time.Time) error {
 				}
 			}
 			rs.consumers = rs.consumers[:offset]
-			return ErrPartialSend
+			return hub.ErrPartialSend
 		}
 	}
 	return nil
 }
 
-func (rs *RetrySender) SendWithContext(msg Message, ctx <-chan time.Time) error {
+func (rs *RetrySender) SendWithContext(msg hub.Message, ctx <-chan time.Time) error {
 	offset := 0
 	for idx, consumer := range rs.consumers {
 		select {
@@ -102,13 +78,13 @@ type Consumer struct {
 	success, discard uint64
 	id               int
 	Topic            *Topic
-	send             chan Message
-	C                <-chan Message
+	send             chan hub.Message
+	C                <-chan hub.Message
 	closed           int32
 	closer           func() error
 }
 
-func (consumer *Consumer) Unread(msg Message) bool {
+func (consumer *Consumer) Unread(msg hub.Message) bool {
 	select {
 	case consumer.send <- msg:
 		return true

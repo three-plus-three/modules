@@ -1,4 +1,4 @@
-package mq
+package engine
 
 import (
 	"bytes"
@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
+
+	"github.com/three-plus-three/modules/hub"
 )
 
 type Client interface {
@@ -39,7 +41,7 @@ func (core *Core) IsClosed() bool {
 
 func (core *Core) Close() error {
 	if !atomic.CompareAndSwapInt32(&core.closed, 0, 1) {
-		return ErrAlreadyClosed
+		return hub.ErrAlreadyClosed
 	}
 
 	func() {

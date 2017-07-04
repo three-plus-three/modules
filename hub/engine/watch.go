@@ -1,4 +1,4 @@
-package mq
+package engine
 
 type Watcher interface {
 	OnNewQueue(name string)

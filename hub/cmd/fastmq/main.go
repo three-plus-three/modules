@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/runner-mei/command"
-	"github.com/three-plus-three/modules/mq"
-	"github.com/three-plus-three/modules/mq/client"
+	"github.com/three-plus-three/modules/hub"
+	"github.com/three-plus-three/modules/hub/engine"
 )
 
 func main() {
@@ -29,9 +29,9 @@ func (cmd *runCmd) Flags(fs *flag.FlagSet) *flag.FlagSet {
 }
 
 func (cmd *runCmd) Run(args []string) error {
-	opt := &mq.Options{}
+	opt := &engine.Options{}
 
-	srv, err := mq.NewEngine(opt, nil)
+	srv, err := engine.NewEngine(opt, nil)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ type sendCmd struct {
 
 func (cmd *sendCmd) Flags(fs *flag.FlagSet) *flag.FlagSet {
 	fs.StringVar(&cmd.url, "url", "http://127.0.0.1:59876", "")
-	fs.StringVar(&cmd.typ, "type", client.QUEUE, "send to '"+client.TOPIC+"' or '"+client.QUEUE+"'.")
+	fs.StringVar(&cmd.typ, "type", hub.QUEUE, "send to '"+hub.TOPIC+"' or '"+hub.QUEUE+"'.")
 	fs.StringVar(&cmd.id, "id", "", "the name of client.")
 	fs.UintVar(&cmd.repeat, "repeat", 1, "send message count.")
 	fs.BoolVar(&cmd.stat, "stat", false, "stat message rate.")
@@ -62,17 +62,17 @@ func (cmd *sendCmd) Run(args []string) error {
 		return errors.New("arguments error!\r\n\tUsage: fastmq send queue name messagebody")
 	}
 
-	builder := client.Connect(cmd.url).ID(cmd.id)
+	builder := hub.Connect(cmd.url).ID(cmd.id)
 
 	var err error
-	var cli *client.Publisher
+	var cli *hub.Publisher
 	switch cmd.typ {
 	case "topic":
 		cli, err = builder.ToTopic(args[0])
 	case "queue":
 		cli, err = builder.ToQueue(args[0])
 	default:
-		return errors.New("arguments error: type must is '" + client.TOPIC + "' or '" + client.QUEUE + "'.")
+		return errors.New("arguments error: type must is '" + hub.TOPIC + "' or '" + hub.QUEUE + "'.")
 	}
 
 	if nil != err {
@@ -113,7 +113,7 @@ type subscribeCmd struct {
 
 func (cmd *subscribeCmd) Flags(fs *flag.FlagSet) *flag.FlagSet {
 	fs.StringVar(&cmd.url, "url", "http://127.0.0.1:59876", "the address of target mq server.")
-	fs.StringVar(&cmd.typ, "type", client.QUEUE, "send to '"+client.TOPIC+"' or '"+client.QUEUE+"'.")
+	fs.StringVar(&cmd.typ, "type", hub.QUEUE, "send to '"+hub.TOPIC+"' or '"+hub.QUEUE+"'.")
 	fs.StringVar(&cmd.id, "id", "", "the name of client.")
 	fs.StringVar(&cmd.forward, "forward", "", "resend to address.")
 	fs.BoolVar(&cmd.console, "console", true, "print message to console.")
@@ -126,26 +126,26 @@ func (cmd *subscribeCmd) Run(args []string) error {
 	if len(args) != 1 {
 		return errors.New("arguments error!\r\n\tUsage: fastmq subscribe queue name")
 	}
-	var forwarder *client.Publisher
-	var subscription *client.Subscription
+	var forwarder *hub.Publisher
+	var subscription *hub.Subscription
 	var err error
 
 	if cmd.forward != "" {
-		forwardBuilder := client.Connect(cmd.url)
+		forwardBuilder := hub.Connect(cmd.url)
 		switch cmd.typ {
 		case "topic":
 			forwarder, err = forwardBuilder.ToTopic(cmd.forward)
 		case "queue":
 			forwarder, err = forwardBuilder.ToQueue(cmd.forward)
 		default:
-			return errors.New("arguments error: type must is '" + client.TOPIC + "' or '" + client.QUEUE + "'.")
+			return errors.New("arguments error: type must is '" + hub.TOPIC + "' or '" + hub.QUEUE + "'.")
 		}
 		if err != nil {
 			return err
 		}
 	}
 
-	subBuilder := client.Connect(cmd.url).ID(cmd.id)
+	subBuilder := hub.Connect(cmd.url).ID(cmd.id)
 
 	var startAt, endAt time.Time
 	var messageCount uint = 0
@@ -156,13 +156,13 @@ func (cmd *subscribeCmd) Run(args []string) error {
 	case "queue":
 		subscription, err = subBuilder.SubscribeQueue(args[0])
 	default:
-		return errors.New("arguments error: type must is '" + client.TOPIC + "' or '" + client.QUEUE + "'.")
+		return errors.New("arguments error: type must is '" + hub.TOPIC + "' or '" + hub.QUEUE + "'.")
 	}
 	if nil != err {
 		return err
 	}
 
-	cb := func(sub *client.Subscription, msg []byte) {
+	cb := func(sub *hub.Subscription, msg []byte) {
 		if cmd.console {
 			fmt.Println(string(msg))
 		}

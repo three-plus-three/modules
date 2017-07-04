@@ -1,4 +1,4 @@
-package client
+package hub
 
 import (
 	"net/url"
