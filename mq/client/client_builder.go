@@ -16,7 +16,7 @@ type ClientBuilder struct {
 	baseURL string
 	//capacity int
 	//bufSize  int
-	//id       string
+	id string
 }
 
 func (builder *ClientBuilder) Clone() *ClientBuilder {
@@ -28,12 +28,12 @@ func (builder *ClientBuilder) Clone() *ClientBuilder {
 	}
 }
 
-/*
-func (builder *ClientBuilder) Id(name string) *ClientBuilder {
+func (builder *ClientBuilder) ID(name string) *ClientBuilder {
 	builder.id = name
 	return builder
 }
 
+/*
 func (builder *ClientBuilder) SetBufSize(size int) *ClientBuilder {
 	builder.bufSize = size
 	return builder
@@ -46,12 +46,14 @@ func (builder *ClientBuilder) SetQueueCapacity(capacity int) *ClientBuilder {
 */
 
 func (builder *ClientBuilder) ToQueue(name string) (*Publisher, error) {
-	u := joinURL(builder.baseURL, "/sendQueue?name="+url.QueryEscape(name))
+	u := joinURL(builder.baseURL, "/sendQueue?name="+url.QueryEscape(name)+
+		"&client="+url.QueryEscape(builder.id))
 	return builder.to(u)
 }
 
 func (builder *ClientBuilder) ToTopic(name string) (*Publisher, error) {
-	u := joinURL(builder.baseURL, "/sendTopic?name="+url.QueryEscape(name))
+	u := joinURL(builder.baseURL, "/sendTopic?name="+url.QueryEscape(name)+
+		"&client="+url.QueryEscape(builder.id))
 	return builder.to(u)
 }
 
@@ -74,12 +76,14 @@ func (builder *ClientBuilder) connect(uri string) (*websocket.Conn, error) {
 }
 
 func (builder *ClientBuilder) SubscribeQueue(name string) (*Subscription, error) {
-	u := joinURL(builder.baseURL, "/subscribeQueue?name="+url.QueryEscape(name))
+	u := joinURL(builder.baseURL, "/subscribeQueue?name="+url.QueryEscape(name)+
+		"&client="+url.QueryEscape(builder.id))
 	return builder.subscribe(u)
 }
 
 func (builder *ClientBuilder) SubscribeTopic(name string) (*Subscription, error) {
-	u := joinURL(builder.baseURL, "/subscribeTopic?name="+url.QueryEscape(name))
+	u := joinURL(builder.baseURL, "/subscribeTopic?name="+url.QueryEscape(name)+
+		"&client="+url.QueryEscape(builder.id))
 	return builder.subscribe(u)
 }
 

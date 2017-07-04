@@ -303,7 +303,8 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 		role:       "subscriber",
 		client:     params.Get("client"),
 		name:       params.Get("name"),
-		c:          make(chan struct{})}
+		c:          make(chan struct{}),
+		logger:     se.Logger}
 	var consumer *Consumer
 
 	stub.srv.Handshake = func(config *websocket.Config, req *http.Request) (err error) {

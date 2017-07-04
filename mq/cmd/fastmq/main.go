@@ -41,9 +41,9 @@ func (cmd *runCmd) Run(args []string) error {
 }
 
 type sendCmd struct {
-	url string
-	typ string
-	//id     string
+	url    string
+	typ    string
+	id     string
 	repeat uint
 	stat   bool
 }
@@ -51,7 +51,7 @@ type sendCmd struct {
 func (cmd *sendCmd) Flags(fs *flag.FlagSet) *flag.FlagSet {
 	fs.StringVar(&cmd.url, "url", "http://127.0.0.1:59876", "")
 	fs.StringVar(&cmd.typ, "type", client.QUEUE, "send to '"+client.TOPIC+"' or '"+client.QUEUE+"'.")
-	//fs.StringVar(&cmd.id, "id", "", "the name of client.")
+	fs.StringVar(&cmd.id, "id", "", "the name of client.")
 	fs.UintVar(&cmd.repeat, "repeat", 1, "send message count.")
 	fs.BoolVar(&cmd.stat, "stat", false, "stat message rate.")
 	return fs
@@ -62,7 +62,7 @@ func (cmd *sendCmd) Run(args []string) error {
 		return errors.New("arguments error!\r\n\tUsage: fastmq send queue name messagebody")
 	}
 
-	builder := client.Connect(cmd.url)
+	builder := client.Connect(cmd.url).ID(cmd.id)
 
 	var err error
 	var cli *client.Publisher
@@ -102,9 +102,9 @@ func (cmd *sendCmd) Run(args []string) error {
 }
 
 type subscribeCmd struct {
-	url string
-	typ string
-	//id      string
+	url     string
+	typ     string
+	id      string
 	forward string
 	console bool
 	stat    bool
@@ -114,7 +114,7 @@ type subscribeCmd struct {
 func (cmd *subscribeCmd) Flags(fs *flag.FlagSet) *flag.FlagSet {
 	fs.StringVar(&cmd.url, "url", "http://127.0.0.1:59876", "the address of target mq server.")
 	fs.StringVar(&cmd.typ, "type", client.QUEUE, "send to '"+client.TOPIC+"' or '"+client.QUEUE+"'.")
-	//fs.StringVar(&cmd.id, "id", "", "the name of client.")
+	fs.StringVar(&cmd.id, "id", "", "the name of client.")
 	fs.StringVar(&cmd.forward, "forward", "", "resend to address.")
 	fs.BoolVar(&cmd.console, "console", true, "print message to console.")
 	fs.BoolVar(&cmd.stat, "stat", false, "stat message rate.")
@@ -145,7 +145,7 @@ func (cmd *subscribeCmd) Run(args []string) error {
 		}
 	}
 
-	subBuilder := client.Connect(cmd.url)
+	subBuilder := client.Connect(cmd.url).ID(cmd.id)
 
 	var startAt, endAt time.Time
 	var messageCount uint = 0

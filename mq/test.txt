@@ -1,0 +1,62 @@
+old:
+recv: 10000 , elapsed: 61.5ms
+recv: 100000 , elapsed: 665ms
+recv: 100000 , elapsed: 583.5ms
+recv: 100000 , elapsed: 670ms
+recv: 100000 , elapsed: 546.5ms
+recv: 100000 , elapsed: 656ms
+recv: 100000 , elapsed: 568ms
+recv: 100000 , elapsed: 562ms
+recv: 100000 , elapsed: 590.5ms
+recv: 1000000 , elapsed: 5.381s
+recv: 1000000 , elapsed: 5.427s
+recv: 1000000 , elapsed: 5.4535s
+recv: 1000000 , elapsed: 5.308s
+
+
+new
+recv: 10000 , elapsed: 67ms
+recv: 10000 , elapsed: 77.5ms
+recv: 10000 , elapsed: 81ms
+recv: 10000 , elapsed: 66.5ms
+recv: 10000 , elapsed: 70ms
+recv: 10000 , elapsed: 75.5ms
+recv: 10000 , elapsed: 67ms
+recv: 10000 , elapsed: 74ms
+recv: 10000 , elapsed: 83.5ms
+recv: 10000 , elapsed: 73.5ms
+recv: 10000 , elapsed: 66.5ms
+recv: 10000 , elapsed: 67ms
+recv: 10000 , elapsed: 78.5ms
+recv: 10000 , elapsed: 76ms
+recv: 100000 , elapsed: 671.5ms
+recv: 100000 , elapsed: 692.5ms
+recv: 100000 , elapsed: 648ms
+recv: 100000 , elapsed: 719ms
+recv: 100000 , elapsed: 639.5ms
+recv: 100000 , elapsed: 632ms
+recv: 1000000 , elapsed: 6.419s
+recv: 1000000 , elapsed: 6.688s
+recv: 1000000 , elapsed: 6.2235s
+recv: 1000000 , elapsed: 6.0895s
+
+new
+recv: 10000 , elapsed: 87.5ms
+recv: 10000 , elapsed: 92ms
+recv: 10000 , elapsed: 89ms
+recv: 10000 , elapsed: 70.5ms
+recv: 10000 , elapsed: 65ms
+recv: 10000 , elapsed: 72ms
+recv: 100000 , elapsed: 699.5ms
+recv: 100000 , elapsed: 635ms
+recv: 100000 , elapsed: 644.5ms
+recv: 100000 , elapsed: 659ms
+recv: 100000 , elapsed: 654.5ms
+recv: 100000 , elapsed: 624ms
+recv: 1000000 , elapsed: 6.13s
+recv: 1000000 , elapsed: 6.102s
+recv: 1000000 , elapsed: 6.0655s
+recv: 1000000 , elapsed: 6.024s
+recv: 1000000 , elapsed: 6.106s
+recv: 1000000 , elapsed: 6.0825s
+recv: 1000000 , elapsed: 6.0995s
