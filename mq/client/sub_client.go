@@ -1,10 +1,6 @@
 package client
 
-import (
-	"io"
-	"net"
-	"time"
-)
+import "golang.org/x/net/websocket"
 
 type ErrDisconnect struct {
 	err error
@@ -21,50 +17,27 @@ func IsConnected(e error) bool {
 
 type Subscription struct {
 	closed bool
-	conn   net.Conn
+	Conn   *websocket.Conn
 }
 
-func (self *Subscription) Stop() error {
-	if self.closed {
+func (sub *Subscription) Stop() error {
+	if sub.closed {
 		return nil
 	}
-	self.closed = true
-	return SendFull(self.conn, MSG_CLOSE_BYTES)
+
+	sub.closed = true
+	return sub.Conn.Close()
 }
 
-func (self *Subscription) subscribe(bufSize int, cb func(cli *Subscription, msg Message)) error {
-	var reader FixedMessageReader
-	var recvMessage Message
-	var err error
-
-	if tcpConn, ok := self.conn.(*net.TCPConn); ok {
-
-		if err := tcpConn.SetKeepAlive(true); err != nil {
-			return err
-		}
-		if err := tcpConn.SetKeepAlivePeriod(3 * time.Minute); err != nil {
-			return err
-		}
-	}
-	reader.Init(self.conn)
+func (sub *Subscription) Run(cb func(*Subscription, []byte)) error {
 	for {
-		recvMessage, err = reader.ReadMessage()
-		if nil != err {
-			if io.EOF == err {
-				return nil
-			}
-			return &ErrDisconnect{err}
+		var bs []byte
+		err := websocket.Message.Receive(sub.Conn, &bs)
+		if err != nil {
+			return err
 		}
 
-		if nil != recvMessage {
-			if recvMessage.Command() == MSG_ACK {
-				if self.closed {
-					return nil
-				}
-				return &ErrDisconnect{ErrUnexceptedAck}
-			}
-
-			cb(self, recvMessage)
-		}
+		cb(sub, bs)
 	}
+	return nil
 }

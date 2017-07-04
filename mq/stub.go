@@ -1,4 +1,4 @@
-package server
+package mq
 
 import (
 	"fmt"
@@ -96,8 +96,8 @@ func (stub *engineStub) publish(producer chan<- Message) {
 	defer ticker.Stop()
 
 	const trySendCount = 2
-	is_running := true
-	for is_running {
+	isRunning := true
+	for isRunning {
 		var data []byte
 		if e := websocket.Message.Receive(stub.conn, &data); nil != e {
 			if e == io.EOF {
@@ -107,14 +107,16 @@ func (stub *engineStub) publish(producer chan<- Message) {
 			} else {
 				log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed -", e)
 			}
-			is_running = false
+			isRunning = false
 			break
 		}
+
+		msg := CreateDataMessage(data)
 
 		continueTick := 0
 		for continueTick < trySendCount {
 			select {
-			case producer <- CreateDataMessage(data):
+			case producer <- msg:
 				continueTick = math.MaxInt32
 			case <-ticker.C:
 				continueTick++
@@ -125,7 +127,7 @@ func (stub *engineStub) publish(producer chan<- Message) {
 				log.Println("[broker] connection(write:", stub.remoteAddr, ") is closed - queue is shutdown.")
 
 				continueTick = math.MaxInt32
-				is_running = false
+				isRunning = false
 			}
 		}
 	}
@@ -135,9 +137,8 @@ func (stub *engineStub) sendToTopic(producer Producer) {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
-	const trySendCount = 2
-	is_running := true
-	for is_running {
+	isRunning := true
+	for isRunning {
 		var data []byte
 		if e := websocket.Message.Receive(stub.conn, &data); nil != e {
 			if e == io.EOF {
@@ -147,17 +148,18 @@ func (stub *engineStub) sendToTopic(producer Producer) {
 			} else {
 				log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed -", e)
 			}
-			is_running = false
+			isRunning = false
 			break
 		}
+
 		msg := CreateDataMessage(data)
 		rs, err := producer.SendWithContext(msg, ticker.C)
 		if err != ErrPartialSend {
 			log.Println("[broker] connection(read:", stub.remoteAddr, ") is fail -", err)
-			is_running = false
-			break
+		} else {
+			rs.SendWithContext(msg, ticker.C)
 		}
-		rs.SendWithContext(msg, ticker.C)
+
 		rs.Close()
 	}
 }

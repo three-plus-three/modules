@@ -1,4 +1,4 @@
-package server
+package mq
 
 import "time"
 
@@ -8,12 +8,12 @@ type Queue struct {
 	consumer Consumer
 }
 
-func (self *Queue) ListenOn() *Consumer {
-	return &self.consumer
+func (q *Queue) ListenOn() *Consumer {
+	return &q.consumer
 }
 
-func (self *Queue) Close() error {
-	return self.consumer.Close()
+func (q *Queue) Close() error {
+	return q.consumer.Close()
 }
 
 func (q *Queue) Send(msg Message) error {

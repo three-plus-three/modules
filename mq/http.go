@@ -1,4 +1,4 @@
-package server
+package mq
 
 import (
 	"encoding/json"
@@ -394,6 +394,9 @@ func NewEngine(opts *Options, noRoute http.Handler) (*StandardEngine, error) {
 	core, err := NewCore(opts)
 	if err != nil {
 		return nil, err
+	}
+	if noRoute == nil {
+		noRoute = http.NotFoundHandler()
 	}
 	return &StandardEngine{
 		Core:    core,

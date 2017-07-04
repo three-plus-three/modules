@@ -1,9 +1,11 @@
 package client
 
 import (
-	"errors"
-	"net"
-	"time"
+	"fmt"
+	"net/url"
+	"strings"
+
+	"golang.org/x/net/websocket"
 )
 
 const (
@@ -12,248 +14,114 @@ const (
 )
 
 type ClientBuilder struct {
-	network, address string
-	capacity         int
-	bufSize          int
-	id               string
-	//c                chan Message
+	baseURL string
+	//capacity int
+	//bufSize  int
+	//id       string
 }
 
-func (self *ClientBuilder) Clone() *ClientBuilder {
+func (builder *ClientBuilder) Clone() *ClientBuilder {
 	return &ClientBuilder{
-		network:  self.network,
-		address:  self.address,
-		capacity: self.capacity,
-		bufSize:  self.bufSize,
-		id:       self.id,
+		baseURL: builder.baseURL,
+		//capacity: builder.capacity,
+		//bufSize:  builder.bufSize,
+		//id:       builder.id,
 	}
 }
 
-func (self *ClientBuilder) Id(name string) *ClientBuilder {
-	self.id = name
-	return self
+/*
+func (builder *ClientBuilder) Id(name string) *ClientBuilder {
+	builder.id = name
+	return builder
 }
 
-func (self *ClientBuilder) SetBufSize(size int) *ClientBuilder {
-	self.bufSize = size
-	return self
+func (builder *ClientBuilder) SetBufSize(size int) *ClientBuilder {
+	builder.bufSize = size
+	return builder
 }
 
-func (self *ClientBuilder) SetQueueCapacity(capacity int) *ClientBuilder {
-	self.capacity = capacity
-	return self
+func (builder *ClientBuilder) SetQueueCapacity(capacity int) *ClientBuilder {
+	builder.capacity = capacity
+	return builder
+}
+*/
+
+func (builder *ClientBuilder) ToQueue(name string) (*Publisher, error) {
+	u := joinURL(builder.baseURL, "/sendQueue?name="+url.QueryEscape(name))
+	return builder.to(u)
 }
 
-func (self *ClientBuilder) ToQueue(name string) (*SimplePubClient, error) {
-	msg := NewMessageWriter(MSG_PUB, len(name)+HEAD_LENGTH+8).
-		Append([]byte("queue ")).
-		Append([]byte(name)).
-		Append([]byte("\n")).Build()
-	return self.to(msg)
+func (builder *ClientBuilder) ToTopic(name string) (*Publisher, error) {
+	u := joinURL(builder.baseURL, "/sendTopic?name="+url.QueryEscape(name))
+	return builder.to(u)
 }
 
-func (self *ClientBuilder) ToTopic(name string) (*SimplePubClient, error) {
-	msg := NewMessageWriter(MSG_PUB, len(name)+HEAD_LENGTH+8).
-		Append([]byte("topic ")).
-		Append([]byte(name)).
-		Append([]byte("\n")).Build()
-	return self.to(msg)
-}
-
-func (self *ClientBuilder) To(typ, name string) (*SimplePubClient, error) {
-	msg := NewMessageWriter(MSG_PUB, len(name)+HEAD_LENGTH+8).
-		Append([]byte(typ)).
-		Append([]byte(" ")).
-		Append([]byte(name)).
-		Append([]byte("\n")).Build()
-	return self.to(msg)
-}
-
-func (self *ClientBuilder) to(msg Message) (*SimplePubClient, error) {
-	conn, err := connect(self.network, self.address)
+func (builder *ClientBuilder) to(uri string) (*Publisher, error) {
+	conn, err := builder.connect(uri)
 	if err != nil {
 		return nil, err
 	}
+	return (*Publisher)(conn), nil
+}
 
-	if self.id != "" {
-		sendId(conn, self.id)
+func (builder *ClientBuilder) connect(uri string) (*websocket.Conn, error) {
+	fmt.Println(uri)
+	origin := uri
+	if strings.HasPrefix(uri, "http://") {
+		uri = "ws://" + strings.TrimPrefix(uri, "http://")
+	} else if strings.HasPrefix(uri, "https://") {
+		uri = "wss://" + strings.TrimPrefix(uri, "https://")
 	}
+	fmt.Println(uri)
+	return websocket.Dial(uri, "", origin)
+}
 
-	err = exec(conn, msg)
+func (builder *ClientBuilder) SubscribeQueue(name string) (*Subscription, error) {
+	u := joinURL(builder.baseURL, "/subscribeQueue?name="+url.QueryEscape(name))
+	return builder.subscribe(u)
+}
+
+func (builder *ClientBuilder) SubscribeTopic(name string) (*Subscription, error) {
+	u := joinURL(builder.baseURL, "/subscribeTopic?name="+url.QueryEscape(name))
+	return builder.subscribe(u)
+}
+
+func (builder *ClientBuilder) subscribe(uri string) (*Subscription, error) {
+	conn, err := builder.connect(uri)
 	if err != nil {
 		return nil, err
 	}
-
-	if self.capacity == 0 {
-		self.capacity = 200
-	}
-
-	if self.bufSize == 0 {
-		self.bufSize = 512
-	}
-
-	return &SimplePubClient{conn: conn}, nil
+	return &Subscription{Conn: conn}, nil
 }
 
-func (self *ClientBuilder) ToQueueV2(name string) (*PubClient, error) {
-	msg := NewMessageWriter(MSG_PUB, len(name)+HEAD_LENGTH+8).
-		Append([]byte("queue ")).
-		Append([]byte(name)).
-		Append([]byte("\n")).Build()
-	return self.toV2(msg)
+func Connect(uri string) *ClientBuilder {
+	return &ClientBuilder{baseURL: uri}
 }
 
-func (self *ClientBuilder) ToTopicV2(name string) (*PubClient, error) {
-	msg := NewMessageWriter(MSG_PUB, len(name)+HEAD_LENGTH+8).
-		Append([]byte("topic ")).
-		Append([]byte(name)).
-		Append([]byte("\n")).Build()
-	return self.toV2(msg)
+type Publisher websocket.Conn
+
+func (pub *Publisher) Send(bs []byte) error {
+	return websocket.Message.Send((*websocket.Conn)(pub), bs)
 }
 
-func (self *ClientBuilder) toV2(msg Message) (*PubClient, error) {
-	// if self.c == nil {
-	// 	self.c = make(chan Message, self.capacity)
-	// }
-
-	v2 := &PubClient{
-		C: make(chan Message, self.capacity),
-	}
-
-	v2.runItInGoroutine(func() {
-		v2.runLoop(self, func(builder *ClientBuilder) (net.Conn, error) {
-			conn, err := connect(self.network, self.address)
-			if err != nil {
-				return nil, err
-			}
-
-			if self.id != "" {
-				sendId(conn, self.id)
-			}
-
-			err = exec(conn, msg)
-			if err != nil {
-				return nil, err
-			}
-			return conn, nil
-		})
-	})
-
-	return v2, nil
+func (pub *Publisher) Close() error {
+	return closeConn((*websocket.Conn)(pub))
 }
 
-func (self *ClientBuilder) SubscribeQueue(name string, cb func(cli *Subscription, msg Message)) error {
-	msg := NewMessageWriter(MSG_SUB, len(name)+HEAD_LENGTH+8).
-		Append([]byte("queue ")).
-		Append([]byte(name)).
-		Append([]byte("\n")).Build()
-	return self.subscribe(msg, cb)
+func closeConn(conn *websocket.Conn) error {
+	return conn.Close()
 }
 
-func (self *ClientBuilder) SubscribeTopic(name string, cb func(cli *Subscription, msg Message)) error {
-	msg := NewMessageWriter(MSG_SUB, len(name)+HEAD_LENGTH+8).
-		Append([]byte("topic ")).
-		Append([]byte(name)).
-		Append([]byte("\n")).Build()
-	return self.subscribe(msg, cb)
-}
-
-func (self *ClientBuilder) Subscribe(typ, name string, cb func(cli *Subscription, msg Message)) error {
-	msg := NewMessageWriter(MSG_SUB, len(name)+HEAD_LENGTH+8).
-		Append([]byte(typ)).
-		Append([]byte(" ")).
-		Append([]byte(name)).
-		Append([]byte("\n")).Build()
-	return self.subscribe(msg, cb)
-}
-
-func (self *ClientBuilder) subscribe(msg Message, cb func(cli *Subscription, msg Message)) error {
-	conn, err := connect(self.network, self.address)
-	if err != nil {
-		return err
+func joinURL(a, b string) string {
+	if strings.HasSuffix(a, "/") {
+		if strings.HasPrefix(b, "/") {
+			return strings.TrimSuffix(a, "/") + b
+		}
+		return a + b
 	}
 
-	if self.id != "" {
-		sendId(conn, self.id)
+	if strings.HasPrefix(b, "/") {
+		return a + b
 	}
-
-	err = exec(conn, msg)
-	if err != nil {
-		conn.Close()
-		return err
-	}
-
-	if self.capacity == 0 {
-		self.capacity = 200
-	}
-
-	if self.bufSize == 0 {
-		self.bufSize = 512
-	}
-
-	var sub = Subscription{conn: conn}
-	defer conn.Close()
-
-	return sub.subscribe(self.bufSize, cb)
-}
-
-func connect(network, address string) (net.Conn, error) {
-	if "" == network {
-		network = "tcp"
-	}
-	if "" == address {
-		return nil, errors.New("address is missing.")
-	}
-	conn, err := net.Dial(network, address)
-	if err != nil {
-		return nil, err
-	}
-	if err := SendMagic(conn); err != nil {
-		conn.Close()
-		return nil, err
-	}
-	// prevent blocked while connect to incorrect server.
-	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	if err = ReadMagic(conn); err != nil {
-		conn.Close()
-		return nil, err
-	}
-
-	conn.SetReadDeadline(time.Time{})
-	return conn, nil
-}
-
-func sendId(conn net.Conn, name string) error {
-	msg := NewMessageWriter(MSG_ID, len(name)+HEAD_LENGTH+8).
-		Append([]byte(name)).
-		Append([]byte("\n")).
-		Build()
-	return SendFull(conn, msg.ToBytes())
-}
-
-func exec(conn net.Conn, msg Message) error {
-	err := SendFull(conn, msg.ToBytes())
-	if err != nil {
-		return err
-	}
-
-	recvMsg, err := ReadMessage(conn)
-	if err != nil {
-		return err
-	}
-
-	if MSG_ACK == recvMsg.Command() {
-		return nil
-	}
-
-	if MSG_ERROR == recvMsg.Command() {
-		return ToError(recvMsg)
-	}
-
-	return errors.New("recv a unexcepted message, exepted is a ack message, actual is " +
-		ToCommandName(recvMsg.Command()))
-}
-
-func Connect(network, address string) *ClientBuilder {
-	return &ClientBuilder{network: network, address: address}
+	return a + "/" + b
 }
