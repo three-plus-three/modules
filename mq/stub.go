@@ -29,8 +29,10 @@ type engineStub struct {
 	remoteAddr string
 	mode       string
 	role       string
+	client     string
 	name       string
 	conn       *websocket.Conn
+	logger     *log.Logger
 
 	c      chan struct{}
 	closed int32
@@ -54,6 +56,7 @@ func (stub *engineStub) Info() map[string]interface{} {
 		"remoteAddr": stub.remoteAddr,
 		"mode":       stub.mode,
 		"role":       stub.role,
+		"client":     stub.client,
 		"name":       stub.name,
 		"createdAt":  stub.createdAt,
 	}
@@ -66,7 +69,7 @@ func (stub *engineStub) subscribe(consumer *Consumer) {
 		case msg, ok := <-consumer.C:
 			if !ok {
 				is_running = false
-				log.Println("[broker] connection(write:", stub.remoteAddr, ") is closed - queue is shutdown.")
+				stub.logger.Println("[", stub.client, "] connection(write:", stub.remoteAddr, ") is closed - queue is shutdown.")
 				break
 			}
 
@@ -74,19 +77,19 @@ func (stub *engineStub) subscribe(consumer *Consumer) {
 				is_running = false
 
 				if !consumer.Unread(msg) {
-					log.Println("[broker] message is missing on the connection(write:", stub.remoteAddr, ") is .")
+					stub.logger.Println("[", stub.client, "] message is missing on the connection(write:", stub.remoteAddr, ") is .")
 				}
 
 				if strings.Contains(e.Error(), "use of closed network connection") {
-					log.Println("[broker] connection(write:", stub.remoteAddr, ") is closed.")
+					stub.logger.Println("[", stub.client, "] connection(write:", stub.remoteAddr, ") is closed.")
 				} else {
-					log.Println("[broker] connection(write:", stub.remoteAddr, ") is closed -", e)
+					stub.logger.Println("[", stub.client, "] connection(write:", stub.remoteAddr, ") is closed -", e)
 				}
 				break
 			}
 		case <-stub.c:
 			is_running = false
-			log.Println("[broker] connection(write:", stub.remoteAddr, ") is closed - queue is shutdown.")
+			stub.logger.Println("[", stub.client, "] connection(write:", stub.remoteAddr, ") is closed - queue is shutdown.")
 		}
 	}
 }
@@ -101,11 +104,11 @@ func (stub *engineStub) publish(producer chan<- Message) {
 		var data []byte
 		if e := websocket.Message.Receive(stub.conn, &data); nil != e {
 			if e == io.EOF {
-				log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
+				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
 			} else if strings.Contains(e.Error(), "use of closed network connection") {
-				log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed.")
+				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed.")
 			} else {
-				log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed -", e)
+				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed -", e)
 			}
 			isRunning = false
 			break
@@ -121,10 +124,10 @@ func (stub *engineStub) publish(producer chan<- Message) {
 			case <-ticker.C:
 				continueTick++
 				if continueTick >= trySendCount {
-					log.Println("[broker] connection(write:", stub.remoteAddr, ") is closed - queue is overflow.")
+					stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed - queue is overflow.")
 				}
 			case <-stub.c:
-				log.Println("[broker] connection(write:", stub.remoteAddr, ") is closed - queue is shutdown.")
+				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed - queue is shutdown.")
 
 				continueTick = math.MaxInt32
 				isRunning = false
@@ -142,11 +145,11 @@ func (stub *engineStub) sendToTopic(producer Producer) {
 		var data []byte
 		if e := websocket.Message.Receive(stub.conn, &data); nil != e {
 			if e == io.EOF {
-				log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
+				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
 			} else if strings.Contains(e.Error(), "use of closed network connection") {
-				log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed.")
+				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed.")
 			} else {
-				log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed -", e)
+				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed -", e)
 			}
 			isRunning = false
 			break
@@ -155,7 +158,7 @@ func (stub *engineStub) sendToTopic(producer Producer) {
 		msg := CreateDataMessage(data)
 		rs, err := producer.SendWithContext(msg, ticker.C)
 		if err != ErrPartialSend {
-			log.Println("[broker] connection(read:", stub.remoteAddr, ") is fail -", err)
+			stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is fail -", err)
 		} else {
 			rs.SendWithContext(msg, ticker.C)
 		}

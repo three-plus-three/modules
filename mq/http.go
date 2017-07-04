@@ -39,12 +39,13 @@ func getRealIP(req *http.Request) string {
 type StandardEngine struct {
 	Core    *Core
 	NoRoute http.Handler
+	Logger  *log.Logger
 }
 
 func (se *StandardEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/sendQueue", "/sendQueue/":
-		se.send(w, r,
+		se.send(w, r, "queue",
 			func(name string) (interface{}, error) {
 				queue := se.Core.CreateQueueIfNotExists(name)
 				if queue == nil {
@@ -57,7 +58,7 @@ func (se *StandardEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				stub.publish(queue.C)
 			})
 	case "/sendTopic", "/sendTopic/":
-		se.send(w, r,
+		se.send(w, r, "topic",
 			func(name string) (interface{}, error) {
 				topic := se.Core.CreateTopicIfNotExists(name)
 				if topic == nil {
@@ -300,6 +301,7 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 		remoteAddr: getRealIP(r),
 		mode:       mode,
 		role:       "subscriber",
+		client:     params.Get("client"),
 		name:       params.Get("name"),
 		c:          make(chan struct{})}
 	var consumer *Consumer
@@ -331,16 +333,18 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 				var data []byte
 				if e := websocket.Message.Receive(conn, &data); nil != e {
 					if e == io.EOF {
-						log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
+						se.Logger.Println("connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
 					} else if strings.Contains(e.Error(), "use of closed network connection") {
-						log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed.")
+						se.Logger.Println("connection(read:", stub.remoteAddr, ") is closed.")
 					} else {
-						log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed -", e)
+						se.Logger.Println("connection(read:", stub.remoteAddr, ") is closed -", e)
 					}
 					break
 				}
 			}
 		}()
+		se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, ", and peer =", stub.remoteAddr, ") is connected.")
+		defer se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, ", and peer =", stub.remoteAddr, ") is disconnected.")
 
 		stub.subscribe(consumer)
 	})
@@ -348,7 +352,7 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 	stub.srv.ServeHTTP(w, r)
 }
 
-func (se *StandardEngine) send(w http.ResponseWriter, r *http.Request,
+func (se *StandardEngine) send(w http.ResponseWriter, r *http.Request, mode string,
 	create func(name string) (interface{}, error),
 	run func(stub *engineStub, o interface{})) {
 
@@ -357,10 +361,12 @@ func (se *StandardEngine) send(w http.ResponseWriter, r *http.Request,
 	stub := &engineStub{
 		createdAt:  time.Now(),
 		remoteAddr: getRealIP(r),
-		mode:       "queue",
+		mode:       mode,
 		role:       "pushlisher",
+		client:     params.Get("client"),
 		name:       params.Get("name"),
-		c:          make(chan struct{})}
+		c:          make(chan struct{}),
+		logger:     se.Logger}
 	var o interface{}
 
 	stub.srv.Handshake = func(config *websocket.Config, req *http.Request) (err error) {
@@ -381,8 +387,10 @@ func (se *StandardEngine) send(w http.ResponseWriter, r *http.Request,
 	stub.srv.Handler = websocket.Handler(func(conn *websocket.Conn) {
 		stub.conn = conn
 		defer stub.Close()
-
 		stub.disconnect = se.Core.Connect(stub)
+
+		se.Logger.Println("[", stub.client, "] publisher(name=", stub.name, ", and peer =", stub.remoteAddr, ") is connected.")
+		defer se.Logger.Println("[", stub.client, "] publisher(name=", stub.name, ", and peer =", stub.remoteAddr, ") is disconnected.")
 
 		run(stub, o)
 	})
@@ -401,5 +409,6 @@ func NewEngine(opts *Options, noRoute http.Handler) (*StandardEngine, error) {
 	return &StandardEngine{
 		Core:    core,
 		NoRoute: noRoute,
+		Logger:  opts.Logger,
 	}, nil
 }

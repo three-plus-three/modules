@@ -36,6 +36,7 @@ func (cmd *runCmd) Run(args []string) error {
 		return err
 	}
 
+	fmt.Println("listen at -", cmd.listenAt)
 	return http.ListenAndServe(cmd.listenAt, srv)
 }
 

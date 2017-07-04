@@ -59,6 +59,6 @@ func (self *Options) ensureDefault() {
 	// }
 
 	if self.Logger == nil {
-		self.Logger = log.New(os.Stderr, "[aa] ", log.Ldate|log.Ltime|log.Lmicroseconds)
+		self.Logger = log.New(os.Stderr, "[mq] ", log.Ldate|log.Ltime|log.Lmicroseconds)
 	}
 }

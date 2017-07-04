@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -65,14 +64,12 @@ func (builder *ClientBuilder) to(uri string) (*Publisher, error) {
 }
 
 func (builder *ClientBuilder) connect(uri string) (*websocket.Conn, error) {
-	fmt.Println(uri)
 	origin := uri
 	if strings.HasPrefix(uri, "http://") {
 		uri = "ws://" + strings.TrimPrefix(uri, "http://")
 	} else if strings.HasPrefix(uri, "https://") {
 		uri = "wss://" + strings.TrimPrefix(uri, "https://")
 	}
-	fmt.Println(uri)
 	return websocket.Dial(uri, "", origin)
 }
 
