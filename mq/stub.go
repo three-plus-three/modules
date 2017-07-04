@@ -60,7 +60,6 @@ func (stub *engineStub) Info() map[string]interface{} {
 }
 
 func (stub *engineStub) subscribe(consumer *Consumer) {
-
 	is_running := true
 	for is_running {
 		select {
@@ -132,7 +131,7 @@ func (stub *engineStub) publish(producer chan<- Message) {
 	}
 }
 
-func (stub *engineStub) publish(producer chan<- Message) {
+func (stub *engineStub) sendToTopic(producer Producer) {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
@@ -151,23 +150,14 @@ func (stub *engineStub) publish(producer chan<- Message) {
 			is_running = false
 			break
 		}
-
-		continueTick := 0
-		for continueTick < trySendCount {
-			select {
-			case producer <- CreateDataMessage(data):
-				continueTick = math.MaxInt32
-			case <-ticker.C:
-				continueTick++
-				if continueTick >= trySendCount {
-					log.Println("[broker] connection(write:", stub.remoteAddr, ") is closed - queue is overflow.")
-				}
-			case <-stub.c:
-				log.Println("[broker] connection(write:", stub.remoteAddr, ") is closed - queue is shutdown.")
-
-				continueTick = math.MaxInt32
-				is_running = false
-			}
+		msg := CreateDataMessage(data)
+		rs, err := producer.SendWithContext(msg, ticker.C)
+		if err != ErrPartialSend {
+			log.Println("[broker] connection(read:", stub.remoteAddr, ") is fail -", err)
+			is_running = false
+			break
 		}
+		rs.SendWithContext(msg, ticker.C)
+		rs.Close()
 	}
 }

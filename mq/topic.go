@@ -25,10 +25,6 @@ func (topic *Topic) Close() error {
 	return nil
 }
 
-func (topic *Topic) Chan() chan<- Message {
-	return nil
-}
-
 func (topic *Topic) Send(msg Message) error {
 	topic.channels_lock.RLock()
 	defer topic.channels_lock.RUnlock()
@@ -44,15 +40,8 @@ func (topic *Topic) Send(msg Message) error {
 	return nil
 }
 
-func (topic *Topic) SendTimeout(msg Message, timeout time.Duration) error {
+func (topic *Topic) SendWithContext(msg Message, ctx <-chan time.Time) (*RetrySender, error) {
 	var channels []*Consumer
-
-	var timer *time.Timer
-	if timeout > 0 {
-		timer = time.NewTimer(timeout)
-		defer timer.Stop()
-	}
-
 	func() {
 		topic.channels_lock.RLock()
 		defer topic.channels_lock.RUnlock()
@@ -68,36 +57,15 @@ func (topic *Topic) SendTimeout(msg Message, timeout time.Duration) error {
 	}()
 
 	if len(channels) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	if timeout > 0 {
-		return ErrPartialSend
+	var rs = &RetrySender{consumers: channels}
+	if ctx == nil {
+		return rs, ErrPartialSend
 	}
-
-	for idx, consumer := range channels {
-		select {
-		case consumer.send <- msg:
-			consumer.addSuccess()
-		case <-timer.C:
-			consumer.addDiscard()
-
-			channels = channels[idx+1:]
-			goto skip_ff
-		}
-	}
-	return nil
-
-skip_ff:
-	for _, consumer := range channels {
-		select {
-		case consumer.send <- msg:
-			consumer.addSuccess()
-		default:
-			consumer.addDiscard()
-		}
-	}
-	return ErrPartialSend
+	err := rs.send(msg, ctx)
+	return rs, err
 }
 
 func (topic *Topic) ListenOn() *Consumer {
@@ -137,6 +105,6 @@ func (topic *Topic) remove(id int) (ret *Consumer) {
 	return ret
 }
 
-func creatTopic(srv *Server, name string, capacity int) *Topic {
+func creatTopic(srv *Core, name string, capacity int) *Topic {
 	return &Topic{name: name, capacity: capacity}
 }

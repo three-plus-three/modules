@@ -33,7 +33,69 @@ func CreateDataMessage(bs []byte) Message {
 
 type Producer interface {
 	Send(msg Message) error
-	SendTimeout(msg Message, timeout time.Duration) error
+	SendWithContext(msg Message, ctx <-chan time.Time) (*RetrySender, error)
+}
+
+type RetrySender struct {
+	consumers []*Consumer
+}
+
+func (rs *RetrySender) Close() error {
+	for _, c := range rs.consumers {
+		c.addDiscard()
+	}
+	return nil
+}
+
+func (rs *RetrySender) send(msg Message, ctx <-chan time.Time) error {
+	for idx, consumer := range rs.consumers {
+		select {
+		case consumer.send <- msg:
+			consumer.addSuccess()
+		case <-ctx:
+
+			offset := 0
+			if idx != offset {
+				rs.consumers[offset] = consumer
+			}
+			offset++
+
+			for i := idx + 1; i < len(rs.consumers); i++ {
+				select {
+				case rs.consumers[i].send <- msg:
+					rs.consumers[i].addSuccess()
+				default:
+					if idx != offset {
+						rs.consumers[offset] = rs.consumers[i]
+					}
+					offset++
+				}
+			}
+			rs.consumers = rs.consumers[:offset]
+			return ErrPartialSend
+		}
+	}
+	return nil
+}
+
+func (rs *RetrySender) SendWithContext(msg Message, ctx <-chan time.Time) error {
+	offset := 0
+	for idx, consumer := range rs.consumers {
+		select {
+		case consumer.send <- msg:
+			consumer.addSuccess()
+		default:
+			if idx != offset {
+				rs.consumers[offset] = consumer
+			}
+			offset++
+		}
+	}
+	if offset == 0 {
+		return nil
+	}
+	rs.consumers = rs.consumers[:offset]
+	return rs.send(msg, ctx)
 }
 
 type Consumer struct {

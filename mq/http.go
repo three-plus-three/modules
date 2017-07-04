@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
@@ -36,16 +37,38 @@ func getRealIP(req *http.Request) string {
 }
 
 type StandardEngine struct {
-	Server  *Server
+	Core    *Core
 	NoRoute http.Handler
 }
 
 func (se *StandardEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/sendQueue", "/sendQueue/":
-		se.sendQueue(w, r)
+		se.send(w, r,
+			func(name string) (interface{}, error) {
+				queue := se.Core.CreateQueueIfNotExists(name)
+				if queue == nil {
+					return nil, errors.New("create queue fail")
+				}
+				return queue, nil
+			},
+			func(stub *engineStub, o interface{}) {
+				queue := o.(*Queue)
+				stub.publish(queue.C)
+			})
 	case "/sendTopic", "/sendTopic/":
-		se.sendTopic(w, r)
+		se.send(w, r,
+			func(name string) (interface{}, error) {
+				topic := se.Core.CreateTopicIfNotExists(name)
+				if topic == nil {
+					return nil, errors.New("create topic fail")
+				}
+				return topic, nil
+			},
+			func(stub *engineStub, o interface{}) {
+				topic := o.(*Topic)
+				stub.sendToTopic(topic)
+			})
 	case "/subscribeQueue", "/subscribeQueue/":
 		se.subscribeQueue(w, r)
 	case "/subscribeTopic", "/subscribeTopic/":
@@ -68,12 +91,12 @@ func (se *StandardEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			case "GET":
 				se.doGet(w, r, urlPath,
 					func(name string) *Consumer {
-						return se.Server.CreateQueueIfNotExists(name).ListenOn()
+						return se.Core.CreateQueueIfNotExists(name).ListenOn()
 					})
 			case "POST", "PUT":
 				se.doPost(w, r, urlPath,
 					func(name string) Producer {
-						return se.Server.CreateQueueIfNotExists(name)
+						return se.Core.CreateQueueIfNotExists(name)
 					})
 			default:
 				if nil != r.Body {
@@ -96,12 +119,12 @@ func (se *StandardEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			case "GET":
 				se.doGet(w, r, urlPath,
 					func(name string) *Consumer {
-						return se.Server.CreateTopicIfNotExists(name).ListenOn()
+						return se.Core.CreateTopicIfNotExists(name).ListenOn()
 					})
 			case "POST", "PUT":
 				se.doPost(w, r, urlPath,
 					func(name string) Producer {
-						return se.Server.CreateTopicIfNotExists(name)
+						return se.Core.CreateTopicIfNotExists(name)
 					})
 			default:
 				if nil != r.Body {
@@ -205,7 +228,11 @@ func (se *StandardEngine) doPost(w http.ResponseWriter, r *http.Request,
 	if timeout == 0 {
 		err = send.Send(msg)
 	} else {
-		err = send.SendTimeout(msg, timeout)
+		timer := time.NewTimer(timeout)
+		_, err = send.SendWithContext(msg, timer.C)
+		if err == nil {
+			timer.Stop()
+		}
 	}
 
 	w.Header().Add("Content-Type", "text/plain")
@@ -232,22 +259,22 @@ func GetTimeout(query_params url.Values, value time.Duration) time.Duration {
 
 func (se *StandardEngine) queuesIndex(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(se.Server.GetQueues())
+	json.NewEncoder(w).Encode(se.Core.GetQueues())
 }
 
 func (se *StandardEngine) topicsIndex(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(se.Server.GetTopics())
+	json.NewEncoder(w).Encode(se.Core.GetTopics())
 }
 
 func (se *StandardEngine) clientsIndex(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(se.Server.GetClients())
+	json.NewEncoder(w).Encode(se.Core.GetClients())
 }
 
 func (se *StandardEngine) subscribeQueue(w http.ResponseWriter, r *http.Request) {
 	se.subscribe(w, r, "queue", func(name string) *Consumer {
-		queue := se.Server.CreateQueueIfNotExists(name)
+		queue := se.Core.CreateQueueIfNotExists(name)
 		if queue == nil {
 			return nil
 		}
@@ -257,7 +284,7 @@ func (se *StandardEngine) subscribeQueue(w http.ResponseWriter, r *http.Request)
 
 func (se *StandardEngine) subscribeTopic(w http.ResponseWriter, r *http.Request) {
 	se.subscribe(w, r, "topic", func(name string) *Consumer {
-		queue := se.Server.CreateTopicIfNotExists(name)
+		queue := se.Core.CreateTopicIfNotExists(name)
 		if queue == nil {
 			return nil
 		}
@@ -296,13 +323,20 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 		stub.conn = conn
 		defer stub.Close()
 
-		stub.disconnect = se.Server.Connect(stub)
+		stub.disconnect = se.Core.Connect(stub)
 
 		go func() {
 			defer stub.Close()
 			for {
 				var data []byte
 				if e := websocket.Message.Receive(conn, &data); nil != e {
+					if e == io.EOF {
+						log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
+					} else if strings.Contains(e.Error(), "use of closed network connection") {
+						log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed.")
+					} else {
+						log.Println("[broker] connection(read:", stub.remoteAddr, ") is closed -", e)
+					}
 					break
 				}
 			}
@@ -314,7 +348,10 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 	stub.srv.ServeHTTP(w, r)
 }
 
-func (se *StandardEngine) sendQueue(w http.ResponseWriter, r *http.Request) {
+func (se *StandardEngine) send(w http.ResponseWriter, r *http.Request,
+	create func(name string) (interface{}, error),
+	run func(stub *engineStub, o interface{})) {
+
 	params := r.URL.Query()
 
 	stub := &engineStub{
@@ -324,7 +361,7 @@ func (se *StandardEngine) sendQueue(w http.ResponseWriter, r *http.Request) {
 		role:       "pushlisher",
 		name:       params.Get("name"),
 		c:          make(chan struct{})}
-	var queue *Queue
+	var o interface{}
 
 	stub.srv.Handshake = func(config *websocket.Config, req *http.Request) (err error) {
 		config.Origin, err = websocket.Origin(config, req)
@@ -332,11 +369,11 @@ func (se *StandardEngine) sendQueue(w http.ResponseWriter, r *http.Request) {
 			return fmt.Errorf("null origin")
 		}
 		if stub.name == "" {
-			return errors.New("queue name is missing")
+			return errors.New("name is missing")
 		}
-		queue = se.Server.CreateQueueIfNotExists(stub.name)
-		if queue == nil {
-			return errors.New("create queue fail")
+		o, err = create(stub.name)
+		if err != nil {
+			return err
 		}
 		return nil
 	}
@@ -345,23 +382,21 @@ func (se *StandardEngine) sendQueue(w http.ResponseWriter, r *http.Request) {
 		stub.conn = conn
 		defer stub.Close()
 
-		stub.disconnect = se.Server.Connect(stub)
+		stub.disconnect = se.Core.Connect(stub)
 
-		go func() {
-			defer stub.Close()
-			for {
-				var data []byte
-				if e := websocket.Message.Receive(conn, &data); nil != e {
-					break
-				}
-			}
-		}()
-
-		stub.publish(queue.C)
+		run(stub, o)
 	})
 
 	stub.srv.ServeHTTP(w, r)
 }
 
-func (se *StandardEngine) sendTopic(w http.ResponseWriter, r *http.Request) {
+func NewEngine(opts *Options, noRoute http.Handler) (*StandardEngine, error) {
+	core, err := NewCore(opts)
+	if err != nil {
+		return nil, err
+	}
+	return &StandardEngine{
+		Core:    core,
+		NoRoute: noRoute,
+	}, nil
 }
