@@ -39,7 +39,7 @@ func getRealIP(req *http.Request) string {
 }
 
 type StandardEngine struct {
-	Core    *Core
+	*Core
 	NoRoute http.Handler
 	Logger  *log.Logger
 }
