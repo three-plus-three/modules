@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"sync/atomic"
 	"time"
 
 	"github.com/three-plus-three/modules/hub"
@@ -10,6 +11,8 @@ type Queue struct {
 	name     string
 	C        chan hub.Message
 	consumer Consumer
+
+	closed int32
 }
 
 func (q *Queue) ListenOn() *Consumer {
@@ -17,6 +20,12 @@ func (q *Queue) ListenOn() *Consumer {
 }
 
 func (q *Queue) Close() error {
+	if atomic.CompareAndSwapInt32(&q.closed, 0, 1) {
+		close(q.C)
+		for range q.C {
+		}
+	}
+
 	return q.consumer.Close()
 }
 
@@ -42,9 +51,6 @@ func creatQueue(srv *Core, name string, capacity int) *Queue {
 	q := &Queue{name: name, C: c, consumer: Consumer{C: c, send: c}}
 
 	q.consumer.closer = func() error {
-		close(q.C)
-		for range q.C {
-		}
 		return nil
 	}
 	return q

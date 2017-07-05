@@ -1,6 +1,10 @@
 package hub
 
-import "golang.org/x/net/websocket"
+import (
+	"sync/atomic"
+
+	"golang.org/x/net/websocket"
+)
 
 type ErrDisconnect struct {
 	err error
@@ -16,20 +20,18 @@ func IsConnected(e error) bool {
 }
 
 type Subscription struct {
-	closed bool
+	closed int32
 	Conn   *websocket.Conn
 }
 
-func (sub *Subscription) Stop() error {
-	if sub.closed {
-		return nil
+func (sub *Subscription) Close() error {
+	if atomic.CompareAndSwapInt32(&sub.closed, 0, 1) {
+		return sub.Conn.Close()
 	}
-
-	sub.closed = true
-	return sub.Conn.Close()
+	return nil
 }
 
-func (sub *Subscription) Run(cb func(*Subscription, []byte)) error {
+func (sub *Subscription) Run(cb func(*Subscription, Message)) error {
 	for {
 		var bs []byte
 		err := websocket.Message.Receive(sub.Conn, &bs)
@@ -37,7 +39,7 @@ func (sub *Subscription) Run(cb func(*Subscription, []byte)) error {
 			return err
 		}
 
-		cb(sub, bs)
+		cb(sub, CreateDataMessage(bs))
 	}
 	return nil
 }
