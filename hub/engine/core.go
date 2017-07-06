@@ -44,31 +44,48 @@ func (core *Core) Close() error {
 		return hub.ErrAlreadyClosed
 	}
 
-	func() {
+	var closers = func() []io.Closer {
+		var closers []io.Closer
+
 		core.clients_lock.Lock()
 		defer core.clients_lock.Unlock()
+
 		for el := core.clients.Front(); el != nil; el = el.Next() {
 			if conn, ok := el.Value.(io.Closer); ok {
-				conn.Close()
+				closers = append(closers, conn)
 			}
 		}
+		return closers
 	}()
+	for _, closer := range closers {
+		closer.Close()
+	}
 
-	func() {
+	closers = func() []io.Closer {
+		var closers []io.Closer
 		core.queues_lock.Lock()
 		defer core.queues_lock.Unlock()
 		for _, v := range core.queues {
-			v.Close()
+			closers = append(closers, v)
 		}
+		return closers
 	}()
+	for _, closer := range closers {
+		closer.Close()
+	}
 
-	func() {
+	closers = func() []io.Closer {
+		var closers []io.Closer
 		core.topics_lock.Lock()
 		defer core.topics_lock.Unlock()
 		for _, v := range core.topics {
-			v.Close()
+			closers = append(closers, v)
 		}
+		return closers
 	}()
+	for _, closer := range closers {
+		closer.Close()
+	}
 
 	core.waitGroup.Wait()
 	return nil
@@ -105,21 +122,22 @@ func (core *Core) GetTopics() []string {
 type DisconnectFunc func()
 
 func (core *Core) Connect(client interface{}) DisconnectFunc {
-	var el *list.Element
-
-	core.clients_lock.Lock()
-	if core.clients == nil {
-		core.clients = list.New()
-	}
-	el = core.clients.PushBack(client)
-	core.clients_lock.Unlock()
+	var el = func() *list.Element {
+		core.clients_lock.Lock()
+		defer core.clients_lock.Unlock()
+		if core.clients == nil {
+			core.clients = list.New()
+		}
+		return core.clients.PushBack(client)
+	}()
 
 	return DisconnectFunc(func() {
 		core.clients_lock.Lock()
+		defer core.clients_lock.Unlock()
+
 		if core.clients != nil {
 			core.clients.Remove(el)
 		}
-		core.clients_lock.Unlock()
 	})
 }
 
