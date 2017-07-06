@@ -101,8 +101,8 @@ func Connect(uri string) *ClientBuilder {
 
 type Publisher websocket.Conn
 
-func (pub *Publisher) Send(bs []byte) error {
-	return websocket.Message.Send((*websocket.Conn)(pub), bs)
+func (pub *Publisher) Send(bs Message) error {
+	return websocket.Message.Send((*websocket.Conn)(pub), bs.Bytes())
 }
 
 func (pub *Publisher) Close() error {
