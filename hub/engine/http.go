@@ -346,8 +346,8 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 				}
 			}
 		}()
-		se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, ", and peer =", stub.remoteAddr, ") is connected.")
-		defer se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, ", and peer =", stub.remoteAddr, ") is disconnected.")
+		se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, " and peer =", stub.remoteAddr, ") is connected.")
+		defer se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, " and peer =", stub.remoteAddr, ") is disconnected.")
 
 		stub.subscribe(consumer)
 	})
