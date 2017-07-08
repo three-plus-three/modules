@@ -392,8 +392,8 @@ func (se *StandardEngine) send(w http.ResponseWriter, r *http.Request, mode stri
 		defer stub.Close()
 		stub.disconnect = se.Core.Connect(stub)
 
-		se.Logger.Println("[", stub.client, "] publisher(name=", stub.name, ", and peer =", stub.remoteAddr, ") is connected.")
-		defer se.Logger.Println("[", stub.client, "] publisher(name=", stub.name, ", and peer =", stub.remoteAddr, ") is disconnected.")
+		se.Logger.Println("[", stub.client, "] publisher(name=", stub.name, "and peer =", stub.remoteAddr, ") is connected.")
+		defer se.Logger.Println("[", stub.client, "] publisher(name=", stub.name, "and peer =", stub.remoteAddr, ") is disconnected.")
 
 		run(stub, o)
 	})
