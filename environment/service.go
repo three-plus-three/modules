@@ -14,6 +14,7 @@ import (
 var UnknownServiceConfig = &ServiceConfig{Id: ENV_MAX_PROXY_ID}
 
 type ServiceConfig struct {
+	env  *Environment
 	Id   ENV_PROXY_TYPE
 	Name string
 	Host string
@@ -27,6 +28,7 @@ type ServiceConfig struct {
 }
 
 func (cfg *ServiceConfig) copyFrom(src *ServiceConfig) {
+	cfg.env = src.env
 	cfg.Id = src.Id
 	cfg.Name = src.Name
 	cfg.Host = src.Host
@@ -156,18 +158,29 @@ func (cfg *ServiceConfig) Url() string {
 		}
 	}
 
+	host := cfg.Host
+	port := cfg.Port
+
+	if engine := cfg.env.GetEngineConfig(); engine.IsEnabled && !engine.IsMasterHost {
+		host = engine.RemoteHost
+
+		if remotePort := engine.RemotePort; "" != remotePort && "0" != remotePort {
+			port = remotePort
+		}
+	}
+
 	var s string
 	if ENV_LCN_PROXY_ID == cfg.Id {
 		if "" == cfg.Path {
-			s = "https://" + cfg.Host + ":" + cfg.Port
+			s = "https://" + host + ":" + port
 		} else {
-			s = "https://" + cfg.Host + ":" + cfg.Port + "/" + cfg.Path
+			s = "https://" + host + ":" + port + "/" + cfg.Path
 		}
 	} else {
 		if "" == cfg.Path {
-			s = "http://" + cfg.Host + ":" + cfg.Port
+			s = "http://" + host + ":" + port
 		} else {
-			s = "http://" + cfg.Host + ":" + cfg.Port + "/" + cfg.Path
+			s = "http://" + host + ":" + port + "/" + cfg.Path
 		}
 	}
 	cfg.surl.Store(s)

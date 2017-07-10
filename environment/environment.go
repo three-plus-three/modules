@@ -114,6 +114,7 @@ type Options struct {
 
 type EngineConfig struct {
 	IsEnabled       bool
+	IsMasterHost    bool
 	Name            string
 	IsRemoteBlocked bool
 	RemoteHost      string
@@ -308,6 +309,7 @@ func NewEnvironment(opt Options) (*Environment, error) {
 		loadServiceConfig(cfg, so, &env.serviceOptions[idx])
 	}
 	for idx := range env.serviceOptions {
+		env.serviceOptions[idx].env = env
 		env.serviceOptions[idx].listeners.Init()
 	}
 
@@ -400,11 +402,14 @@ func loadServiceConfig(cfg map[string]string, so ServiceOption, sc *ServiceConfi
 }
 
 func loadEngineRegistry(cfg *Config) EngineConfig {
-	return EngineConfig{IsEnabled: cfg.BoolWithDefault("engine.is_enabled", false),
+	engine := EngineConfig{IsEnabled: cfg.BoolWithDefault("engine.is_enabled", false),
 		Name:            strings.TrimSpace(cfg.StringWithDefault("engine.name", "default")),
 		IsRemoteBlocked: cfg.BoolWithDefault("engine.remote_blocked", false),
 		RemoteHost:      strings.TrimSpace(cfg.StringWithDefault("engine.remote_host", "127.0.0.1")),
 		RemotePort:      strings.TrimSpace(cfg.StringWithDefault("engine.remote_port", ""))}
+
+	engine.IsMasterHost = engine.IsMaster()
+	return engine
 }
 
 func boolWith(cfg map[string]string, key string, value bool) bool {
