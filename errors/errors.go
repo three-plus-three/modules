@@ -80,3 +80,27 @@ func Concat(msg string, errs []error) error {
 	}
 	return &MutiErrors{msg: buffer.String(), errs: errs}
 }
+
+type ApplicationError struct {
+	ErrCode    int    `json:"code"`
+	ErrMessage string `json:"message"`
+}
+
+func (err *ApplicationError) Code() int {
+	return err.ErrCode
+}
+
+func (err *ApplicationError) Error() string {
+	return err.ErrMessage
+}
+
+func NewApplicationError(code int, msg string) RuntimeError {
+	return &ApplicationError{ErrCode: code, ErrMessage: msg}
+}
+
+func ToRuntimeError(e error) RuntimeError {
+	if re, ok := e.(RuntimeError); ok {
+		return re
+	}
+	return &ApplicationError{ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
+}
