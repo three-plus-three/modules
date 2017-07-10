@@ -2,6 +2,7 @@ package environment
 
 import (
 	"bytes"
+	"context"
 	"net/url"
 
 	"github.com/three-plus-three/modules/errors"
@@ -91,12 +92,36 @@ func (hc *HttpClient) SetBody(body interface{}) *HttpClient {
 	return hc
 }
 
-func (hc HttpClient) Do(action string, result interface{}) errors.RuntimeError {
+func (hc HttpClient) DoWithContext(ctx context.Context, action string, result interface{}) errors.RuntimeError {
 	urlStr := hc.cfg.UrlFor(hc.basePath)
 	if len(hc.params) != 0 {
 		urlStr = urlStr + "?" + hc.params.Encode()
 	}
-	return httputil.InvokeHttp(action, urlStr, hc.Body, hc.exceptedCode, result, hc.cached)
+	return httputil.InvokeHttpWithContext(ctx, action, urlStr, hc.Body, hc.exceptedCode, result, hc.cached)
+}
+
+func (hc HttpClient) PostWithContext(ctx context.Context, result interface{}) errors.RuntimeError {
+	return hc.DoWithContext(ctx, "POST", result)
+}
+
+func (hc HttpClient) CreateWithContext(ctx context.Context, result interface{}) errors.RuntimeError {
+	return hc.DoWithContext(ctx, "POST", result)
+}
+
+func (hc HttpClient) GetWithContext(ctx context.Context, result interface{}) errors.RuntimeError {
+	return hc.DoWithContext(ctx, "GET", result)
+}
+
+func (hc HttpClient) PutWithContext(ctx context.Context, result interface{}) errors.RuntimeError {
+	return hc.DoWithContext(ctx, "PUT", result)
+}
+
+func (hc HttpClient) DeleteWithContext(ctx context.Context, result interface{}) errors.RuntimeError {
+	return hc.DoWithContext(ctx, "DELETE", result)
+}
+
+func (hc HttpClient) Do(action string, result interface{}) errors.RuntimeError {
+	return hc.DoWithContext(nil, action, result)
 }
 
 func (hc HttpClient) POST(result interface{}) errors.RuntimeError {

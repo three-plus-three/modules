@@ -2,6 +2,7 @@ package httputil
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -25,6 +26,10 @@ var InsecureHttpTransport = &http.Transport{
 var InsecureHttpClent = &http.Client{Transport: InsecureHttpTransport}
 
 func InvokeHttp(action, url string, body interface{}, exceptedCode int, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+	return InvokeHttpWithContext(nil, action, url, body, exceptedCode, result, cachedBuffer)
+}
+
+func InvokeHttpWithContext(ctx context.Context, action, url string, body interface{}, exceptedCode int, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
 	var req *http.Request
 	var e error
 
@@ -57,6 +62,10 @@ func InvokeHttp(action, url string, body interface{}, exceptedCode int, result i
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Connection", "Keep-Alive")
+
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
 	resp, e := http.DefaultClient.Do(req)
 	if nil != e {
 		return errors.NewApplicationError(http.StatusServiceUnavailable, e.Error())
