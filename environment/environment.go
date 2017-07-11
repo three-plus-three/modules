@@ -184,12 +184,17 @@ type Environment struct {
 }
 
 func (self *Environment) Clone() *Environment {
-	var copyed = *self
+	var copyed = &Environment{}
+	*copyed = *self
 	copyed.serviceOptions = make([]ServiceConfig, len(self.serviceOptions))
 	for idx := range self.serviceOptions {
 		copyed.serviceOptions[idx].copyFrom(&self.serviceOptions[idx])
 	}
-	return &copyed
+
+	for idx := range self.serviceOptions {
+		copyed.serviceOptions[idx].env = copyed
+	}
+	return copyed
 }
 
 func (self *Environment) RemoveAllListener() {

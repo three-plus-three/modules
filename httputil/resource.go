@@ -1,12 +1,12 @@
 package httputil
 
 import (
-	"cn/com/hengwei/commons/as"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/three-plus-three/modules/as"
 	"github.com/three-plus-three/modules/errors"
 )
 

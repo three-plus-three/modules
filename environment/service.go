@@ -34,7 +34,9 @@ func (cfg *ServiceConfig) copyFrom(src *ServiceConfig) {
 	cfg.Host = src.Host
 	cfg.Port = src.Port
 	cfg.Path = src.Path
-	cfg.surl.Store(src.surl.Load())
+	if o := src.surl.Load(); o != nil {
+		cfg.surl.Store(o)
+	}
 
 	cfg.listeners.Init()
 
