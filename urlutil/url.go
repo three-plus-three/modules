@@ -7,6 +7,21 @@ import (
 	"strings"
 )
 
+// SplitURLPath 分隔 url path, 取出 url path 的第一部份
+func SplitURLPath(pa string) (string, string) {
+	return Split(pa)
+}
+
+// JoinURLPath 拼接 url
+func JoinURLPath(paths ...string) string {
+	return Join(paths)
+}
+
+// JoinURLPathWith 拼接 url
+func JoinURLPathWith(base string, paths []string) string {
+	return JoinWith(base, paths)
+}
+
 // Split 分隔 url path, 取出 url path 的第一部份
 func Split(pa string) (string, string) {
 	if "" == pa {
@@ -26,7 +41,14 @@ func Split(pa string) (string, string) {
 
 // Join 拼接 url
 func Join(paths ...string) string {
-	return JoinWith(paths[0], paths[1:])
+	switch len(paths) {
+	case 0:
+		return ""
+	case 1:
+		return paths[1]
+	default:
+		return JoinWith(paths[0], paths[1:])
+	}
 }
 
 // JoinWith 拼接 url
@@ -182,22 +204,4 @@ func (self *URLBuilder) ToUrl() string {
 
 func (self *URLBuilder) Build() string {
 	return self.String()
-}
-
-func ConcatURLPaths(paths ...string) string {
-	buf := bytes.NewBuffer(make([]byte, 0, 512))
-	endWithSplash := true
-	for _, pa := range paths {
-		if 0 == len(pa) {
-			continue
-		}
-
-		if !endWithSplash && '/' != pa[0] {
-			buf.WriteString("/")
-		}
-
-		buf.WriteString(pa)
-		endWithSplash = '/' == pa[len(pa)-1]
-	}
-	return buf.String()
 }
