@@ -9,7 +9,7 @@ func SplitURLPath(pa string) (string, string) {
 
 // JoinURLPath 拼接 url
 func JoinURLPath(paths ...string) string {
-	return urlutil.Join(pa...)
+	return urlutil.Join(paths...)
 }
 
 // JoinURLPathWith 拼接 url

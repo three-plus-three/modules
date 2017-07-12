@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/three-plus-three/modules/errors"
+	"github.com/three-plus-three/modules/urlutil"
 )
 
 func marshalError(e error) Result {
@@ -47,7 +48,7 @@ type HttpClient struct {
 	Warnings interface{}
 }
 
-func (self *HttpClient) CreateUrl() *URLBuilder {
+func (self *HttpClient) CreateUrl() *urlutil.URLBuilder {
 	return NewURLBuilder(self.Url)
 }
 

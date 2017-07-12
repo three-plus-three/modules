@@ -14,7 +14,7 @@ func SplitURLPath(pa string) (string, string) {
 
 // JoinURLPath 拼接 url
 func JoinURLPath(paths ...string) string {
-	return Join(paths)
+	return Join(paths...)
 }
 
 // JoinURLPathWith 拼接 url
