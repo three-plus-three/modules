@@ -81,7 +81,7 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 	}()
 
 	if resp.StatusCode != exceptedCode {
-		if exceptedCode != 0 || (resp.StatusCode < http.StatusOK || resp.StatusCode > 299) {
+		if exceptedCode != 0 || resp.StatusCode < http.StatusOK || resp.StatusCode > 299 {
 
 			respBody, e := ioutil.ReadAll(resp.Body)
 			if nil != e {
