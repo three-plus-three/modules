@@ -66,6 +66,7 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 	if ctx != nil {
 		req = req.WithContext(ctx)
 	}
+
 	resp, e := http.DefaultClient.Do(req)
 	if nil != e {
 		return errors.NewApplicationError(http.StatusServiceUnavailable, e.Error())
@@ -80,7 +81,7 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 	}()
 
 	if resp.StatusCode != exceptedCode {
-		if exceptedCode == 0 && (resp.StatusCode < http.StatusOK || resp.StatusCode > 299) {
+		if exceptedCode != 0 || (resp.StatusCode < http.StatusOK || resp.StatusCode > 299) {
 
 			respBody, e := ioutil.ReadAll(resp.Body)
 			if nil != e {
@@ -89,7 +90,7 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 			if 0 == len(respBody) {
 				return errors.NewApplicationError(resp.StatusCode, fmt.Sprintf("%v: read_error", resp.StatusCode))
 			}
-			return errors.NewApplicationError(resp.StatusCode, string(respBody))
+			return errors.NewApplicationError(resp.StatusCode, "request fail: "+string(respBody))
 		}
 	}
 
@@ -135,6 +136,7 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 			return nil
 		}
 
+		//bs, _ := ioutil.ReadAll(resp.Body)
 		//cachedBuffer = bytes.NewBuffer(make([]byte, 0, 1024))
 		decoder := json.NewDecoder(resp.Body)
 		decoder.UseNumber()
