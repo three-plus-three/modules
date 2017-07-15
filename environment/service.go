@@ -127,16 +127,19 @@ func (cfg *ServiceConfig) RemoteAddr(s string) string {
 
 func (cfg *ServiceConfig) SetHost(s string) {
 	cfg.Host = s
+	cfg.surl.Store("")
 	cfg.Notify()
 }
 
 func (cfg *ServiceConfig) SetPort(s string) {
 	cfg.Port = s
+	cfg.surl.Store("")
 	cfg.Notify()
 }
 
 func (cfg *ServiceConfig) SetPath(s string) {
 	cfg.Path = s
+	cfg.surl.Store("")
 	cfg.Notify()
 }
 

@@ -45,7 +45,7 @@ func Join(paths ...string) string {
 	case 0:
 		return ""
 	case 1:
-		return paths[1]
+		return paths[0]
 	default:
 		return JoinWith(paths[0], paths[1:])
 	}
