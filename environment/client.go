@@ -77,6 +77,10 @@ func (hc *HttpClient) SetParam(key, value string) *HttpClient {
 }
 
 func (hc *HttpClient) SetParams(values map[string]string) *HttpClient {
+	if len(values) == 0 {
+		return hc
+	}
+
 	if hc.params == nil {
 		hc.params = url.Values{}
 	}

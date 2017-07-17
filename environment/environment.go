@@ -104,6 +104,7 @@ var (
 )
 
 type Options struct {
+	ConfigFiles          []string
 	ConfDir              string
 	FlagSet              *flag.FlagSet
 	Name                 string
@@ -282,13 +283,12 @@ func NewEnvironment(opt Options) (*Environment, error) {
 		}
 	}
 
-	cfg := ReadConfigs(fs, opt.Name, opt.PrintIfFilesNotFound)
+	cfg := ReadConfigs(fs, opt.ConfigFiles, opt.Name, opt.PrintIfFilesNotFound)
 	if !opt.IsTest {
 		if e := InitConfig(opt.FlagSet, cfg, opt.PrintIfFilesNotFound); nil != e {
 			return nil, e
 		}
 	}
-
 	env := &Environment{
 		//rootDir: opt.rootDir,
 		Fs:     fs,

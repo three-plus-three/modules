@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	commons_cfg "github.com/three-plus-three/modules/cfg"
 )
@@ -56,11 +57,35 @@ func LoadConfigs(fs FileSystem, nm string, dumpFilesIfNotFound bool) map[string]
 // 	return LoadConfigsWith(fs, nm, flagSet, true)
 // }
 
-func ReadConfigs(fs FileSystem, nm string, dumpFilesIfNotFound bool) map[string]string {
+func ReadConfigs(fs FileSystem, files []string, nm string, dumpFilesIfNotFound bool) map[string]string {
 	cfg := LoadConfigs(fs, "app.properties", dumpFilesIfNotFound)
 	if nil == cfg {
 		cfg = map[string]string{}
 	}
+
+	if len(files) > 0 {
+		for _, file := range files {
+			if !filepath.IsAbs(file) {
+				file = fs.FromDataConfig(file)
+			}
+
+			props, e := commons_cfg.ReadProperties(file)
+			if e != nil {
+				if dumpFilesIfNotFound || !os.IsNotExist(e) {
+					log.Println("[warn] load config fail: ", e)
+				}
+				continue
+			}
+
+			log.Println("[info] load config ok: ", file)
+			if len(props) > 0 {
+				for k, v := range props {
+					cfg[k] = v
+				}
+			}
+		}
+	}
+
 	localCfg := LoadConfigs(fs, nm+".properties", dumpFilesIfNotFound)
 	if nil != localCfg {
 		for k, v := range localCfg {
