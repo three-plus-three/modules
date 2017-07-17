@@ -218,6 +218,97 @@ func (self *Environment) GetEngineConfig() *EngineConfig {
 }
 
 func NewEnvironment(opt Options) (*Environment, error) {
+	if os.Getenv("tpt_version") == "3.2" {
+		return newEnvironment2(opt)
+	}
+	return newOldEnvironment(opt)
+}
+
+func newEnvironment2(opt Options) (*Environment, error) {
+	var fs *linuxFs
+	if runtime.GOOS == "windows" {
+		var rootDir string
+		if "" == opt.ConfDir {
+			if cwd, e := os.Getwd(); nil == e && FileExists(filepath.Join(cwd, "conf", "app.properties")) {
+				rootDir = cwd
+			} else if nil == e && FileExists(filepath.Join(cwd, "..", "conf", "app.properties")) {
+				rootDir = filepath.Clean(filepath.Join(cwd, ".."))
+			} else if exeDir, e := osext.ExecutableFolder(); nil == e && FileExists(filepath.Join(exeDir, "conf", "app.properties")) {
+				rootDir = exeDir
+			} else if nil == e && FileExists(filepath.Join(exeDir, "..", "conf", "app.properties")) {
+				rootDir = filepath.Clean(filepath.Join(exeDir, ".."))
+			} else if opt.IsTest {
+				rootDir, _ = os.Getwd()
+			} else {
+				found := false
+				for _, s := range []string{"../../../../cn/com/hengwei",
+					"../../../../../cn/com/hengwei",
+					"../../../../../../cn/com/hengwei",
+					"../../../../../../../cn/com/hengwei"} {
+					abs, _ := filepath.Abs(s)
+					abs = filepath.Clean(abs)
+					if DirExists(abs) {
+						rootDir = abs
+						found = true
+						break
+					}
+				}
+				if !found {
+					//if "<default>" == opt.rootDir { // "<default>" 作为一个特殊的字符，自动使用当前目录
+					if cwd, e := os.Getwd(); nil == e {
+						rootDir = cwd
+					} else {
+						rootDir = "."
+					}
+					// } else {
+					// 	return nil, errors.New("root directory is not found")
+					// }
+				}
+				opt.IsTest = true
+			}
+		} else {
+			if "<default>" == opt.ConfDir { // "<default>" 作为一个特殊的字符，自动使用当前目录
+				if cwd, e := os.Getwd(); nil == e {
+					rootDir = cwd
+				} else {
+					rootDir = "."
+				}
+			} else {
+				rootDir = filepath.Join(opt.ConfDir, "..")
+			}
+		}
+
+		fs = &linuxFs{
+			installDir: rootDir,
+			binDir:     filepath.Join(rootDir, "bin"),
+			logDir:     filepath.Join(rootDir, "logs"),
+			dataDir:    filepath.Join(rootDir, "data"),
+			confDir:    filepath.Join(rootDir, "data", "conf"),
+			tmpDir:     filepath.Join(rootDir, "data", "tmp"),
+			runDir:     rootDir,
+		}
+	} else {
+		fs = &linuxFs{
+			installDir: "/usr/local/tpt",
+			binDir:     "/usr/local/tpt/bin",
+			logDir:     "/var/log/tpt",
+			dataDir:    "/var/lib/tpt",
+			confDir:    "/etc/tpt",
+			tmpDir:     "/tmp/tpt",
+			runDir:     "/var/run/tpt",
+		}
+	}
+
+	if confDir := os.Getenv("hw_conf_dir"); confDir != "" {
+		fs.confDir = confDir
+	}
+	if dataDir := os.Getenv("hw_data_dir"); dataDir != "" {
+		fs.dataDir = dataDir
+	}
+	return NewEnvironmentWithFS(fs, opt)
+}
+
+func newOldEnvironment(opt Options) (*Environment, error) {
 	var fs FileSystem
 	if runtime.GOOS == "windows" {
 		var rootDir string
@@ -270,7 +361,10 @@ func NewEnvironment(opt Options) (*Environment, error) {
 				rootDir = filepath.Join(opt.ConfDir, "..")
 			}
 		}
-		fs = &winFs{rootDir: rootDir}
+
+		fs = &winFs{
+			rootDir: rootDir,
+		}
 	} else {
 		fs = &linuxFs{
 			installDir: "/usr/local/tpt",
@@ -283,6 +377,10 @@ func NewEnvironment(opt Options) (*Environment, error) {
 		}
 	}
 
+	return NewEnvironmentWithFS(fs, opt)
+}
+
+func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 	cfg := ReadConfigs(fs, opt.ConfigFiles, opt.Name, opt.PrintIfFilesNotFound)
 	if !opt.IsTest {
 		if e := InitConfig(opt.FlagSet, cfg, opt.PrintIfFilesNotFound); nil != e {
