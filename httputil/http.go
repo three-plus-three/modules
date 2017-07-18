@@ -88,9 +88,9 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 				panic(e.Error())
 			}
 			if 0 == len(respBody) {
-				return errors.NewApplicationError(resp.StatusCode, fmt.Sprintf("%v: read_error", resp.StatusCode))
+				return errors.NewApplicationError(resp.StatusCode, fmt.Sprintf("request '%v' fail: %v: read_error", url, resp.StatusCode))
 			}
-			return errors.NewApplicationError(resp.StatusCode, "request fail: "+string(respBody))
+			return errors.NewApplicationError(resp.StatusCode, "request '"+url+"' fail: "+resp.Status+": "+string(respBody))
 		}
 	}
 
