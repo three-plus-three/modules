@@ -68,12 +68,24 @@ func (hc *HttpClient) Path(paths ...string) *HttpClient {
 	return hc
 }
 
-func (hc *HttpClient) SetParam(key, value string) *HttpClient {
+func (hc *HttpClient) AddParam(key, value string) *HttpClient {
+	if hc.params == nil {
+		hc.params = url.Values{}
+	}
+	hc.params.Add(key, value)
+	return hc
+}
+
+func (hc *HttpClient) Param(key, value string) *HttpClient {
 	if hc.params == nil {
 		hc.params = url.Values{}
 	}
 	hc.params.Set(key, value)
 	return hc
+}
+
+func (hc *HttpClient) SetParam(key, value string) *HttpClient {
+	return hc.Param(key, value)
 }
 
 func (hc *HttpClient) SetParams(values map[string]string) *HttpClient {
