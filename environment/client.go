@@ -14,7 +14,7 @@ type HttpClient struct {
 	cfg          *ServiceConfig
 	basePath     string
 	params       url.Values
-	Body         interface{}
+	body         interface{}
 	cached       *bytes.Buffer
 	exceptedCode int
 }
@@ -89,6 +89,10 @@ func (hc *HttpClient) SetParam(key, value string) *HttpClient {
 }
 
 func (hc *HttpClient) SetParams(values map[string]string) *HttpClient {
+	return hc.Params(values)
+}
+
+func (hc *HttpClient) Params(values map[string]string) *HttpClient {
 	if len(values) == 0 {
 		return hc
 	}
@@ -103,9 +107,45 @@ func (hc *HttpClient) SetParams(values map[string]string) *HttpClient {
 	return hc
 }
 
-func (hc *HttpClient) SetBody(body interface{}) *HttpClient {
-	hc.Body = body
+func (hc *HttpClient) SetParamValues(values url.Values) *HttpClient {
+	return hc.ParamValues(values)
+}
+
+func (hc *HttpClient) ParamValues(values url.Values) *HttpClient {
+	if len(values) == 0 {
+		return hc
+	}
+
+	if hc.params == nil {
+		hc.params = url.Values{}
+	}
+
+	for key, value := range values {
+		hc.params[key] = value
+	}
 	return hc
+}
+
+func (hc *HttpClient) SetBody(body interface{}) *HttpClient {
+	hc.body = body
+	return hc
+}
+
+func (hc *HttpClient) Body(body interface{}) *HttpClient {
+	hc.body = body
+	return hc
+}
+
+func (hc *HttpClient) GetPath() string {
+	return hc.basePath
+}
+
+func (hc *HttpClient) GetParamValues() url.Values {
+	return hc.params
+}
+
+func (hc *HttpClient) GetBody() interface{} {
+	return hc.body
 }
 
 func (hc HttpClient) DoWithContext(ctx context.Context, action string, result interface{}) errors.RuntimeError {
@@ -113,7 +153,7 @@ func (hc HttpClient) DoWithContext(ctx context.Context, action string, result in
 	if len(hc.params) != 0 {
 		urlStr = urlStr + "?" + hc.params.Encode()
 	}
-	return httputil.InvokeHttpWithContext(ctx, action, urlStr, hc.Body, hc.exceptedCode, result, hc.cached)
+	return httputil.InvokeHttpWithContext(ctx, action, urlStr, hc.body, hc.exceptedCode, result, hc.cached)
 }
 
 func (hc HttpClient) PostWithContext(ctx context.Context, result interface{}) errors.RuntimeError {
