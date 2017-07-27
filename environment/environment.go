@@ -161,6 +161,9 @@ func (db *DbConfig) Url() (string, string) {
 		}
 		return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
 			db.Username, db.Password, db.Address, db.Port, db.Schema)
+	case "odbc_with_mssql":
+		return "odbc_with_mssql", fmt.Sprintf("dsn=%s;uid=%s;pwd=%s",
+			db.Schema, db.Username, db.Password)
 	default:
 		panic(errors.New("unknown db type - " + db.DbType))
 	}
@@ -320,13 +323,13 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 	env.Db.Models = ReadDbConfig("models.", cfg, db_defaults)
 	env.Db.Data = ReadDbConfig("data.", cfg, db_defaults)
 
-	if opt.IsTest {
-		env.Db.Models.Port = "5432"
-		env.Db.Models.Schema = "tpt_models_test"
+	//if opt.IsTest {
+	// env.Db.Models.Port = "5432"
+	// env.Db.Models.Schema = "tpt_models_test"
 
-		env.Db.Data.Port = "5432"
-		env.Db.Data.Schema = "tpt_data_test"
-	}
+	// env.Db.Data.Port = "5432"
+	// env.Db.Data.Schema = "tpt_data_test"
+	//}
 
 	env.serviceOptions = make([]ServiceConfig, len(ServiceOptions))
 	for idx, so := range ServiceOptions {
