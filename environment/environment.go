@@ -159,7 +159,7 @@ func (db *DbConfig) Url() (string, string) {
 		if db.Port == "" {
 			db.Port = "3306"
 		}
-		return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+		return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?autocommit=true&parseTime=true",
 			db.Username, db.Password, db.Address, db.Port, db.Schema)
 	case "odbc_with_mssql":
 		return "odbc_with_mssql", fmt.Sprintf("dsn=%s;uid=%s;pwd=%s",
