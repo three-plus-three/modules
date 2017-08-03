@@ -179,6 +179,7 @@ import (
 	"strings"
 	ttemplate "text/template"
 	"time"
+	"errors"
 
 	util "github.com/three-plus-three/modules/goutils"
 )
@@ -243,6 +244,54 @@ var nonhermeticFunctions = []string{
 	// OS
 	"env",
 	"expandenv",
+}
+
+func strInSlice(value interface{}, values []string) bool {
+	valueStr := fmt.Sprint(value)
+	for _, v := range values {
+		if v == valueStr {
+			return true
+		}
+	}
+	return false
+}
+
+func intInSlice(value interface{}, values []int) bool {
+	i64, err := toInt64Value(value)
+	if err != nil {
+		return false
+	}
+
+	for _, v := range values {
+		if int64(v) == i64 {
+			return true
+		}
+	}
+	return false
+}
+
+func int64InSlice(value interface{}, values []int64) bool {
+	i64, err := toInt64Value(value)
+	if err != nil {
+		return false
+	}
+
+	for _, v := range values {
+		if v == i64 {
+			return true
+		}
+	}
+	return false
+}
+
+func valueInSlice(value interface{}, values []interface{} ) bool {
+	valueStr := fmt.Sprint(value)
+	for _, v := range values {
+		if fmt.Sprint(v) == valueStr {
+			return true
+		}
+	}
+	return false
 }
 
 var genericMap = map[string]interface{}{
@@ -348,14 +397,30 @@ var genericMap = map[string]interface{}{
 		}
 		return false
 	},
-	"in": func(value interface{}, values []interface{}) bool {
-		valueStr := fmt.Sprint(value)
-		for _, v := range values {
-			if fmt.Sprint(v) == valueStr {
-				return true
+	"in": func(value1, value2 interface{}, values interface{}) bool {
+		switch values := value1.(type) {
+		case []interface{}:
+			return valueInSlice(value2, values)
+		case []int:
+			return intInSlice(value2, values)
+		case []int64:
+			return int64InSlice(value2, values)
+		case []string:
+			return strInSlice(value2, values)
+		default:
+			switch values := value2.(type) {
+			case []interface{}:
+				return valueInSlice(value2, values)
+			case []int:
+				return intInSlice(value2, values)
+			case []int64:
+				return int64InSlice(value2, values)
+			case []string:
+				return strInSlice(value2, values)
+			default:
+				return false
 			}
 		}
-		return false
 	},
 
 	"toString": strval,
@@ -705,6 +770,40 @@ func toInt64(v interface{}) int64 {
 		return 0
 	default:
 		return 0
+	}
+}
+func toInt64Value(v interface{}) (int64, error) {
+
+	if str, ok := v.(string); ok {
+		iv, err := strconv.ParseInt(str, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return iv, nil
+	}
+
+	val := reflect.Indirect(reflect.ValueOf(v))
+	switch val.Kind() {
+	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
+		return val.Int(), nil
+	case reflect.Uint8, reflect.Uint16, reflect.Uint32:
+		return int64(val.Uint()), nil
+	case reflect.Uint, reflect.Uint64:
+		tv := val.Uint()
+		if tv <= math.MaxInt64 {
+			return int64(tv), nil
+		}
+		// TODO: What is the sensible thing to do here?
+		return 0, errors.New("uint64 overflow")
+	//case reflect.Float32, reflect.Float64:
+	//	return int64(val.Float())
+	//case reflect.Bool:
+	//	if val.Bool() == true {
+	//		return 1
+	//	}
+	//	return 0
+	default:
+		return 0, fmt.Errorf("value isn't int64 - %T %#v", v, v)
 	}
 }
 
