@@ -358,6 +358,9 @@ var genericMap = map[string]interface{}{
 	// split "/" foo/bar returns map[int]string{0: foo, 1: bar}
 	"split": split,
 
+	// split "/" foo/bar returns map[int]string{0: foo, 1: bar}
+	"splitToArray": strings.Split,
+
 	"until":     until,
 	"untilStep": untilStep,
 
