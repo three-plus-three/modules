@@ -169,6 +169,7 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"html/template"
 	"math"
@@ -179,7 +180,6 @@ import (
 	"strings"
 	ttemplate "text/template"
 	"time"
-	"errors"
 
 	util "github.com/three-plus-three/modules/goutils"
 )
@@ -284,7 +284,7 @@ func int64InSlice(value interface{}, values []int64) bool {
 	return false
 }
 
-func valueInSlice(value interface{}, values []interface{} ) bool {
+func valueInSlice(value interface{}, values []interface{}) bool {
 	valueStr := fmt.Sprint(value)
 	for _, v := range values {
 		if fmt.Sprint(v) == valueStr {
@@ -397,7 +397,7 @@ var genericMap = map[string]interface{}{
 		}
 		return false
 	},
-	"in": func(value1, value2 interface{}, values interface{}) bool {
+	"in": func(value1, value2 interface{}) bool {
 		switch values := value1.(type) {
 		case []interface{}:
 			return valueInSlice(value2, values)
@@ -410,13 +410,13 @@ var genericMap = map[string]interface{}{
 		default:
 			switch values := value2.(type) {
 			case []interface{}:
-				return valueInSlice(value2, values)
+				return valueInSlice(value1, values)
 			case []int:
-				return intInSlice(value2, values)
+				return intInSlice(value1, values)
 			case []int64:
-				return int64InSlice(value2, values)
+				return int64InSlice(value1, values)
 			case []string:
-				return strInSlice(value2, values)
+				return strInSlice(value1, values)
 			default:
 				return false
 			}
