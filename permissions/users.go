@@ -58,13 +58,13 @@ func KeyForUsers(key string) string {
 }
 
 type UserAndUserGroup struct {
-	ID       int64  `json:"id" xorm:"id pk autoincr"`
-	UserName string `json:"user_name" xorm:"user_name"`
-	GroupID  int64  `json:"group_id" xorm:"group_id notnull"`
+	ID      int64 `json:"id" xorm:"id pk autoincr"`
+	UserID  int64 `json:"user_id" xorm:"user_id notnull"`
+	GroupID int64 `json:"group_id" xorm:"group_id notnull"`
 }
 
 func (userAndUserGroup *UserAndUserGroup) TableName() string {
-	return "hengwei_user_and_user_groups"
+	return "hengwei_users_and_user_groups"
 }
 
 type UserGroup struct {
@@ -95,7 +95,7 @@ func KeyForUserGroup(key string) string {
 	case "description":
 		return "userGroup.Description"
 	case "parent_id":
-		return "userGroup.ParentId"
+		return "userGroup.ParentID"
 	case "created_at":
 		return "userGroup.CreatedAt"
 	case "updated_at":
