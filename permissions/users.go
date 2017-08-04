@@ -12,7 +12,7 @@ type User struct {
 	Password    string                 `json:"password,omitempty" xorm:"password"`
 	Description string                 `json:"description,omitempty" xorm:"description"`
 	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb"`
-	Source      string                 `json:"source,omitempty" xorm:"-"`
+	Source      string                 `json:"source,omitempty" xorm:"source"`
 	CreatedAt   time.Time              `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt   time.Time              `json:"updated_at,omitempty" xorm:"updated_at updated"`
 	Roles       []Role                 `json:"roles" xorm:"-"`
