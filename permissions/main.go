@@ -17,15 +17,14 @@ func init() {
 			panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
 		}
 
-		// sqlStr := "select * from " + db.Roles().Name() + "as role " +
-		// 	" where exists (select * from " + db.UsersAndRoles().Name() + " as uar join " +
-		// 	db.Users().Name() + " as user on uar.user_id = user.id where role.id = uar.role_id and user.name = ?)"
+		sqlStr := "select * from " + db.PermissionGroupsAndRoles().Name() + "as pg_role " +
+			" where exists (select * from " + db.UsersAndRoles().Name() + " as user_role join " +
+			db.Users().Name() + " as user on user_role.user_id = user.id where user_role.role_id = pg_role.role_id and user.name = ?)"
 
-		// var roles []Role
-		// err = db.Role().Query(sqlStr, user).All(&roles)
-		// if err != nil {
-		// 	panic(errors.New("query roles with user is " + user + "fail: " + err.Error()))
-		// }
+		err = db.PermissionGroupsAndRoles().Query(sqlStr, userName).All(&u.permissionsAndRoles)
+		if err != nil {
+			panic(errors.New("query permissions and roles with user is " + userName + "fail: " + err.Error()))
+		}
 
 		// sqlStr := "select * from " + db.PermissionGroupAndRoles().Name() + "as pg " +
 		// 	" where exists (select * from " + db.UserAndRole().Name() + " as uar join " +
@@ -42,9 +41,10 @@ func init() {
 }
 
 type user struct {
-	db        *DB
-	lifecycle *web_ext.Lifecycle
-	u         User
+	db                  *DB
+	lifecycle           *web_ext.Lifecycle
+	u                   User
+	permissionsAndRoles []PermissionGroupAndRole
 }
 
 func (u *user) ID() int64 {

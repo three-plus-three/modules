@@ -63,13 +63,13 @@ const Update = "update"
 const Query = "query"
 
 type PermissionGroupAndRole struct {
-	ID      int64 `json:"id" xorm:"id pk autoincr"`
-	GroupID int64 `json:"group_id" xorm:"group_id notnull"`
-	RoleID  int64 `json:"role_id" xorm:"role_id notnull"`
-	Create  bool  `json:"create,omitempty" xorm:"create"`
-	Delete  bool  `json:"delete,omitempty" xorm:"delete"`
-	Update  bool  `json:"update,omitempty" xorm:"update"`
-	Query   bool  `json:"query,omitempty" xorm:"query"`
+	ID              int64 `json:"id" xorm:"id pk autoincr"`
+	GroupID         int64 `json:"group_id" xorm:"group_id notnull"`
+	RoleID          int64 `json:"role_id" xorm:"role_id notnull"`
+	CreateOperation bool  `json:"create_operation,omitempty" xorm:"create_operation"`
+	DeleteOperation bool  `json:"delete_operation,omitempty" xorm:"delete_operation"`
+	UpdateOperation bool  `json:"update_operation,omitempty" xorm:"update_operation"`
+	QueryOperation  bool  `json:"query_operation,omitempty" xorm:"query_operation"`
 }
 
 func (gap *PermissionGroupAndRole) TableName() string {
