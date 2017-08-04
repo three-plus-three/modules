@@ -7,7 +7,7 @@ import (
 	"github.com/three-plus-three/modules/web_ext"
 )
 
-func init() {
+func initQ() {
 	web_ext.ReadUser = func(lifecycle *web_ext.Lifecycle, userName string) web_ext.User {
 		db := &DB{Engine: lifecycle.ModelEngine}
 
