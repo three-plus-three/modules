@@ -8,12 +8,18 @@ import (
 	"github.com/three-plus-three/sso/client/revel_sso"
 )
 
+var ReadUser = func(lifecycle *Lifecycle, userName string) User {
+	return &user{lifecycle: lifecycle, name: userName}
+}
+
 type User interface {
-	ID() int
+	ID() int64
 
 	Name() string
 
 	Data(key string) interface{}
+
+	HasPermission(permissionName, op string) bool
 }
 
 type user struct {
@@ -21,7 +27,7 @@ type user struct {
 	name      string
 }
 
-func (u *user) ID() int {
+func (u *user) ID() int64 {
 	return 1
 }
 
@@ -37,6 +43,10 @@ func (u *user) Data(key string) interface{} {
 	return nil
 }
 
+func (u *user) HasPermission(permissionName, op string) bool {
+	return true
+}
+
 // Lifecycle 表示一个运行周期，它包含了所有业务相关的对象
 type Lifecycle struct {
 	environment.Base
@@ -50,6 +60,7 @@ type Lifecycle struct {
 	ApplicationContext string
 	ApplicationRoot    string
 
+	GetUser     func(user string) User
 	CurrentUser func(c *revel.Controller) User
 	CheckUser   revel_sso.CheckFunc
 	MenuList    []toolbox.Menu

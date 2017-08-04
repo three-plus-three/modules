@@ -48,9 +48,9 @@ func KeyForPermissionsGroups(key string) string {
 }
 
 type PermissionAndGroup struct {
-	ID           int64 `json:"id" xorm:"id pk autoincr"`
-	GroupID      int64 `json:"group_id" xorm:"group_id notnull"`
-	PermissionID int64 `json:"permission_id" xorm:"permission_id notnull"`
+	ID           int64  `json:"id" xorm:"id pk autoincr"`
+	GroupID      int64  `json:"group_id" xorm:"group_id notnull"`
+	PermissionID string `json:"permission_id" xorm:"permission_id notnull"`
 }
 
 func (pag *PermissionAndGroup) TableName() string {
@@ -73,5 +73,5 @@ type PermissionGroupAndRole struct {
 }
 
 func (gap *PermissionGroupAndRole) TableName() string {
-	return "hengwei_permission_group_and_roles"
+	return "hengwei_permission_groups_and_roles"
 }

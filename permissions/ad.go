@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"um/app/models"
 
 	"gopkg.in/ldap.v2"
 )
@@ -31,8 +30,8 @@ func GetADConfig() (ADConfig, error) {
 	return adConfig, nil
 }
 
-func GetUser() ([]models.HengweiUser, error) {
-	var users []models.HengweiUser
+func GetUser() ([]User, error) {
+	var users []User
 	ad, err := GetADConfig()
 	if err != nil {
 		return users, err
@@ -73,7 +72,7 @@ func GetUser() ([]models.HengweiUser, error) {
 	}
 
 	for i := 0; i < len(sr.Entries); i++ {
-		var user models.HengweiUser
+		var user User
 		user.Name = sr.Entries[i].GetAttributeValue("name")
 		user.Description = sr.Entries[i].GetAttributeValue("description")
 		user.Attributes["streetAddress"] = sr.Entries[i].GetAttributeValue("streetAddress")

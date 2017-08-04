@@ -22,7 +22,7 @@ func KeyForUsersAndRoles(key string) string {
 	switch key {
 	case "id":
 		return "userAndRole.ID"
-	case "user_name":
+	case "user_id":
 		return "userAndRole.UserID"
 	case "role_id":
 		return "userAndRole.RoleID"
