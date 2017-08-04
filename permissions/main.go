@@ -12,27 +12,27 @@ func init() {
 		db := &DB{Engine: lifecycle.ModelEngine}
 
 		var u = &user{db: db, lifecycle: lifecycle}
-		err := db.User().Where(orm.Cond{"name": userName}).One(&u.u)
+		err := db.Users().Where(orm.Cond{"name": userName}).One(&u.u)
 		if err != nil {
 			panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
 		}
 
 		// sqlStr := "select * from " + db.Role().Name() + "as role " +
-		//   " where exists (select * from " + db.UserAndRole().Name() + " as uar join " +
-		//   db.User().Name() + " as user on uar.user_id = user.id where role.id = uar.role_id and user.name = ?)"
-
-		// var roles []Role
-		// err := db.Role().Query(sqlStr, user).All(&roles)
-		// if err != nil {
-		//   panic(errors.New("query roles with user is " + user + "fail: " + err.Error()))
-		// }
-
-		// sqlStr = "select * from " + db.p().Name() + "as role " +
 		// 	" where exists (select * from " + db.UserAndRole().Name() + " as uar join " +
 		// 	db.User().Name() + " as user on uar.user_id = user.id where role.id = uar.role_id and user.name = ?)"
 
 		// var roles []Role
-		// err := db.Role().Query(sqlStr, user).All(&roles)
+		// err = db.Role().Query(sqlStr, user).All(&roles)
+		// if err != nil {
+		// 	panic(errors.New("query roles with user is " + user + "fail: " + err.Error()))
+		// }
+
+		// sqlStr := "select * from " + db.PermissionGroupAndRoles().Name() + "as pg " +
+		// 	" where exists (select * from " + db.UserAndRole().Name() + " as uar join " +
+		// 	db.User().Name() + " as user on uar.user_id = user.id where role.id = uar.role_id and user.name = ?)"
+
+		// var roles []PermissionGroupAndRole
+		// err = db.Role().Query(sqlStr, user).All(&roles)
 		// if err != nil {
 		// 	panic(errors.New("query roles with user is " + user + "fail: " + err.Error()))
 		// }

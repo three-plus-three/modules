@@ -11,42 +11,42 @@ type DB struct {
 	Engine *xorm.Engine
 }
 
-func (db *DB) PermissionGroup() *orm.Collection {
+func (db *DB) PermissionGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionGroup{}
 	})(db.Engine)
 }
-func (db *DB) User() *orm.Collection {
+func (db *DB) Users() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &User{}
 	})(db.Engine)
 }
-func (db *DB) UserAndRole() *orm.Collection {
+func (db *DB) UsersAndRoles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserAndRole{}
 	})(db.Engine)
 }
-func (db *DB) PermissionAndGroup() *orm.Collection {
+func (db *DB) PermissionsAndGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionAndGroup{}
 	})(db.Engine)
 }
-func (db *DB) Role() *orm.Collection {
+func (db *DB) Roles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &Role{}
 	})(db.Engine)
 }
-func (db *DB) PermissionGroupAndRole() *orm.Collection {
+func (db *DB) PermissionGroupsAndRoles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionGroupAndRole{}
 	})(db.Engine)
 }
-func (db *DB) UserGroup() *orm.Collection {
+func (db *DB) UserGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserGroup{}
 	})(db.Engine)
 }
-func (db *DB) UserAndUserGroup() *orm.Collection {
+func (db *DB) UsersAndUserGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserAndUserGroup{}
 	})(db.Engine)
