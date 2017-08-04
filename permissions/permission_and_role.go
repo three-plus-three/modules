@@ -4,17 +4,16 @@ import (
 	"time"
 
 	"github.com/revel/revel"
+	"github.com/three-plus-three/modules/web_ext"
 )
 
 type PermissionGroup struct {
-	ID          int64        `json:"id" xorm:"id pk autoincr"`
-	Name        string       `json:"name" xorm:"name unique notnull"`
-	Permissions []Permission `json:"permissions" xorm:"-"`
-	Description string       `json:"description,omitempty" xorm:"description"`
-	ParentID    int64        `json:"parent_id,omitempty" xorm:"parent_id"`
-	Operation   string       `json:"operation" xorm:"-"`
-	CreatedAt   time.Time    `json:"created_at,omitempty" xorm:"created_at created"`
-	UpdatedAt   time.Time    `json:"updated_at,omitempty" xorm:"updated_at updated"`
+	ID          int64     `json:"id" xorm:"id pk autoincr"`
+	Name        string    `json:"name" xorm:"name unique notnull"`
+	Description string    `json:"description,omitempty" xorm:"description"`
+	ParentID    int64     `json:"parent_id,omitempty" xorm:"parent_id"`
+	CreatedAt   time.Time `json:"created_at,omitempty" xorm:"created_at created"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
 }
 
 func (pg *PermissionGroup) TableName() string {
@@ -57,10 +56,10 @@ func (pag *PermissionAndGroup) TableName() string {
 	return "hengwei_permissions_and_groups"
 }
 
-const CREATE = "create"
-const DELETE = "delete"
-const UPDATE = "update"
-const QUERY = "query"
+const CREATE = web_ext.CREATE
+const DELETE = web_ext.DELETE
+const UPDATE = web_ext.UPDATE
+const QUERY = web_ext.QUERY
 
 type PermissionGroupAndRole struct {
 	ID              int64 `json:"id" xorm:"id pk autoincr"`

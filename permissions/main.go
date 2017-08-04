@@ -40,6 +40,11 @@ func init() {
 	}
 }
 
+type Permissions struct {
+	PermissionGroup
+	Permissions []string
+}
+
 type user struct {
 	db                  *DB
 	lifecycle           *web_ext.Lifecycle

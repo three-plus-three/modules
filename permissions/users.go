@@ -15,7 +15,6 @@ type User struct {
 	Source      string                 `json:"source,omitempty" xorm:"source"`
 	CreatedAt   time.Time              `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt   time.Time              `json:"updated_at,omitempty" xorm:"updated_at updated"`
-	Roles       []Role                 `json:"roles" xorm:"-"`
 }
 
 func (user *User) TableName() string {
@@ -68,7 +67,6 @@ type UserGroup struct {
 	Name        string    `json:"name" xorm:"name notnull"`
 	Description string    `json:"description" xorm:"description"`
 	ParentID    int64     `json:"parent_id" xorm:"parent_id"`
-	Users       []User    `json:"users" xorm:"-"`
 	CreatedAt   time.Time `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
 }
