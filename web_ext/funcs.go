@@ -89,16 +89,16 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return CurrentUserHasPermission(lifecycle, ctx, permissionName, op)
 	}
 	revel.TemplateFuncs["current_user_has_new_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{"new"})
+		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{CREATE})
 	}
 	revel.TemplateFuncs["current_user_has_del_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{"del"})
+		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{DELETE})
 	}
 	revel.TemplateFuncs["current_user_has_edit_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{"edit"})
+		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{UPDATE})
 	}
 	revel.TemplateFuncs["current_user_has_write_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{"edit", "new", "del"})
+		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{CREATE, DELETE, UPDATE})
 	}
 	revel.TemplateFuncs["user_has_permission"] = func(ctx map[string]interface{}, user, permissionName, op string) bool {
 		u := lifecycle.GetUser(user)
@@ -112,12 +112,12 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 func CurrentUserHasPermission(lifecycle *Lifecycle, ctx map[string]interface{}, permissionName string, opList []string) bool {
 	o := ctx["currentUser"]
 	if o == nil {
-		return false
+		return true
 	}
 
 	u, ok := o.(User)
 	if !ok {
-		return false
+		return true
 	}
 	for _, op := range opList {
 		if u.HasPermission(permissionName, op) {

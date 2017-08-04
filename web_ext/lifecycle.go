@@ -8,6 +8,11 @@ import (
 	"github.com/three-plus-three/sso/client/revel_sso"
 )
 
+const CREATE = "create"
+const DELETE = "delete"
+const UPDATE = "update"
+const QUERY = "query"
+
 var ReadUser = func(lifecycle *Lifecycle, userName string) User {
 	return &user{lifecycle: lifecycle, name: userName}
 }
