@@ -17,9 +17,9 @@ func init() {
 			panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
 		}
 
-		// sqlStr := "select * from " + db.Role().Name() + "as role " +
-		// 	" where exists (select * from " + db.UserAndRole().Name() + " as uar join " +
-		// 	db.User().Name() + " as user on uar.user_id = user.id where role.id = uar.role_id and user.name = ?)"
+		// sqlStr := "select * from " + db.Roles().Name() + "as role " +
+		// 	" where exists (select * from " + db.UsersAndRoles().Name() + " as uar join " +
+		// 	db.Users().Name() + " as user on uar.user_id = user.id where role.id = uar.role_id and user.name = ?)"
 
 		// var roles []Role
 		// err = db.Role().Query(sqlStr, user).All(&roles)

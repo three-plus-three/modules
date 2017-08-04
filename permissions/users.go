@@ -41,14 +41,10 @@ func KeyForUsers(key string) string {
 		return "user.Password"
 	case "description":
 		return "user.Description"
+	case "source":
+		return "user.Source"
 	case "attibutes":
 		return "user.Attibutes"
-	case "company":
-		return "user.Attibutes.Company"
-	case "number":
-		return "user.Attibutes.Number"
-	case "address":
-		return "user.Attibutes.Address"
 	case "created_at":
 		return "user.CreatedAt"
 	case "updated_at":
