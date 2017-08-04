@@ -3,9 +3,9 @@ package permissions
 import "github.com/revel/revel"
 
 type UserAndRole struct {
-	ID       int64  `json:"id" xorm:"id pk autoincr"`
-	UserName string `json:"user_name" xorm:"user_name"`
-	RoleID   int64  `json:"role_id" xorm:"role_id notnull"`
+	ID     int64 `json:"id" xorm:"id pk autoincr"`
+	UserID int64 `json:"user_id" xorm:"user_id"`
+	RoleID int64 `json:"role_id" xorm:"role_id notnull"`
 }
 
 func (userAndRole *UserAndRole) TableName() string {
@@ -13,11 +13,8 @@ func (userAndRole *UserAndRole) TableName() string {
 }
 
 func (userAndRole *UserAndRole) Validate(validation *revel.Validation) bool {
-
-	validation.Required(userAndRole.UserName).Key("userAndRole.UserName")
-
+	validation.Required(userAndRole.UserID).Key("userAndRole.UserID")
 	validation.Required(userAndRole.RoleID).Key("userAndRole.RoleID")
-
 	return validation.HasErrors()
 }
 
@@ -26,7 +23,7 @@ func KeyForUsersAndRoles(key string) string {
 	case "id":
 		return "userAndRole.ID"
 	case "user_name":
-		return "userAndRole.UserName"
+		return "userAndRole.UserID"
 	case "role_id":
 		return "userAndRole.RoleID"
 	}
