@@ -57,10 +57,10 @@ func (pag *PermissionAndGroup) TableName() string {
 	return "hengwei_permissions_and_groups"
 }
 
-const Create = "create"
-const Delete = "delete"
-const Update = "update"
-const Query = "query"
+const CREATE = "create"
+const DELETE = "delete"
+const UPDATE = "update"
+const QUERY = "query"
 
 type PermissionGroupAndRole struct {
 	ID              int64 `json:"id" xorm:"id pk autoincr"`
