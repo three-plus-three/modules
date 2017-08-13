@@ -2,7 +2,7 @@ package concurrency
 
 import "sync/atomic"
 
-type syncError struct {
+type errorWrapper struct {
 	err error
 }
 
@@ -11,7 +11,7 @@ type ErrorValue struct {
 }
 
 func (ev *ErrorValue) Set(e error) {
-	ev.value.Store(&syncError{err: e})
+	ev.value.Store(&errorWrapper{err: e})
 }
 
 func (ev *ErrorValue) Get() error {
@@ -19,7 +19,7 @@ func (ev *ErrorValue) Get() error {
 	if o == nil {
 		return nil
 	}
-	if e, ok := o.(*syncError); ok {
+	if e, ok := o.(*errorWrapper); ok {
 		return e.err
 	}
 	return nil

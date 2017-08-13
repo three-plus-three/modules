@@ -10,7 +10,7 @@ import (
 	"github.com/three-plus-three/modules/web_ext"
 )
 
-func ReadUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
+func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 	db := &DB{Engine: lifecycle.ModelEngine}
 	permissionGroupCache := &GroupCache{}
 	var lastErr concurrency.ErrorValue
@@ -107,6 +107,11 @@ func (u *user) HasPermission(permissionID, op string) bool {
 			enableOperation = pr.UpdateOperation
 		case web_ext.QUERY:
 			enableOperation = pr.QueryOperation
+			if pr.CreateOperation ||
+				pr.DeleteOperation ||
+				pr.UpdateOperation {
+				enableOperation = true
+			}
 		default:
 			panic(errors.New("Operation '" + op + "' is unknown"))
 		}
