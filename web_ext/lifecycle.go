@@ -3,6 +3,7 @@ package web_ext
 import (
 	"github.com/go-xorm/xorm"
 	"github.com/revel/revel"
+	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/sso/client/revel_sso"
@@ -13,8 +14,10 @@ const DELETE = "delete"
 const UPDATE = "update"
 const QUERY = "query"
 
-var ReadUser = func(lifecycle *Lifecycle, userName string) User {
-	return &user{lifecycle: lifecycle, name: userName}
+var InitUser = func(lifecycle *Lifecycle) func(userName string) User {
+	return func(userName string) User {
+		return &user{lifecycle: lifecycle, name: userName}
+	}
 }
 
 type User interface {
@@ -54,7 +57,7 @@ func (u *user) HasPermission(permissionName, op string) bool {
 
 // Lifecycle 表示一个运行周期，它包含了所有业务相关的对象
 type Lifecycle struct {
-	environment.Base
+	concurrency.Base
 	Env         *environment.Environment
 	ModelEngine *xorm.Engine
 	DataEngine  *xorm.Engine
@@ -65,7 +68,7 @@ type Lifecycle struct {
 	ApplicationContext string
 	ApplicationRoot    string
 
-	GetUser     func(user string) User
+	GetUser     func(userName string) User
 	CurrentUser func(c *revel.Controller) User
 	CheckUser   revel_sso.CheckFunc
 	MenuList    []toolbox.Menu
