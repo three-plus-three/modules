@@ -15,17 +15,17 @@ func ResourcesURLFor(s ...string) string {
 
 func initTemplateFuncs(lifecycle *Lifecycle) {
 	revel.TemplateFuncs["assets"] = func(value string) string {
-		return urlutil.Join(lifecycle.URLPrefix, "assets", value)
+		return urlutil.Join(lifecycle.URLPrefix, "web/assets", value)
 	}
 
 	revel.TemplateFuncs["custom_resources_assets"] = func(value string) string {
 		return ResourcesURLFor(value)
 	}
 	revel.TemplateFuncs["mc_assets"] = func(url string) string {
-		return urlutil.Join(lifecycle.URLRoot, "assets", url)
+		return urlutil.Join(lifecycle.URLRoot, "web/assets", url)
 	}
 	revel.TemplateFuncs["tpt_assets"] = func(value string) string {
-		return urlutil.Join(lifecycle.URLPrefix, "tpt_assets", value)
+		return urlutil.Join(lifecycle.URLPrefix, "web/tpt_assets", value)
 	}
 	revel.TemplateFuncs["default"] = func(value, defvalue interface{}) interface{} {
 		if nil == value {
