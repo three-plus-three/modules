@@ -4,3 +4,52 @@
   fields:
     user_id: 'PK_REFERENCE(users_key_1)'
     role_id: 'PK_REFERENCE(roles_key_1)'
+
+- table: 'hengwei_users_and_roles'
+  pk:
+    id: 'PK_GENERATE(users_and_roles_key_2)'
+  fields:
+    user_id: 'PK_REFERENCE(users_key_2)'
+    role_id: 'PK_REFERENCE(roles_key_2)'
+
+- table: 'hengwei_users_and_roles'
+  pk:
+    id: 'PK_GENERATE(users_and_roles_key_3)'
+  fields:
+    user_id: 'PK_REFERENCE(users_key_3)'
+    role_id: 'PK_REFERENCE(roles_key_3)'
+
+- table: 'hengwei_users_and_roles'
+  pk:
+    id: 'PK_GENERATE(users_and_roles_key_4)'
+  fields:
+    user_id: 'PK_REFERENCE(users_key_3)'
+    role_id: 'PK_REFERENCE(roles_key_4)'
+
+- table: 'hengwei_users_and_roles'
+  pk:
+    id: 'PK_GENERATE(users_and_roles_key_5)'
+  fields:
+    user_id: 'PK_REFERENCE(users_key_3)'
+    role_id: 'PK_REFERENCE(roles_key_5)'
+
+- table: 'hengwei_users_and_roles'
+  pk:
+    id: 'PK_GENERATE(users_and_roles_key_6)'
+  fields:
+    user_id: 'PK_REFERENCE(users_key_4)'
+    role_id: 'PK_REFERENCE(roles_key_6)'
+
+- table: 'hengwei_users_and_roles'
+  pk:
+    id: 'PK_GENERATE(users_and_roles_key_7)'
+  fields:
+    user_id: 'PK_REFERENCE(users_key_4)'
+    role_id: 'PK_REFERENCE(roles_key_7)'
+
+- table: 'hengwei_users_and_roles'
+  pk:
+    id: 'PK_GENERATE(users_and_roles_key_8)'
+  fields:
+    user_id: 'PK_REFERENCE(users_key_4)'
+    role_id: 'PK_REFERENCE(roles_key_8)'

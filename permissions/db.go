@@ -86,14 +86,14 @@ func InitTables(engine *xorm.Engine) error {
 
 func DropTables(engine *xorm.Engine) error {
 	beans := []interface{}{
-		&PermissionGroup{},
-		&User{},
-		&Role{},
 		&UserAndRole{},
+		&UserAndUserGroup{},
 		&PermissionAndGroup{},
 		&PermissionGroupAndRole{},
+		&PermissionGroup{},
 		&UserGroup{},
-		&UserAndUserGroup{},
+		&User{},
+		&Role{},
 	}
 
 	for _, bean := range beans {
