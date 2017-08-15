@@ -29,6 +29,26 @@ func GetPermissionsByTag(tag string) ([]Permission, error) {
 	return filterPermissions, nil
 }
 
+//获取所有 tags
+func GetPermissionTags() ([]string, error) {
+	all, err := GetPermissions()
+	if err != nil {
+		return nil, err
+	}
+	tagsByName := map[string]struct{}{}
+	for i := 0; i < len(all); i++ {
+		for j := 0; j < len(all[i].Tags); j++ {
+			tagsByName[all[i].Tags[j]] = struct{}{}
+		}
+	}
+	tags := make([]string, 0, len(tagsByName))
+	for key := range tagsByName {
+		tags = append(tags, key)
+	}
+
+	return tags, nil
+}
+
 //获取权限
 func GetPermissions() ([]Permission, error) {
 	permissionsCache.Invalid()

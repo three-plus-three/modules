@@ -83,3 +83,30 @@ func InitTables(engine *xorm.Engine) error {
 	}
 	return nil
 }
+
+func DropTables(engine *xorm.Engine) error {
+	beans := []interface{}{
+		&PermissionGroup{},
+		&User{},
+		&Role{},
+		&UserAndRole{},
+		&PermissionAndGroup{},
+		&PermissionGroupAndRole{},
+		&UserGroup{},
+		&UserAndUserGroup{},
+	}
+
+	for _, bean := range beans {
+		if err := engine.DropIndexes(bean); err != nil {
+			if !strings.Contains(err.Error(), "already exists") {
+				return err
+			}
+		}
+	}
+
+	if err := engine.DropTables(beans...); err != nil {
+		return err
+	}
+
+	return nil
+}

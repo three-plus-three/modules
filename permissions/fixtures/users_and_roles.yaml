@@ -1,6 +1,6 @@
 - table: 'hengwei_users_and_roles'
   pk:
-    id: 'PK_GENERATE(users_and_roles_key)'
+    id: 'PK_GENERATE(users_and_roles_key_1)'
   fields:
-    user_id: 'PK_GENERATE(users_key_1)'
-    role_id: 'PK_GENERATE(roles_key_1)'
+    user_id: 'PK_REFERENCE(users_key_1)'
+    role_id: 'PK_REFERENCE(roles_key_1)'

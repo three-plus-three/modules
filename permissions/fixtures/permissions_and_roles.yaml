@@ -2,9 +2,9 @@
   pk:
     id: 'PK_GENERATE(pr_key_1)'
   fields:
-    role_id: 'PK_GENERATE(roles_key_1)'
-    group_id: 'PK_GENERATE(permission_group_key_1)'
-    add_table: true
-    del_table: true
-    edit_table: true
-    query_table: true
+    role_id: 'PK_REFERENCE(roles_key_1)'
+    group_id: 'PK_REFERENCE(permission_group_key_1)'
+    create_operation: true
+    delete_operation: true
+    update_operation: true
+    query_operation: true

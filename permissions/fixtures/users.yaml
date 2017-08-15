@@ -1,4 +1,4 @@
-- table: 'hengwei_user'
+- table: 'hengwei_users'
   pk:
     id: 'PK_GENERATE(users_key_1)'
   fields:

@@ -15,9 +15,11 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 	permissionGroupCache := &GroupCache{}
 	var lastErr concurrency.ErrorValue
 
-	permissionGroupCache.Init(5*time.Minute, func() {
+	refresh := func() {
 		lastErr.Set(permissionGroupCache.refresh(db))
-	})
+	}
+	permissionGroupCache.Init(5*time.Minute, refresh)
+	refresh()
 
 	return func(userName string) web_ext.User {
 		if e := lastErr.Get(); e != nil {
@@ -32,13 +34,14 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
 		}
 
-		sqlStr := "select * from " + db.PermissionGroupsAndRoles().Name() + "as pg_role " +
+		sqlStr := "select * from " + db.PermissionGroupsAndRoles().Name() + " as pg_role " +
 			" where exists (select * from " + db.UsersAndRoles().Name() + " as user_role join " +
-			db.Users().Name() + " as user on user_role.user_id = user.id where user_role.role_id = pg_role.role_id and user.name = ?)"
+			db.Users().Name() + " as tuser on user_role.user_id = tuser.id where user_role.role_id = pg_role.role_id and tuser.name = ?)"
 
 		err = db.PermissionGroupsAndRoles().Query(sqlStr, userName).All(&u.permissionsAndRoles)
 		if err != nil {
-			panic(errors.New("query permissions and roles with user is " + userName + "fail: " + err.Error()))
+			log.Println("[permission] ", sqlStr, userName)
+			panic(errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error()))
 		}
 
 		// sqlStr := "select * from " + db.PermissionGroupAndRoles().Name() + "as pg " +

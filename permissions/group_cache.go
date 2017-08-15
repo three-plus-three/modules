@@ -8,8 +8,8 @@ import (
 )
 
 type Permissions struct {
-	PermissionGroup
-	Permissions []string
+	PermissionGroup `xorm:"extends"`
+	Permissions     []string `xorm:"-"`
 }
 
 type GroupCache struct {
