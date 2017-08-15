@@ -1,0 +1,60 @@
+- table: 'hengwei_permission_groups'
+  pk:
+    id: 'PK_GENERATE(permission_group_key_1)'
+  fields:
+    name: fuq
+    description: Est dolores sunt nam molestiae ut nihil.
+    created_at: 1996-02-27T22:05:43+08:00
+    updated_at: 2014-05-30T00:05:24+08:00
+
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_11)'
+  fields:
+    group_id: PK_REFERENCE(permission_group_key_11)
+    permission_id: p11
+
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_12)'
+  fields:
+    group_id: PK_REFERENCE(permission_group_key_1)
+    permission_id: p12
+
+    
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_13)'
+  fields:
+    group_id: PK_REFERENCE(permission_group_key_1)
+    permission_id: p13
+
+- table: 'hengwei_permission_groups'
+  pk:
+    id: 'PK_GENERATE(permission_group_key_2)'
+  fields:
+    name: fuq
+    description: Est dolores sunt nam molestiae ut nihil.
+    created_at: 1996-02-27T22:05:43+08:00
+    updated_at: 2014-05-30T00:05:24+08:00
+
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_21)'
+  fields:
+    group_id: PK_REFERENCE(permission_group_key_2)
+    permission_id: p21
+
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_22)'
+  fields:
+    group_id: PK_REFERENCE(permission_group_key_2)
+    permission_id: p22
+
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_23)'
+  fields:
+    group_id: PK_REFERENCE(permission_group_key_2)
+    permission_id: p23

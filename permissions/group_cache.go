@@ -3,6 +3,8 @@ package permissions
 import (
 	"errors"
 	"sync/atomic"
+
+	"github.com/three-plus-three/modules/concurrency"
 )
 
 type Permissions struct {
@@ -11,6 +13,7 @@ type Permissions struct {
 }
 
 type GroupCache struct {
+	concurrency.Tickable
 	permissions atomic.Value
 }
 
@@ -23,7 +26,7 @@ func (cache *GroupCache) Get(id int64) *Permissions {
 	return values[id]
 }
 
-func (cache *GroupCache) savePermissions(values map[int64]*Permissions) {
+func (cache *GroupCache) setPermissions(values map[int64]*Permissions) {
 	cache.permissions.Store(values)
 }
 
@@ -51,5 +54,17 @@ func (cache *GroupCache) refresh(db *DB) error {
 		values[p.ID] = p
 	}
 
-	cache.savePermissions(values)
+	var pagArray []PermissionAndGroup
+	err = db.PermissionsAndGroups().Where().All(&pagArray)
+	if err != nil {
+		return errors.New("query permission groups fail: " + err.Error())
+	}
+	for _, p := range pagArray {
+		if old, ok := values[p.GroupID]; ok {
+			old.Permissions = append(old.Permissions, p.PermissionID)
+		}
+	}
+
+	cache.setPermissions(values)
+	return nil
 }
