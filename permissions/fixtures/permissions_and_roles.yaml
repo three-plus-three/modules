@@ -71,7 +71,7 @@
     role_id: 'PK_REFERENCE(roles_key_5)'
     group_id: 'PK_REFERENCE(permission_group_key_3)'
     create_operation: true
-    delete_operation: true
+    delete_operation: false
     update_operation: false
     query_operation: true
 
