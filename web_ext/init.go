@@ -80,7 +80,11 @@ func Init(projectName, projectTitle, projectContext string,
 		lifecycle.GetUser = InitUser(lifecycle)
 
 		lifecycle.CurrentUser = func(c *revel.Controller) User {
-			return lifecycle.GetUser(c.Session[sso.SESSION_USER_KEY])
+			username := c.Session[sso.SESSION_USER_KEY]
+			if username == "" {
+				return nil
+			}
+			return lifecycle.GetUser(username)
 		}
 		lifecycle.CheckUser = initSSO(env)
 
