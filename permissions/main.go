@@ -135,11 +135,25 @@ func (u *user) hasPermission(groupID int64, permissionID string) bool {
 		log.Println("[permissions] permission group with id is", groupID, "isn't found.")
 		return false
 	}
-	for _, id := range permissions.Permissions {
+	for _, id := range permissions.PermissionIDs {
 		if permissionID == id {
 			return true
 		}
 	}
+
+	for _, tag := range permissions.PermissionTags {
+		permissionList, err := GetPermissionsByTag(tag)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, permission := range permissionList {
+			if permissionID == permission.ID {
+				return true
+			}
+		}
+	}
+
 	if permissions.ParentID != 0 {
 		return u.hasPermission(permissions.ParentID, permissionID)
 	}

@@ -35,7 +35,7 @@ func KeyForPermissionsGroups(key string) string {
 	case "description":
 		return "permissionGroup.Description"
 	case "parent_id":
-		return "permissionGroup.ParentId"
+		return "permissionGroup.ParentID"
 	case "operation":
 		return "permissionGroup.Operation"
 	case "created_at":
@@ -47,10 +47,14 @@ func KeyForPermissionsGroups(key string) string {
 }
 
 type PermissionAndGroup struct {
-	ID           int64  `json:"id" xorm:"id pk autoincr"`
-	GroupID      int64  `json:"group_id" xorm:"group_id notnull"`
-	PermissionID string `json:"permission_id" xorm:"permission_id notnull"`
+	ID               int64  `json:"id" xorm:"id pk autoincr"`
+	GroupID          int64  `json:"group_id" xorm:"group_id notnull"`
+	PermissionObject string `json:"permission_object" xorm:"permission_object notnull"`
+	Type             int64  `json:"type" xorm:"type notnull"`
 }
+
+const PERMISSION_ID = 0
+const PERMISSION_TAG = 1
 
 func (pag *PermissionAndGroup) TableName() string {
 	return "hengwei_permissions_and_groups"
