@@ -14,7 +14,7 @@ type Menu struct {
 func (menu Menu) IsActiveWith(ctx map[string]interface{}) bool {
 	o := ctx["active"]
 	if o == nil {
-		o := ctx["controller"]
+		o = ctx["controller"]
 		if o == nil {
 			return false
 		}
