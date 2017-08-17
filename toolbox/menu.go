@@ -12,9 +12,12 @@ type Menu struct {
 
 // IsActive 判断这个菜单是否是展开的
 func (menu Menu) IsActiveWith(ctx map[string]interface{}) bool {
-	o := ctx["controller"]
+	o := ctx["active"]
 	if o == nil {
-		return false
+		o := ctx["controller"]
+		if o == nil {
+			return false
+		}
 	}
 
 	name, ok := o.(string)
