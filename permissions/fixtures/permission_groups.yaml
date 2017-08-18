@@ -3,7 +3,7 @@
     id: 'PK_GENERATE(permission_group_key_1)'
   fields:
     name: fuaaq
-    description: Est dolores sunt nam molestiae ut nihil.
+    description: Est dolores sunt nam molestiae nihil.
     created_at: 1996-02-27T22:05:43+08:00
     updated_at: 2014-05-30T00:05:24+08:00
 
@@ -12,29 +12,31 @@
     id: 'PK_GENERATE(hengwei_permissions_and_groups_11)'
   fields:
     group_id: 'PK_REFERENCE(permission_group_key_1)'
-    permission_id: p11
+    permission_object: p11
+    type: 0
 
 - table: 'hengwei_permissions_and_groups'
   pk:
     id: 'PK_GENERATE(hengwei_permissions_and_groups_12)'
   fields:
     group_id: PK_REFERENCE(permission_group_key_1)
-    permission_id: p12
-
+    permission_object: p12
+    type: 0
     
 - table: 'hengwei_permissions_and_groups'
   pk:
     id: 'PK_GENERATE(hengwei_permissions_and_groups_13)'
   fields:
     group_id: PK_REFERENCE(permission_group_key_1)
-    permission_id: p13
+    permission_object: p13
+    type: 0
 
 - table: 'hengwei_permission_groups'
   pk:
     id: 'PK_GENERATE(permission_group_key_2)'
   fields:
     name: fuasq
-    description: Est dolores sunt nam molestiae ut nihil.
+    description: Est dolores sunt nam molestiae ut nih.
     created_at: 1996-02-27T22:05:43+08:00
     updated_at: 2014-05-30T00:05:24+08:00
 
@@ -43,28 +45,31 @@
     id: 'PK_GENERATE(hengwei_permissions_and_groups_21)'
   fields:
     group_id: PK_REFERENCE(permission_group_key_2)
-    permission_id: p12
+    permission_object: p12
+    type: 0
 
 - table: 'hengwei_permissions_and_groups'
   pk:
     id: 'PK_GENERATE(hengwei_permissions_and_groups_22)'
   fields:
     group_id: PK_REFERENCE(permission_group_key_2)
-    permission_id: p22
+    permission_object: p22
+    type: 0
 
 - table: 'hengwei_permissions_and_groups'
   pk:
     id: 'PK_GENERATE(hengwei_permissions_and_groups_23)'
   fields:
     group_id: PK_REFERENCE(permission_group_key_2)
-    permission_id: p23
+    permission_object: p23
+    type: 0
 
 - table: 'hengwei_permission_groups'
   pk:
     id: 'PK_GENERATE(permission_group_key_3)'
   fields:
     name: fuassq
-    description: Est dolores sunt nam molestiae ut nihil.
+    description: Est doles sunt nam molestiae ut nihil.
     parent_id: PK_REFERENCE(permission_group_key_1)
     created_at: 1996-02-27T22:05:43+08:00
     updated_at: 2014-05-30T00:05:24+08:00
@@ -74,18 +79,84 @@
     id: 'PK_GENERATE(hengwei_permissions_and_groups_11)'
   fields:
     group_id: PK_REFERENCE(permission_group_key_3)
-    permission_id: p11
+    permission_object: p11
+    type: 0
 
 - table: 'hengwei_permissions_and_groups'
   pk:
     id: 'PK_GENERATE(hengwei_permissions_and_groups_12)'
   fields:
     group_id: PK_REFERENCE(permission_group_key_3)
-    permission_id: p32
+    permission_object: p32
+    type: 0
 
 - table: 'hengwei_permissions_and_groups'
   pk:
     id: PK_GENERATE(hengwei_permissions_and_groups_13)
   fields:
     group_id: 'PK_REFERENCE(permission_group_key_3)'
-    permission_id: p33
+    permission_object: p33
+    type: 0
+
+
+
+- table: 'hengwei_permission_groups'
+  pk:
+    id: 'PK_GENERATE(permission_group_key_4)'
+  fields:
+    name: f1
+    description: Est dolores nt nam tiae ut nihila.
+    created_at: 1996-02-27T22:05:43+08:00
+    updated_at: 2014-05-30T00:05:24+08:00
+
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_14)'
+  fields:
+    group_id: 'PK_REFERENCE(permission_group_key_4)'
+    permission_object: um
+    type: 1
+
+
+- table: 'hengwei_permission_groups'
+  pk:
+    id: 'PK_GENERATE(permission_group_key_5)'
+  fields:
+    name: f2
+    description: Est dolors sunt nam moleste ut nihilb.
+    created_at: 1996-02-27T22:05:43+08:00
+    updated_at: 2014-05-30T00:05:24+08:00
+
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_15)'
+  fields:
+    group_id: 'PK_REFERENCE(permission_group_key_5)'
+    permission_object: um
+    type: 1
+
+- table: 'hengwei_permission_groups'
+  pk:
+    id: 'PK_GENERATE(permission_group_key_6)'
+  fields:
+    name: f3
+    description: Est dolores sunt nam moltiae utlc.
+    parent_id: PK_REFERENCE(permission_group_key_4)
+    created_at: 1996-02-27T22:05:43+08:00
+    updated_at: 2014-05-30T00:05:24+08:00
+
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_16)'
+  fields:
+    group_id: 'PK_REFERENCE(permission_group_key_6)'
+    permission_object: um
+    type: 1
+
+- table: 'hengwei_permissions_and_groups'
+  pk:
+    id: 'PK_GENERATE(hengwei_permissions_and_groups_16)'
+  fields:
+    group_id: 'PK_REFERENCE(permission_group_key_6)'
+    permission_object: as
+    type: 1

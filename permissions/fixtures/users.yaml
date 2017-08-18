@@ -38,3 +38,15 @@
     description: Est et ab inventore et.
     created_at: 1976-04-08T12:39:11+08:00
     updated_at: 1971-10-18T18:46:55+08:00
+
+
+- table: 'hengwei_users'
+  pk:
+    id: 'PK_GENERATE(users_key_5)'
+  fields:
+    name: A1
+    password: d168kts8w
+    description: Est et ab inventore et.
+    created_at: 1976-04-08T12:39:11+08:00
+    updated_at: 1971-10-18T18:46:55+08:00
+

@@ -101,6 +101,7 @@
     query_operation: true
 
 
+
 - table: 'hengwei_permission_groups_and_roles'
   pk:
     id: 'PK_GENERATE(pr_key_10)'
@@ -112,13 +113,36 @@
     update_operation: true
     query_operation: true
 
+
 - table: 'hengwei_permission_groups_and_roles'
   pk:
-    id: 'PK_GENERATE(pr_key_10)'
+    id: 'PK_GENERATE(pr_key_11)'
   fields:
-    role_id: 'PK_REFERENCE(roles_key_8)'
-    group_id: 'PK_REFERENCE(permission_group_key_1)'
+    role_id: 'PK_REFERENCE(roles_key_9)'
+    group_id: 'PK_REFERENCE(permission_group_key_4)'
     create_operation: true
     delete_operation: true
     update_operation: true
+    query_operation: true
+
+- table: 'hengwei_permission_groups_and_roles'
+  pk:
+    id: 'PK_GENERATE(pr_key_11)'
+  fields:
+    role_id: 'PK_REFERENCE(roles_key_9)'
+    group_id: 'PK_REFERENCE(permission_group_key_5)'
+    create_operation: true
+    delete_operation: true
+    update_operation: false
+    query_operation: true
+
+- table: 'hengwei_permission_groups_and_roles'
+  pk:
+    id: 'PK_GENERATE(pr_key_11)'
+  fields:
+    role_id: 'PK_REFERENCE(roles_key_10)'
+    group_id: 'PK_REFERENCE(permission_group_key_6)'
+    create_operation: true
+    delete_operation: true
+    update_operation: false
     query_operation: true
