@@ -37,7 +37,7 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 		}
 		if visitor == 0 {
 			var visitorRole Role
-			if e := db.Roles().Where(orm.Cond{"name": "visitor"}).One(&adminRole); e == nil {
+			if e := db.Roles().Where(orm.Cond{"name": "visitor"}).One(&visitorRole); e == nil {
 				visitor = visitorRole.ID
 			} else {
 				log.Println("[warn] role visitor isnot found -", e)
@@ -124,12 +124,23 @@ func (u *user) HasPermission(permissionID, op string) bool {
 	if u.Name() == "admin" {
 		return true
 	}
+	if u.administrator != 0 {
+		for _, pr := range u.permissionsAndRoles {
+			if pr.RoleID == u.administrator {
+				return true
+			}
+		}
+	}
+
+	if u.visitor != 0 && web_ext.QUERY == op {
+		for _, pr := range u.permissionsAndRoles {
+			if pr.RoleID == u.visitor {
+				return true
+			}
+		}
+	}
 
 	for _, pr := range u.permissionsAndRoles {
-		if u.administrator != 0 && pr.RoleID == u.administrator {
-			return true
-		}
-
 		enableOperation := false
 		switch op {
 		case web_ext.CREATE:
@@ -139,10 +150,6 @@ func (u *user) HasPermission(permissionID, op string) bool {
 		case web_ext.UPDATE:
 			enableOperation = pr.UpdateOperation
 		case web_ext.QUERY:
-			if u.visitor != 0 && pr.RoleID == u.visitor {
-				return true
-			}
-
 			enableOperation = pr.QueryOperation
 			if pr.CreateOperation ||
 				pr.DeleteOperation ||
