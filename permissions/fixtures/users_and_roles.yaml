@@ -64,3 +64,16 @@
 
 
 
+- table: 'hengwei_users_and_roles'
+  pk:
+    id: 'PK_GENERATE(users_and_roles_key_10)'
+  fields:
+    user_id: 'PK_REFERENCE(users_key_adm)'
+    role_id: 'PK_REFERENCE(roles_key_administrator)'
+
+- table: 'hengwei_users_and_roles'
+  pk:
+    id: 'PK_GENERATE(users_and_roles_key_11)'
+  fields:
+    user_id: 'PK_REFERENCE(users_key_viewer)'
+    role_id: 'PK_REFERENCE(roles_key_visitor)'

@@ -47,7 +47,38 @@ func TestHasPermission(t *testing.T) {
 
 	RegisterPermissions(permissionProvider)
 
-	u := readUser("t7o")
+	u := readUser("admin")
+	if !u.HasPermission("perm_not_exists_in_db", CREATE) {
+		t.Error("admin 有任何权限")
+	}
+
+	u = readUser("adm")
+	if !u.HasPermission("perm_not_exists_in_db", CREATE) {
+		t.Error("有 administrator 角色的用户有任何权限")
+	}
+
+	if !u.HasPermission("p12", CREATE) {
+		t.Error("有 administrator 角色的用户有任何权限")
+	}
+
+	u = readUser("viewer")
+	if !u.HasPermission("perm_not_exists_in_db", QUERY) {
+		t.Error("有 visitor 角色的用户有任何读权限")
+	}
+
+	if !u.HasPermission("p12", QUERY) {
+		t.Error("有 visitor 角色的用户有任何读权限")
+	}
+
+	if u.HasPermission("perm_not_exists_in_db", UPDATE) {
+		t.Error("有 visitor 角色的用户没有任何写权限")
+	}
+
+	if u.HasPermission("p12", UPDATE) {
+		t.Error("有 visitor 角色的用户没有任何写权限")
+	}
+
+	u = readUser("t7o")
 	if u.HasPermission("p1", CREATE) {
 		t.Error("except no p1 create")
 	}

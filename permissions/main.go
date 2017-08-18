@@ -51,12 +51,33 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			visitor:              visitor}
 		err := db.Users().Where(orm.Cond{"name": userName}).One(&u.u)
 		if err != nil {
-			panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
+			if userName != "admin" {
+				panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
+			}
+			u.u.Name = userName
+			return u
+		}
+
+		rolesqlStr := "select * from " + db.Roles().Name() + " as roles " +
+			" where exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
+			db.Users().Name() + " as users on users_roles.user_id = users.id where users_roles.role_id = roles.id and users.name = ?)"
+		err = db.Roles().Query(rolesqlStr, userName).All(&u.roles)
+		if err != nil {
+			log.Println("[permission] ", rolesqlStr, userName)
+			panic(errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error()))
+		}
+
+		if u.administrator != 0 {
+			for _, role := range u.roles {
+				if role.ID == u.administrator {
+					return u
+				}
+			}
 		}
 
 		sqlStr := "select * from " + db.PermissionGroupsAndRoles().Name() + " as pg_role " +
-			" where exists (select * from " + db.UsersAndRoles().Name() + " as user_role join " +
-			db.Users().Name() + " as tuser on user_role.user_id = tuser.id where user_role.role_id = pg_role.role_id and tuser.name = ?)"
+			" where exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
+			db.Users().Name() + " as users on users_roles.user_id = users.id where users_roles.role_id = pg_role.role_id and users.name = ?)"
 
 		err = db.PermissionGroupsAndRoles().Query(sqlStr, userName).All(&u.permissionsAndRoles)
 		if err != nil {
@@ -82,6 +103,7 @@ type user struct {
 	db                   *DB
 	lifecycle            *web_ext.Lifecycle
 	u                    User
+	roles                []Role
 	permissionsAndRoles  []PermissionGroupAndRole
 	permissionGroupCache *GroupCache
 
@@ -125,16 +147,16 @@ func (u *user) HasPermission(permissionID, op string) bool {
 		return true
 	}
 	if u.administrator != 0 {
-		for _, pr := range u.permissionsAndRoles {
-			if pr.RoleID == u.administrator {
+		for _, role := range u.roles {
+			if role.ID == u.administrator {
 				return true
 			}
 		}
 	}
 
 	if u.visitor != 0 && web_ext.QUERY == op {
-		for _, pr := range u.permissionsAndRoles {
-			if pr.RoleID == u.visitor {
+		for _, role := range u.roles {
+			if role.ID == u.visitor {
 				return true
 			}
 		}

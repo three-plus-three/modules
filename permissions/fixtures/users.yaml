@@ -50,3 +50,24 @@
     created_at: 1976-04-08T12:39:11+08:00
     updated_at: 1971-10-18T18:46:55+08:00
 
+
+- table: 'hengwei_users'
+  pk:
+    id: 'PK_GENERATE(users_key_adm)'
+  fields:
+    name: adm
+    password: d168kts8w
+    description: Est et ab inventore et.
+    created_at: 1988-05-07T15:19:23+08:00
+    updated_at: 1988-04-05T15:50:03+08:00
+
+- table: 'hengwei_users'
+  pk:
+    id: 'PK_GENERATE(users_key_viewer)'
+  fields:
+    name: viewer
+    password: d168kts8w
+    description: Est et ab inventore et.
+    created_at: 1988-05-07T15:19:23+08:00
+    updated_at: 1988-04-05T15:50:03+08:00
+
