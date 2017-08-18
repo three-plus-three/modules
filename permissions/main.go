@@ -21,14 +21,34 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 	permissionGroupCache.Init(5*time.Minute, refresh)
 	refresh()
 
+	var administrator, visitor int64
+
 	return func(userName string) web_ext.User {
 		if e := lastErr.Get(); e != nil {
 			panic(e)
 		}
+		if administrator == 0 {
+			var adminRole Role
+			if e := db.Roles().Where(orm.Cond{"name": "administrator"}).One(&adminRole); e == nil {
+				administrator = adminRole.ID
+			} else {
+				log.Println("[warn] role administrator isnot found -", e)
+			}
+		}
+		if visitor == 0 {
+			var visitorRole Role
+			if e := db.Roles().Where(orm.Cond{"name": "visitor"}).One(&adminRole); e == nil {
+				visitor = visitorRole.ID
+			} else {
+				log.Println("[warn] role visitor isnot found -", e)
+			}
+		}
 
 		var u = &user{db: db,
 			lifecycle:            lifecycle,
-			permissionGroupCache: permissionGroupCache}
+			permissionGroupCache: permissionGroupCache,
+			administrator:        administrator,
+			visitor:              visitor}
 		err := db.Users().Where(orm.Cond{"name": userName}).One(&u.u)
 		if err != nil {
 			panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
@@ -64,6 +84,8 @@ type user struct {
 	u                    User
 	permissionsAndRoles  []PermissionGroupAndRole
 	permissionGroupCache *GroupCache
+
+	administrator, visitor int64
 }
 
 func (u *user) ID() int64 {
@@ -99,7 +121,15 @@ func (u *user) Data(key string) interface{} {
 }
 
 func (u *user) HasPermission(permissionID, op string) bool {
+	if u.Name() == "admin" {
+		return true
+	}
+
 	for _, pr := range u.permissionsAndRoles {
+		if u.administrator != 0 && pr.RoleID == u.administrator {
+			return true
+		}
+
 		enableOperation := false
 		switch op {
 		case web_ext.CREATE:
@@ -109,6 +139,10 @@ func (u *user) HasPermission(permissionID, op string) bool {
 		case web_ext.UPDATE:
 			enableOperation = pr.UpdateOperation
 		case web_ext.QUERY:
+			if u.visitor != 0 && pr.RoleID == u.visitor {
+				return true
+			}
+
 			enableOperation = pr.QueryOperation
 			if pr.CreateOperation ||
 				pr.DeleteOperation ||
