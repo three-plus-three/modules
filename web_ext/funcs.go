@@ -116,12 +116,12 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 func CurrentUserHasPermission(lifecycle *Lifecycle, ctx map[string]interface{}, permissionName string, opList []string) bool {
 	o := ctx["currentUser"]
 	if o == nil {
-		return true
+		return false
 	}
 
 	u, ok := o.(User)
 	if !ok {
-		return true
+		return false
 	}
 	for _, op := range opList {
 		if u.HasPermission(permissionName, op) {

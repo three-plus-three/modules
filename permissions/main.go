@@ -21,22 +21,63 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 	permissionGroupCache.Init(5*time.Minute, refresh)
 	refresh()
 
+	var administrator, visitor int64
+
 	return func(userName string) web_ext.User {
 		if e := lastErr.Get(); e != nil {
 			panic(e)
 		}
+		if administrator == 0 {
+			var adminRole Role
+			if e := db.Roles().Where(orm.Cond{"name": "administrator"}).One(&adminRole); e == nil {
+				administrator = adminRole.ID
+			} else {
+				log.Println("[warn] role administrator isnot found -", e)
+			}
+		}
+		if visitor == 0 {
+			var visitorRole Role
+			if e := db.Roles().Where(orm.Cond{"name": "visitor"}).One(&visitorRole); e == nil {
+				visitor = visitorRole.ID
+			} else {
+				log.Println("[warn] role visitor isnot found -", e)
+			}
+		}
 
 		var u = &user{db: db,
 			lifecycle:            lifecycle,
-			permissionGroupCache: permissionGroupCache}
+			permissionGroupCache: permissionGroupCache,
+			administrator:        administrator,
+			visitor:              visitor}
 		err := db.Users().Where(orm.Cond{"name": userName}).One(&u.u)
 		if err != nil {
-			panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
+			if userName != "admin" {
+				panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
+			}
+			u.u.Name = userName
+			return u
+		}
+
+		rolesqlStr := "select * from " + db.Roles().Name() + " as roles " +
+			" where exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
+			db.Users().Name() + " as users on users_roles.user_id = users.id where users_roles.role_id = roles.id and users.name = ?)"
+		err = db.Roles().Query(rolesqlStr, userName).All(&u.roles)
+		if err != nil {
+			log.Println("[permission] ", rolesqlStr, userName)
+			panic(errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error()))
+		}
+
+		if u.administrator != 0 {
+			for _, role := range u.roles {
+				if role.ID == u.administrator {
+					return u
+				}
+			}
 		}
 
 		sqlStr := "select * from " + db.PermissionGroupsAndRoles().Name() + " as pg_role " +
-			" where exists (select * from " + db.UsersAndRoles().Name() + " as user_role join " +
-			db.Users().Name() + " as tuser on user_role.user_id = tuser.id where user_role.role_id = pg_role.role_id and tuser.name = ?)"
+			" where exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
+			db.Users().Name() + " as users on users_roles.user_id = users.id where users_roles.role_id = pg_role.role_id and users.name = ?)"
 
 		err = db.PermissionGroupsAndRoles().Query(sqlStr, userName).All(&u.permissionsAndRoles)
 		if err != nil {
@@ -62,8 +103,11 @@ type user struct {
 	db                   *DB
 	lifecycle            *web_ext.Lifecycle
 	u                    User
+	roles                []Role
 	permissionsAndRoles  []PermissionGroupAndRole
 	permissionGroupCache *GroupCache
+
+	administrator, visitor int64
 }
 
 func (u *user) ID() int64 {
@@ -99,6 +143,25 @@ func (u *user) Data(key string) interface{} {
 }
 
 func (u *user) HasPermission(permissionID, op string) bool {
+	if u.Name() == "admin" {
+		return true
+	}
+	if u.administrator != 0 {
+		for _, role := range u.roles {
+			if role.ID == u.administrator {
+				return true
+			}
+		}
+	}
+
+	if u.visitor != 0 && web_ext.QUERY == op {
+		for _, role := range u.roles {
+			if role.ID == u.visitor {
+				return true
+			}
+		}
+	}
+
 	for _, pr := range u.permissionsAndRoles {
 		enableOperation := false
 		switch op {

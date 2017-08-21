@@ -63,9 +63,9 @@ func (cache *GroupCache) refresh(db *DB) error {
 	for _, p := range pagArray {
 		if old, ok := values[p.GroupID]; ok {
 			if p.Type == PERMISSION_TAG {
-				old.PermissionIDs = append(old.PermissionIDs, p.PermissionObject)
-			} else {
 				old.PermissionTags = append(old.PermissionTags, p.PermissionObject)
+			} else {
+				old.PermissionIDs = append(old.PermissionIDs, p.PermissionObject)
 			}
 		}
 	}
