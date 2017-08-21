@@ -67,6 +67,10 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return urlutil.JoinWith(lifecycle.ApplicationContext, s)
 	}
 
+	revel.TemplateFuncs["appRoot"] = func(s ...string) string {
+		return urlutil.JoinWith(lifecycle.ApplicationRoot, s)
+	}
+
 	revel.TemplateFuncs["urlRoot"] = func(s ...string) string {
 		return urlutil.JoinWith(lifecycle.URLRoot, s)
 	}
