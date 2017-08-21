@@ -67,6 +67,10 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return urlutil.JoinWith(lifecycle.ApplicationContext, s)
 	}
 
+	revel.TemplateFuncs["urlRoot"] = func(s ...string) string {
+		return urlutil.JoinWith(lifecycle.URLRoot, s)
+	}
+
 	funcs := functions.HtmlFuncMap()
 	for k, v := range funcs {
 		if _, ok := revel.TemplateFuncs[k]; !ok {
