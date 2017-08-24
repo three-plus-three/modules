@@ -2,10 +2,11 @@ package toolbox
 
 // Menu 表示一个菜单
 type Menu struct {
-	Name  string
-	Title string
-	URL   string
-	Icon  string
+	Name       string
+	Permission string
+	Title      string
+	URL        string
+	Icon       string
 
 	Children []Menu
 }
