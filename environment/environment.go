@@ -103,7 +103,7 @@ var (
 		{Id: ENV_ASSET_MANAGE_PROXY_ID, Name: "am", Host: "127.0.0.1", Port: "37092"},
 		{Id: ENV_NSM_PROXY_ID, Name: "nsm", Host: "127.0.0.1", Port: "37093"},
 		{Id: ENV_MINIO_PROXY_ID, Name: "minio", Host: "127.0.0.1", Port: "37094"},
-		{Id: ENV_UM_PROXY_ID, Name: "um", Host: "127.0.0.1", Port: "37094"},
+		{Id: ENV_UM_PROXY_ID, Name: "um", Host: "127.0.0.1", Port: "37095"},
 	}
 )
 
