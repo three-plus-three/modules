@@ -76,8 +76,8 @@ func GetPermissions() ([]Permission, error) {
 	return all, nil
 }
 
-//获取权限
-func GetPermissionGroups() ([]Group, error) {
+//获取权限组
+func GetDefaultPermissionGroups() ([]Group, error) {
 	var allGroups []Group
 	for _, p := range privoders {
 		groups, err := p.GetGroups()
