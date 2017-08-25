@@ -9,9 +9,9 @@ import (
 
 type PermissionGroup struct {
 	ID          int64     `json:"id" xorm:"id pk autoincr"`
-	Name        string    `json:"name" xorm:"name unique notnull"`
+	Name        string    `json:"name" xorm:"name unique(pname) notnull"`
 	Description string    `json:"description,omitempty" xorm:"description"`
-	ParentID    int64     `json:"parent_id,omitempty" xorm:"parent_id"`
+	ParentID    int64     `json:"parent_id,omitempty" xorm:"parent_id unique(pname)"`
 	CreatedAt   time.Time `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
 }

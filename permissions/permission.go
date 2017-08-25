@@ -173,22 +173,17 @@ func appendGroups(allGroups, groups []Group) []Group {
 	return allGroups
 }
 
-func appendString(a []string, s string) []string {
-	found := false
-	for _, v := range a {
-		if v == s {
-			found = true
-		}
-	}
-	if found {
-		return a
-	}
-	return append(a, s)
-}
-
 func mergeStrings(a, b []string) []string {
 	for _, s := range b {
-		a = appendString(a, s)
+		found := false
+		for _, v := range a {
+			if v == s {
+				found = true
+			}
+		}
+		if !found {
+			a = append(a, s)
+		}
 	}
 	return a
 }
