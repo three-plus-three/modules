@@ -54,6 +54,7 @@ const (
 	ENV_NSM_PROXY_ID
 	ENV_MINIO_PROXY_ID
 	ENV_USER_MANAGE_PROXY_ID
+	ENV_ITSM_PROXY_ID
 	ENV_MAX_PROXY_ID
 
 	ENV_MIN_PROXY_ID = ENV_REDIS_PROXY_ID
@@ -104,6 +105,7 @@ var (
 		{Id: ENV_NSM_PROXY_ID, Name: "nsm", Host: "127.0.0.1", Port: "37093"},
 		{Id: ENV_MINIO_PROXY_ID, Name: "minio", Host: "127.0.0.1", Port: "37094"},
 		{Id: ENV_UM_PROXY_ID, Name: "um", Host: "127.0.0.1", Port: "37095"},
+		{Id: ENV_ITSM_PROXY_ID, Name: "itsm", Host: "127.0.0.1", Port: "37096"},
 	}
 )
 

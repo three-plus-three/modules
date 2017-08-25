@@ -2,6 +2,7 @@ package web_ext
 
 import (
 	"crypto/sha1"
+	"flag"
 	"log"
 	"os"
 	"path/filepath"
@@ -16,13 +17,10 @@ import (
 
 var lifecycleData *Lifecycle
 
-func Init(projectName, projectTitle, projectContext string,
+func Init(serviceID environment.ENV_PROXY_TYPE,
+	projectName, projectTitle string,
 	cb func(*Lifecycle) error,
 	createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
-
-	if projectContext == "" {
-		projectContext = projectName
-	}
 
 	// Filters is the default set of global filters.
 	revel.Filters = []revel.Filter{
@@ -62,6 +60,9 @@ func Init(projectName, projectTitle, projectContext string,
 			os.Exit(-1)
 			return
 		}
+
+		serviceObject := env.GetServiceConfig(serviceID)
+		projectContext := serviceObject.Name
 
 		lifecycle.URLPrefix = env.DaemonUrlPath
 		lifecycle.URLRoot = env.DaemonUrlPath
@@ -116,6 +117,12 @@ func Init(projectName, projectTitle, projectContext string,
 			env.RawDaemonUrlPath, sha1.New, secretKey)
 
 		initTemplateFuncs(lifecycle)
+
+		if !revel.DevMode {
+			if fp := flag.Lookup("port"); nil != fp && fp.Value.String() == fp.DefValue {
+				revel.Server.Addr = serviceObject.ListenAddr("")
+			}
+		}
 	}, 0)
 
 	revel.OnAppStart(func() {
