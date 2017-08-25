@@ -17,8 +17,7 @@ import (
 
 var lifecycleData *Lifecycle
 
-func Init(serviceID environment.ENV_PROXY_TYPE,
-	projectName, projectTitle string,
+func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 	cb func(*Lifecycle) error,
 	createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
 
@@ -41,7 +40,18 @@ func Init(serviceID environment.ENV_PROXY_TYPE,
 	}
 
 	revel.OnAppStart(func() {
-		env, err := environment.NewEnvironment(environment.Options{Name: projectName,
+		env, err := environment.NewEnvironment(environment.Options{Name: "",
+			ConfDir: filepath.Join(os.Getenv("hw_root_dir"), "conf")})
+		if nil != err {
+			log.Println(err)
+			os.Exit(-1)
+			return
+		}
+
+		serviceObject := env.GetServiceConfig(serviceID)
+		projectContext := serviceObject.Name
+
+		env, err = environment.NewEnvironment(environment.Options{Name: serviceObject.Name,
 			ConfDir: filepath.Join(os.Getenv("hw_root_dir"), "conf")})
 		if nil != err {
 			log.Println(err)
@@ -60,9 +70,6 @@ func Init(serviceID environment.ENV_PROXY_TYPE,
 			os.Exit(-1)
 			return
 		}
-
-		serviceObject := env.GetServiceConfig(serviceID)
-		projectContext := serviceObject.Name
 
 		lifecycle.URLPrefix = env.DaemonUrlPath
 		lifecycle.URLRoot = env.DaemonUrlPath
