@@ -35,17 +35,32 @@ func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, 
 		configs = append(configs, *config)
 	}
 
-	return PermissionGetFunc(func() ([]Permission, error) {
-		var allPermissions []Permission
-		for _, config := range configs {
-			permissions, err := ReadHTTP(config.Name, config.URL)
-			if err != nil {
-				return nil, err
+	return PermissionProviderFunc{
+		ProviderName: "http",
+
+		Permissions: func() ([]Permission, error) {
+			var allPermissions []Permission
+			for _, config := range configs {
+				permissions, _, err := ReadHTTP(config.Name, config.URL)
+				if err != nil {
+					return nil, err
+				}
+				allPermissions = append(allPermissions, permissions...)
 			}
-			allPermissions = append(allPermissions, permissions...)
-		}
-		return allPermissions, nil
-	}), nil
+			return allPermissions, nil
+		},
+
+		Groups: func() ([]Group, error) {
+			var allGroups []Group
+			for _, config := range configs {
+				_, groups, err := ReadHTTP(config.Name, config.URL)
+				if err != nil {
+					return nil, err
+				}
+				allGroups = appendGroups(allGroups, groups)
+			}
+			return allGroups, nil
+		}}, nil
 }
 
 func ReadHTTPConfig(filename string, args map[string]interface{}) (*HTTPConfig, error) {
@@ -77,29 +92,32 @@ func ReadHTTPConfig(filename string, args map[string]interface{}) (*HTTPConfig, 
 	return &config, nil
 }
 
-func ReadHTTP(filename, url string) ([]Permission, error) {
+func ReadHTTP(filename, url string) ([]Permission, []Group, error) {
 	response, err := http.Get(url)
 	if err != nil {
-		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
+		return nil, nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
 	}
 	if response.StatusCode != http.StatusOK {
 		bs, _ := ioutil.ReadAll(response.Body)
 		if len(bs) == 0 {
-			return nil, errors.New("read web in '" + filename + "' fail: " + response.Status)
+			return nil, nil, errors.New("read web in '" + filename + "' fail: " + response.Status)
 		}
-		return nil, errors.New("read web in '" + filename + "' fail: " + response.Status + "\r\n" + string(bs))
+		return nil, nil, errors.New("read web in '" + filename + "' fail: " + response.Status + "\r\n" + string(bs))
 	}
 
 	var buf bytes.Buffer
 	_, err = io.Copy(&buf, response.Body)
 	if err != nil {
-		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
+		return nil, nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
 	}
 
-	var permissions []Permission
-	err = json.NewDecoder(&buf).Decode(&permissions)
-	if err != nil {
-		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error() + "\r\n" + buf.String())
+	var data struct {
+		Permissions []Permission
+		Groups      []Group
 	}
-	return permissions, nil
+	err = json.NewDecoder(&buf).Decode(&data)
+	if err != nil {
+		return nil, nil, errors.New("read web in '" + filename + "' fail: " + err.Error() + "\r\n" + buf.String())
+	}
+	return data.Permissions, data.Groups, nil
 }

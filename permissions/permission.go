@@ -5,6 +5,15 @@ import (
 	"time"
 )
 
+type Group struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+
+	Children       []Group  `json:"children,omitempty"`
+	PermissionIDs  []string `json:"permissions,omitempty"`
+	PermissionTags []string `json:"tags,omitempty"`
+}
+
 type Permission struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
@@ -67,6 +76,20 @@ func GetPermissions() ([]Permission, error) {
 	return all, nil
 }
 
+//获取权限
+func GetPermissionGroups() ([]Group, error) {
+	var allGroups []Group
+	for _, p := range privoders {
+		groups, err := p.GetGroups()
+		if err != nil {
+			return nil, err
+		}
+
+		allGroups = appendGroups(allGroups, groups)
+	}
+	return allGroups, nil
+}
+
 //缓存
 var permissionsCache PermissionsCache
 
@@ -102,11 +125,70 @@ func RegisterPermissions(privoder PermissionProvider) {
 var privoders []PermissionProvider
 
 type PermissionProvider interface {
+	Name() string
 	GetPermissions() ([]Permission, error)
+	GetGroups() ([]Group, error)
 }
 
-type PermissionGetFunc func() ([]Permission, error)
+type PermissionProviderFunc struct {
+	ProviderName string
+	Permissions  func() ([]Permission, error)
+	Groups       func() ([]Group, error)
+}
 
-func (f PermissionGetFunc) GetPermissions() ([]Permission, error) {
-	return f()
+func (f PermissionProviderFunc) Name() string {
+	return f.ProviderName
+}
+
+func (f PermissionProviderFunc) GetPermissions() ([]Permission, error) {
+	if f.Permissions == nil {
+		return nil, nil
+	}
+	return f.Permissions()
+}
+
+func (f PermissionProviderFunc) GetGroups() ([]Group, error) {
+	if f.Groups == nil {
+		return nil, nil
+	}
+	return f.Groups()
+}
+
+func appendGroups(allGroups, groups []Group) []Group {
+	for _, group := range groups {
+		found := false
+		for idx := range allGroups {
+			if allGroups[idx].Name == group.Name {
+				found = true
+
+				allGroups[idx].PermissionIDs = mergeStrings(allGroups[idx].PermissionIDs, group.PermissionIDs)
+				allGroups[idx].PermissionTags = mergeStrings(allGroups[idx].PermissionTags, group.PermissionTags)
+				allGroups[idx].Children = appendGroups(allGroups[idx].Children, group.Children)
+			}
+		}
+		if !found {
+			allGroups = append(allGroups, group)
+		}
+	}
+	return allGroups
+}
+
+func appendString(a []string, s string) []string {
+	found := false
+	for _, v := range a {
+		if v == s {
+			found = true
+		}
+	}
+	if found {
+		return a
+	}
+	return append(a, s)
+}
+
+func mergeStrings(a, b []string) []string {
+	for _, s := range b {
+		a = appendString(a, s)
+	}
+	return a
 }

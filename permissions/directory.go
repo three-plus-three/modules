@@ -9,35 +9,56 @@ import (
 )
 
 func LoadDirectory(dirname string) PermissionProvider {
-	return PermissionGetFunc(func() ([]Permission, error) {
-		files, err := ioutil.ReadDir(dirname)
-		if err != nil {
-			return nil, err
-		}
-
-		var allPermissions []Permission
-		for _, file := range files {
-			permissions, err := ReadFile(filepath.Join(dirname, file.Name()))
+	return PermissionProviderFunc{
+		ProviderName: "directory",
+		Permissions: func() ([]Permission, error) {
+			files, err := ioutil.ReadDir(dirname)
 			if err != nil {
 				return nil, err
 			}
-			allPermissions = append(allPermissions, permissions...)
-		}
-		return allPermissions, nil
-	})
+
+			var allPermissions []Permission
+			for _, file := range files {
+				permissions, _, err := ReadFile(filepath.Join(dirname, file.Name()))
+				if err != nil {
+					return nil, err
+				}
+				allPermissions = append(allPermissions, permissions...)
+			}
+			return allPermissions, nil
+		},
+		Groups: func() ([]Group, error) {
+			files, err := ioutil.ReadDir(dirname)
+			if err != nil {
+				return nil, err
+			}
+
+			var allGroups []Group
+			for _, file := range files {
+				_, groups, err := ReadFile(filepath.Join(dirname, file.Name()))
+				if err != nil {
+					return nil, err
+				}
+				allGroups = appendGroups(allGroups, groups)
+			}
+			return allGroups, nil
+		}}
 }
 
-func ReadFile(filename string) ([]Permission, error) {
+func ReadFile(filename string) ([]Permission, []Group, error) {
 	out, err := os.Open(filename)
 	if err != nil {
-		return nil, errors.New("ReadFile: " + err.Error())
+		return nil, nil, errors.New("ReadFile: " + err.Error())
 	}
 	defer out.Close()
 
-	var permissions []Permission
-	err = json.NewDecoder(out).Decode(&permissions)
-	if err != nil {
-		return nil, errors.New("read '" + filename + "' fail: " + err.Error())
+	var data struct {
+		Permissions []Permission
+		Groups      []Group
 	}
-	return permissions, nil
+	err = json.NewDecoder(out).Decode(&data)
+	if err != nil {
+		return nil, nil, errors.New("read '" + filename + "' fail: " + err.Error())
+	}
+	return data.Permissions, data.Groups, nil
 }

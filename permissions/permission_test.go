@@ -37,13 +37,14 @@ func TestHasPermission(t *testing.T) {
 		return
 	}
 
-	permissionProvider := PermissionGetFunc(func() ([]Permission, error) {
-		allPermissions := []Permission{Permission{"um_1", "1", "2", []string{"um"}},
-			Permission{"um_2", "2", "2", []string{"um"}},
-			Permission{"as_1", "3", "2", []string{"as"}},
-			Permission{"as_2", "4", "2", []string{"as"}}}
-		return allPermissions, nil
-	})
+	permissionProvider := PermissionProviderFunc{
+		Permissions: func() ([]Permission, error) {
+			allPermissions := []Permission{Permission{"um_1", "1", "2", []string{"um"}},
+				Permission{"um_2", "2", "2", []string{"um"}},
+				Permission{"as_1", "3", "2", []string{"as"}},
+				Permission{"as_2", "4", "2", []string{"as"}}}
+			return allPermissions, nil
+		}}
 
 	RegisterPermissions(permissionProvider)
 
