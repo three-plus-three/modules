@@ -190,3 +190,37 @@ func TestHasPermission(t *testing.T) {
 	}
 
 }
+
+func TestSaveDefaultPermissionGroups(t *testing.T) {
+	env := env_tests.Clone(nil)
+
+	lifecycle, err := web_ext.NewLifecycle(env)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	var db = DB{lifecycle.ModelEngine}
+	permissionProvider := PermissionProviderFunc{
+		ProviderName: "",
+		Permissions: func() ([]Permission, error) {
+			allPermissions := []Permission{Permission{"um_1", "1", "2", []string{"um"}},
+				Permission{"um_2", "2", "2", []string{"um"}},
+				Permission{"um_3", "3", "2", []string{"um"}},
+				Permission{"um_4", "4", "2", []string{"um"}}}
+			return allPermissions, nil
+		},
+		Groups: func() ([]Group, error) {
+			allGroups := []Group{Group{Name: "分组1", Children: []Group{
+				Group{Name: "分组1-1", PermissionIDs: []string{"um_3", "um_4"}},
+				Group{Name: "分组1-2", PermissionIDs: []string{"um_1", "um_2"}}}},
+				Group{Name: "分组2", Children: []Group{
+					Group{Name: "分组2-1", PermissionTags: []string{"um"}},
+					Group{Name: "分组2-2", PermissionIDs: []string{"um_3", "um_3"}}}}}
+			return allGroups, nil
+		}}
+	RegisterPermissions(permissionProvider)
+	err = SaveDefaultPermissionGroups(&db)
+	if err != nil {
+		t.Error(err)
+	}
+}

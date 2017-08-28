@@ -21,3 +21,6 @@ out/
 *.log
 
 .idea
+
+
+environment/env_tests/test_*.properties

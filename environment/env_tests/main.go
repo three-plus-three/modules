@@ -18,7 +18,6 @@ var data_db_drv = flag.String("data_db.driver", "postgres", "the db driver")
 var env_file = flag.String("env_file", "test_postgres.properties", "")
 
 func Clone(env *environment.Environment) *environment.Environment {
-
 	var copyed *environment.Environment
 	if env == nil {
 		file := *env_file
