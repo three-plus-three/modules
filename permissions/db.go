@@ -21,6 +21,11 @@ func (db *DB) Users() *orm.Collection {
 		return &User{}
 	})(db.Engine)
 }
+func (db *DB) OnlineUsers() *orm.Collection {
+	return orm.New(func() interface{} {
+		return &OnlineUser{}
+	})(db.Engine)
+}
 func (db *DB) UsersAndRoles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserAndRole{}
@@ -56,6 +61,7 @@ func InitTables(engine *xorm.Engine) error {
 	beans := []interface{}{
 		&PermissionGroup{},
 		&User{},
+		&OnlineUser{},
 		&Role{},
 		&UserAndRole{},
 		&PermissionAndGroup{},
@@ -92,6 +98,7 @@ func DropTables(engine *xorm.Engine) error {
 		&PermissionGroupAndRole{},
 		&PermissionGroup{},
 		&UserGroup{},
+		&OnlineUser{},
 		&User{},
 		&Role{},
 	}

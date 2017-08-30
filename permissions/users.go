@@ -6,6 +6,17 @@ import (
 	"github.com/revel/revel"
 )
 
+type OnlineUser struct {
+	UserID    int64     `json:"user_id" xorm:"user_id pk"`
+	Address   string    `json:"address" xorm:"address"`
+	CreatedAt time.Time `json:"created_at,omitempty" xorm:"created_at created"`
+	UpdatedAt time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
+}
+
+func (onlineUser *OnlineUser) TableName() string {
+	return "hengwei_online_users"
+}
+
 type User struct {
 	ID          int64                  `json:"id" xorm:"id pk autoincr"`
 	Name        string                 `json:"name" xorm:"name notnull"`
@@ -13,6 +24,7 @@ type User struct {
 	Description string                 `json:"description,omitempty" xorm:"description"`
 	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb"`
 	Source      string                 `json:"source,omitempty" xorm:"source"`
+	LockedAt    *time.Time             `json:"locked_at,omitempty" xorm:"locked_at null"`
 	CreatedAt   time.Time              `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt   time.Time              `json:"updated_at,omitempty" xorm:"updated_at updated"`
 }
