@@ -2,6 +2,7 @@ package permissions
 
 import (
 	"crypto/tls"
+	"fmt"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ type ADConfig struct {
 	Username  string
 	Password  string
 	BaseDN    string
+	Filter    string
 }
 
 //读取AD的配置
@@ -23,6 +25,7 @@ func readLDAPConfig(env *environment.Environment) (ADConfig, error) {
 	ldapServer := env.Config.StringWithDefault("users.ldap_address", "")
 	ldapTLS := env.Config.BoolWithDefault("users.ldap_tls", false)
 
+	ldapFilter := env.Config.StringWithDefault("users.ldap_filter", "(&(objectClass=organizationalPerson))")
 	ldapUsername := env.Config.StringWithDefault("users.ldap_username", "")
 	ldapPassword := env.Config.StringWithDefault("users.ldap_password", "")
 	ldapDN := env.Config.StringWithDefault("users.ldap_dn", "")
@@ -33,6 +36,7 @@ func readLDAPConfig(env *environment.Environment) (ADConfig, error) {
 		Username:  ldapUsername,
 		Password:  ldapPassword,
 		BaseDN:    ldapDN,
+		Filter:    ldapFilter,
 	}, nil
 }
 
@@ -61,11 +65,13 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 		return nil, err
 	}
 
+	ldapRolesFieldName := env.Config.StringWithDefault("users.ldap_roles", "memberOf")
+
 	//获取数据
 	sr, err := l.Search(ldap.NewSearchRequest(
 		cfg.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		"(&(objectClass=organizationalPerson))",
+		cfg.Filter,
 		[]string{},
 		nil,
 	))
@@ -75,10 +81,29 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 
 	var users = make([]User, 0, len(sr.Entries))
 	for i := 0; i < len(sr.Entries); i++ {
+		var roles []string
+		if ldapRolesFieldName != "" {
+			roleValues := sr.Entries[i].GetAttributeValues(ldapRolesFieldName)
+			roles = make([]string, 0, len(roleValues))
+			for _, roleName := range roleValues {
+				dn, err := ldap.ParseDN(roleName)
+				if err != nil {
+					roles = append(roles, roleName)
+					continue
+				}
+
+				if len(dn.RDNs) == 0 || len(dn.RDNs[0].Attributes) == 0 {
+					continue
+				}
+				roles = append(roles, fmt.Sprintf("%#v", dn.RDNs[0].Attributes[0].Value))
+			}
+		}
+
 		users = append(users, User{
 			Name:        sr.Entries[i].GetAttributeValue("name"),
 			Description: sr.Entries[i].GetAttributeValue("description"),
 			Attributes: map[string]interface{}{
+				"roles":           roles,
 				"streetAddress":   sr.Entries[i].GetAttributeValue("streetAddress"),
 				"company":         sr.Entries[i].GetAttributeValue("company"),
 				"telephoneNumber": sr.Entries[i].GetAttributeValue("telephoneNumber")},
