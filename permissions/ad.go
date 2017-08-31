@@ -1,6 +1,7 @@
 package permissions
 
 import (
+	"crypto/tls"
 	"strings"
 	"time"
 
@@ -36,7 +37,6 @@ func readLDAPConfig(env *environment.Environment) (ADConfig, error) {
 }
 
 func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
-	var users []User
 	cfg, err := readLDAPConfig(env)
 	if err != nil {
 		return nil, err
@@ -45,29 +45,35 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 	//连接活动目录
 	l, err := ldap.Dial("tcp", cfg.Address)
 	if err != nil {
-		return users, err
+		return nil, err
 	}
 	defer l.Close()
 
-	err = l.Bind(cfg.Username, cfg.Password)
-	if err != nil {
-		return users, err
+	if cfg.EnableTLS {
+		err = l.StartTLS(&tls.Config{InsecureSkipVerify: true})
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	searchRequest := ldap.NewSearchRequest(
+	err = l.Bind(cfg.Username, cfg.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	//获取数据
+	sr, err := l.Search(ldap.NewSearchRequest(
 		cfg.BaseDN,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
 		"(&(objectClass=organizationalPerson))",
 		[]string{},
 		nil,
-	)
-
-	//获取数据
-	sr, err := l.Search(searchRequest)
+	))
 	if err != nil {
-		return users, err
+		return nil, err
 	}
 
+	var users = make([]User, 0, len(sr.Entries))
 	for i := 0; i < len(sr.Entries); i++ {
 		users = append(users, User{
 			Name:        sr.Entries[i].GetAttributeValue("name"),
