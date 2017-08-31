@@ -97,6 +97,8 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 				}
 				roles = append(roles, fmt.Sprintf("%#v", dn.RDNs[0].Attributes[0].Value))
 			}
+
+			userData["raw_roles"] = roleValues
 		}
 
 		users = append(users, User{
