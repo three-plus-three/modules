@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/three-plus-three/modules/environment"
-
-	"gopkg.in/ldap.v2"
 )
 
 type ADConfig struct {
@@ -82,6 +80,7 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 	var users = make([]User, 0, len(sr.Entries))
 	for i := 0; i < len(sr.Entries); i++ {
 		var roles []string
+		var rawRoles []string
 		if ldapRolesFieldName != "" {
 			roleValues := sr.Entries[i].GetAttributeValues(ldapRolesFieldName)
 			roles = make([]string, 0, len(roleValues))
@@ -98,7 +97,7 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 				roles = append(roles, fmt.Sprintf("%#v", dn.RDNs[0].Attributes[0].Value))
 			}
 
-			userData["raw_roles"] = roleValues
+			rawRoles = roleValues
 		}
 
 		users = append(users, User{
@@ -106,10 +105,11 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 			Description: sr.Entries[i].GetAttributeValue("description"),
 			Attributes: map[string]interface{}{
 				"roles":           roles,
+				"raw_roles":       rawRoles,
 				"streetAddress":   sr.Entries[i].GetAttributeValue("streetAddress"),
 				"company":         sr.Entries[i].GetAttributeValue("company"),
 				"telephoneNumber": sr.Entries[i].GetAttributeValue("telephoneNumber")},
-			Source:    "AD",
+			Source:    "ldap",
 			CreatedAt: convertToTime(strings.Split(sr.Entries[i].GetAttributeValue("whenCreated"), ".")[0]),
 			UpdatedAt: convertToTime(strings.Split(sr.Entries[i].GetAttributeValue("whenChanged"), ".")[0]),
 		})
