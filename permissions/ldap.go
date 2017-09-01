@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/three-plus-three/modules/environment"
+	ldap "gopkg.in/ldap.v2"
 )
 
 type ADConfig struct {
