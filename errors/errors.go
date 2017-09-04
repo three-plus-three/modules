@@ -41,18 +41,11 @@ type PGError interface {
 	Get(k byte) (v string)
 }
 
-func Wrap(s string, e error) error {
+func Wrap(e error, s string, args ...interface{}) error {
 	if "" == s {
 		return e
 	}
-	return native.New(s + ": " + e.Error())
-}
-
-func WrapFmt(e error, fmt string, args ...interface{}) error {
-	if "" == fmt {
-		return e
-	}
-	return native.New(fmt.Sprint(fmt, args) + ": " + e.Error())
+	return native.New(fmt.Sprintf(s, args...) + ": " + e.Error())
 }
 
 type MutiErrors struct {
