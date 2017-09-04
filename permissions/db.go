@@ -22,8 +22,8 @@ func (db *DB) Begin() (*DB, error) {
 	if db.session != nil {
 		return nil, errors.New("run in the transaction")
 	}
-	db.session = db.Engine.NewSession()
-	return &DB{Engine: db.Engine, session: db.session}, nil
+	session := db.Engine.NewSession()
+	return &DB{Engine: db.Engine, session: session}, nil
 }
 
 func (db *DB) Commit() error {
