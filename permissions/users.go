@@ -19,7 +19,7 @@ func (onlineUser *OnlineUser) TableName() string {
 
 type User struct {
 	ID          int64                  `json:"id" xorm:"id pk autoincr"`
-	Name        string                 `json:"name" xorm:"name notnull"`
+	Name        string                 `json:"name" xorm:"name unique notnull"`
 	Password    string                 `json:"password,omitempty" xorm:"password"`
 	Description string                 `json:"description,omitempty" xorm:"description"`
 	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb"`

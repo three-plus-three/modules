@@ -68,8 +68,8 @@ const QUERY = web_ext.QUERY
 
 type PermissionGroupAndRole struct {
 	ID              int64 `json:"id" xorm:"id pk autoincr"`
-	GroupID         int64 `json:"group_id" xorm:"group_id notnull"`
-	RoleID          int64 `json:"role_id" xorm:"role_id notnull"`
+	GroupID         int64 `json:"group_id" xorm:"group_id unique(group_role) notnull"`
+	RoleID          int64 `json:"role_id" xorm:"role_id unique(group_role) notnull"`
 	CreateOperation bool  `json:"create_operation,omitempty" xorm:"create_operation"`
 	DeleteOperation bool  `json:"delete_operation,omitempty" xorm:"delete_operation"`
 	UpdateOperation bool  `json:"update_operation,omitempty" xorm:"update_operation"`
