@@ -28,7 +28,7 @@ func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, 
 	var configs []HTTPConfig
 
 	for _, file := range files {
-		config, err := ReadHTTPConfig(filepath.Join(dirname, file.Name()), args)
+		config, err := ReadHTTPConfigFromFile(filepath.Join(dirname, file.Name()), args)
 		if err != nil {
 			return nil, err
 		}
@@ -41,7 +41,7 @@ func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, 
 		Permissions: func() ([]Permission, error) {
 			var allPermissions []Permission
 			for _, config := range configs {
-				permissions, _, err := ReadHTTP(config.Name, config.URL)
+				permissions, _, err := ReadPermissionsFromHTTP(config.Name, config.URL)
 				if err != nil {
 					return nil, err
 				}
@@ -53,7 +53,7 @@ func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, 
 		Groups: func() ([]Group, error) {
 			var allGroups []Group
 			for _, config := range configs {
-				_, groups, err := ReadHTTP(config.Name, config.URL)
+				_, groups, err := ReadPermissionsFromHTTP(config.Name, config.URL)
 				if err != nil {
 					return nil, err
 				}
@@ -63,10 +63,10 @@ func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, 
 		}}, nil
 }
 
-func ReadHTTPConfig(filename string, args map[string]interface{}) (*HTTPConfig, error) {
+func ReadHTTPConfigFromFile(filename string, args map[string]interface{}) (*HTTPConfig, error) {
 	out, err := os.Open(filename)
 	if err != nil {
-		return nil, errors.New("ReadFile: " + err.Error())
+		return nil, errors.New("ReadHTTPConfigFromFile: " + err.Error())
 	}
 	defer out.Close()
 
@@ -92,7 +92,7 @@ func ReadHTTPConfig(filename string, args map[string]interface{}) (*HTTPConfig, 
 	return &config, nil
 }
 
-func ReadHTTP(filename, url string) ([]Permission, []Group, error) {
+func ReadPermissionsFromHTTP(filename, url string) ([]Permission, []Group, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, nil, errors.New("read web in '" + filename + "' fail: " + err.Error())

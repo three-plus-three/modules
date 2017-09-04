@@ -19,7 +19,7 @@ func LoadDirectory(dirname string) PermissionProvider {
 
 			var allPermissions []Permission
 			for _, file := range files {
-				permissions, _, err := ReadFile(filepath.Join(dirname, file.Name()))
+				permissions, _, err := ReadPermissionsFromFile(filepath.Join(dirname, file.Name()))
 				if err != nil {
 					return nil, err
 				}
@@ -35,7 +35,7 @@ func LoadDirectory(dirname string) PermissionProvider {
 
 			var allGroups []Group
 			for _, file := range files {
-				_, groups, err := ReadFile(filepath.Join(dirname, file.Name()))
+				_, groups, err := ReadPermissionsFromFile(filepath.Join(dirname, file.Name()))
 				if err != nil {
 					return nil, err
 				}
@@ -45,10 +45,10 @@ func LoadDirectory(dirname string) PermissionProvider {
 		}}
 }
 
-func ReadFile(filename string) ([]Permission, []Group, error) {
+func ReadPermissionsFromFile(filename string) ([]Permission, []Group, error) {
 	out, err := os.Open(filename)
 	if err != nil {
-		return nil, nil, errors.New("ReadFile: " + err.Error())
+		return nil, nil, errors.New("ReadPermissionsFromFile: " + err.Error())
 	}
 	defer out.Close()
 
