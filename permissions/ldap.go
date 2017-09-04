@@ -7,8 +7,7 @@ import (
 	"time"
 
 	"github.com/three-plus-three/modules/environment"
-
-	"gopkg.in/ldap.v2"
+	ldap "gopkg.in/ldap.v2"
 )
 
 type ldapConfig struct {
