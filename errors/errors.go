@@ -48,6 +48,13 @@ func Wrap(s string, e error) error {
 	return native.New(s + ": " + e.Error())
 }
 
+func WrapFmt(e error, fmt string, args ...interface{}) error {
+	if "" == fmt {
+		return e
+	}
+	return native.New(fmt.Sprint(fmt, args) + ": " + e.Error())
+}
+
 type MutiErrors struct {
 	msg  string
 	errs []error
