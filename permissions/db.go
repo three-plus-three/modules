@@ -1,6 +1,8 @@
 package permissions
 
 import (
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/go-xorm/xorm"
@@ -8,53 +10,88 @@ import (
 )
 
 type DB struct {
-	Engine *xorm.Engine
+	Engine  *xorm.Engine
+	session *xorm.Session
+}
+
+func (db *DB) WithSession(sess *xorm.Session) *DB {
+	return &DB{Engine: db.Engine, session: sess}
+}
+
+func (db *DB) Begin() (*DB, error) {
+	if db.session != nil {
+		return nil, errors.New("run in the transaction")
+	}
+	db.session = db.Engine.NewSession()
+	return &DB{Engine: db.Engine, session: db.session}, nil
+}
+
+func (db *DB) Commit() error {
+	if db.session == nil {
+		return sql.ErrTxDone
+	}
+	err := db.session.Commit()
+	db.session = nil
+	return err
+}
+
+func (db *DB) Rollback() error {
+	if db.session == nil {
+		return sql.ErrTxDone
+	}
+	err := db.session.Rollback()
+	db.session = nil
+	return err
+}
+
+func (db *DB) Close() error {
+	return db.Rollback()
 }
 
 func (db *DB) PermissionGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionGroup{}
-	})(db.Engine)
+	})(db.Engine).WithSession(db.session)
 }
 func (db *DB) Users() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &User{}
-	})(db.Engine)
+	})(db.Engine).WithSession(db.session)
 }
 func (db *DB) OnlineUsers() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &OnlineUser{}
-	})(db.Engine)
+	})(db.Engine).WithSession(db.session)
 }
 func (db *DB) UsersAndRoles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserAndRole{}
-	})(db.Engine)
+	})(db.Engine).WithSession(db.session)
 }
 func (db *DB) PermissionsAndGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionAndGroup{}
-	})(db.Engine)
+	})(db.Engine).WithSession(db.session)
 }
 func (db *DB) Roles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &Role{}
-	})(db.Engine)
+	})(db.Engine).WithSession(db.session)
 }
 func (db *DB) PermissionGroupsAndRoles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionGroupAndRole{}
-	})(db.Engine)
+	})(db.Engine).WithSession(db.session)
 }
 func (db *DB) UserGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserGroup{}
-	})(db.Engine)
+	})(db.Engine).WithSession(db.session)
 }
 func (db *DB) UsersAndUserGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserAndUserGroup{}
-	})(db.Engine)
+	})(db.Engine).WithSession(db.session)
 }
 
 func InitTables(engine *xorm.Engine) error {
