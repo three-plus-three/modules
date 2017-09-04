@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/revel/revel"
@@ -27,7 +28,9 @@ func initSSO(env *environment.Environment) revel_sso.CheckFunc {
 		copyURL := *req.URL
 		copyURL.Scheme = ""
 		copyURL.Host = ""
-		copyURL.Path = urlutil.Join(revel.AppRoot, copyURL.Path)
+		if !strings.HasPrefix(copyURL.Path, revel.AppRoot) {
+			copyURL.Path = urlutil.Join(revel.AppRoot, copyURL.Path)
+		}
 		return copyURL
 	})
 }

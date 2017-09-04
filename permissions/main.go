@@ -58,12 +58,13 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			return u
 		}
 
-		rolesqlStr := "select * from " + db.Roles().Name() + " as roles " +
-			" where exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
-			db.Users().Name() + " as users on users_roles.user_id = users.id where users_roles.role_id = roles.id and users.name = ?)"
-		err = db.Roles().Query(rolesqlStr, userName).All(&u.roles)
+		cond := orm.Cond{"exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
+			db.Users().Name() + " as users on users_roles.user_id = users.id " +
+			" where users_roles.role_id = " + db.Roles().Name() + ".id and users.name = ?)": userName}
+		err = db.Roles().Where(cond).
+			All(&u.roles)
 		if err != nil {
-			log.Println("[permission] ", rolesqlStr, userName)
+			log.Println("[permission] ", cond)
 			panic(errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error()))
 		}
 
@@ -75,13 +76,12 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			}
 		}
 
-		sqlStr := "select * from " + db.PermissionGroupsAndRoles().Name() + " as pg_role " +
-			" where exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
-			db.Users().Name() + " as users on users_roles.user_id = users.id where users_roles.role_id = pg_role.role_id and users.name = ?)"
-
-		err = db.PermissionGroupsAndRoles().Query(sqlStr, userName).All(&u.permissionsAndRoles)
+		pgRoleCond := orm.Cond{"exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
+			db.Users().Name() + " as users on users_roles.user_id = users.id " +
+			"where users_roles.role_id = " + db.PermissionGroupsAndRoles().Name() + ".role_id and users.name = ?)": userName}
+		err = db.PermissionGroupsAndRoles().Where(pgRoleCond).All(&u.permissionsAndRoles)
 		if err != nil {
-			log.Println("[permission] ", sqlStr, userName)
+			log.Println("[permission] ", pgRoleCond)
 			panic(errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error()))
 		}
 
