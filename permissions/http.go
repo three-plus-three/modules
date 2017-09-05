@@ -3,7 +3,6 @@ package permissions
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/urlutil"
 )
 
@@ -22,7 +22,10 @@ type HTTPConfig struct {
 func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, error) {
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
-		return nil, err
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "载入 PermissionProvider 失败")
 	}
 
 	var configs []HTTPConfig
@@ -30,7 +33,7 @@ func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, 
 	for _, file := range files {
 		config, err := ReadHTTPConfigFromFile(filepath.Join(dirname, file.Name()), args)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "载入 PermissionProvider 失败")
 		}
 		configs = append(configs, *config)
 	}
@@ -43,7 +46,7 @@ func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, 
 			for _, config := range configs {
 				permissions, _, err := ReadPermissionsFromHTTP(config.Name, config.URL)
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrap(err, "从 HTTP 载入 Permissions 失败")
 				}
 				allPermissions = append(allPermissions, permissions...)
 			}
@@ -55,7 +58,7 @@ func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, 
 			for _, config := range configs {
 				_, groups, err := ReadPermissionsFromHTTP(config.Name, config.URL)
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrap(err, "从 HTTP 载入 PermissionGroups 失败")
 				}
 				allGroups = appendGroups(allGroups, groups)
 			}

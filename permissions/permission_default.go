@@ -1,26 +1,25 @@
 package permissions
 
 import (
-	"errors"
-
 	"github.com/runner-mei/orm"
+	"github.com/three-plus-three/modules/errors"
 )
 
 func SaveDefaultPermissionGroups(db *DB) error {
 	allDefaultGroups, err := GetDefaultPermissionGroups()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "载入缺省权限组")
 	}
 	var allPermissionGroups []PermissionGroup
 	err = db.PermissionGroups().
 		Where(orm.Cond{"is_default": "true"}).
 		All(&allPermissionGroups)
 	if err != nil {
-		return errors.New("GetAllPermissionGroups fail:" + err.Error())
+		return errors.Wrap(err, "GetAllPermissionGroups")
 	}
 	err = syncGroups(db, allDefaultGroups, allPermissionGroups)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "载入缺省权限组")
 	}
 	return nil
 }

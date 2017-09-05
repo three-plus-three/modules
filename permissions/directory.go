@@ -2,10 +2,11 @@ package permissions
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/three-plus-three/modules/errors"
 )
 
 func LoadDirectory(dirname string) PermissionProvider {
@@ -14,14 +15,17 @@ func LoadDirectory(dirname string) PermissionProvider {
 		Permissions: func() ([]Permission, error) {
 			files, err := ioutil.ReadDir(dirname)
 			if err != nil {
-				return nil, err
+				if os.IsNotExist(err) {
+					return nil, nil
+				}
+				return nil, errors.Wrap(err, "从 File 载入 Permissions 失败")
 			}
 
 			var allPermissions []Permission
 			for _, file := range files {
 				permissions, _, err := ReadPermissionsFromFile(filepath.Join(dirname, file.Name()))
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrap(err, "从 File 载入 Permissions 失败")
 				}
 				allPermissions = append(allPermissions, permissions...)
 			}
@@ -30,14 +34,17 @@ func LoadDirectory(dirname string) PermissionProvider {
 		Groups: func() ([]Group, error) {
 			files, err := ioutil.ReadDir(dirname)
 			if err != nil {
-				return nil, err
+				if os.IsNotExist(err) {
+					return nil, nil
+				}
+				return nil, errors.Wrap(err, "从 File 载入 PermissionGroups 失败")
 			}
 
 			var allGroups []Group
 			for _, file := range files {
 				_, groups, err := ReadPermissionsFromFile(filepath.Join(dirname, file.Name()))
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrap(err, "从 File 载入 PermissionGroups 失败")
 				}
 				allGroups = appendGroups(allGroups, groups)
 			}
