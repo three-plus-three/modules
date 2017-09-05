@@ -83,6 +83,9 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		lifecycle.Variables["application_context"] = lifecycle.ApplicationContext
 		lifecycle.Variables["application_root"] = lifecycle.ApplicationRoot
 
+		wserviceObject := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
+		lifecycle.Variables["user_logout_url"] = wserviceObject.UrlFor(env.DaemonUrlPath, "/sso/logout")
+
 		lifecycle.GetUser = InitUser(lifecycle)
 
 		lifecycle.CurrentUser = func(c *revel.Controller) User {
