@@ -119,6 +119,9 @@ func (cache *PermissionsCache) Save(permissions []Permission) {
 
 //注册方法
 func RegisterPermissions(privoder PermissionProvider) {
+	if privoder == nil {
+		panic("provider is nil")
+	}
 	privoders = append(privoders, privoder)
 }
 
