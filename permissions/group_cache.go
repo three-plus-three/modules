@@ -27,6 +27,21 @@ func (cache *GroupCache) Get(id int64) *Permissions {
 	return values[id]
 }
 
+//从缓存中获取子组
+func (cache *GroupCache) GetChildren(id int64) []*Permissions {
+	values := cache.getPermissions()
+	if len(values) == 0 {
+		return nil
+	}
+	var children []*Permissions
+	for _, group := range values {
+		if group.ParentID == id {
+			children = append(children, group)
+		}
+	}
+	return children
+}
+
 func (cache *GroupCache) setPermissions(values map[int64]*Permissions) {
 	cache.permissions.Store(values)
 }

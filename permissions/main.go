@@ -193,18 +193,24 @@ func (u *user) HasPermission(permissionID, op string) bool {
 }
 
 func (u *user) hasPermission(groupID int64, permissionID string) bool {
-	permissions := u.permissionGroupCache.Get(groupID)
-	if permissions == nil {
+	group := u.permissionGroupCache.Get(groupID)
+	if group == nil {
 		log.Println("[permissions] permission group with id is", groupID, "isn't found.")
 		return false
 	}
-	for _, id := range permissions.PermissionIDs {
+	return u.hasPermissionInGroup(group, permissionID)
+}
+
+func (u *user) hasPermissionInGroup(group *Permissions, permissionID string) bool {
+	// 在本组中查找是不是有这个权限
+	for _, id := range group.PermissionIDs {
 		if permissionID == id {
 			return true
 		}
 	}
 
-	for _, tag := range permissions.PermissionTags {
+	// 在本组中查找是不是有标签含有这个权限
+	for _, tag := range group.PermissionTags {
 		permissionList, err := GetPermissionsByTag(tag)
 		if err != nil {
 			panic(err)
@@ -217,8 +223,14 @@ func (u *user) hasPermission(groupID int64, permissionID string) bool {
 		}
 	}
 
-	if permissions.ParentID != 0 {
-		return u.hasPermission(permissions.ParentID, permissionID)
+	// 在子组中查找这个权限
+	children := u.permissionGroupCache.GetChildren(group.ID)
+	if len(children) != 0 {
+		for _, child := range children {
+			if u.hasPermissionInGroup(child, permissionID) {
+				return true
+			}
+		}
 	}
 	return false
 }
