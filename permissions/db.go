@@ -142,7 +142,8 @@ func DropTables(engine *xorm.Engine) error {
 
 	for _, bean := range beans {
 		if err := engine.DropIndexes(bean); err != nil {
-			if !strings.Contains(err.Error(), "does not exist") {
+			if !strings.Contains(err.Error(), "does not exist") &&
+				!strings.Contains(err.Error(), "不存在") {
 				return err
 			}
 		}

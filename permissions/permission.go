@@ -1,9 +1,12 @@
 package permissions
 
 import (
+	"errors"
 	"strings"
 	"time"
 )
+
+var ErrPermissionNotFound = errors.New("permission is not found")
 
 type Group struct {
 	Name        string `json:"name"`
@@ -74,6 +77,18 @@ func GetPermissions() ([]Permission, error) {
 	}
 	permissionsCache.Save(all)
 	return all, nil
+}
+func GetPermissionByID(id string) (*Permission, error) {
+	all, err := GetPermissions()
+	if err != nil {
+		return nil, err
+	}
+	for idx := range all {
+		if all[idx].ID == id {
+			return &all[idx], nil
+		}
+	}
+	return nil, ErrPermissionNotFound
 }
 
 //获取权限组
