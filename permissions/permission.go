@@ -119,30 +119,15 @@ func (cache *PermissionCache) load() (*permissionCacheData, error) {
 		return d, nil
 	}
 
-	var allPermissions []Permission
-	var allTags []Tag
-	var allGroups []Group
+	var all PermissionData
 	for _, p := range privoders {
-		permissions, err := p.PermissionObjects()
+		data, err := p.Get()
 		if err != nil {
 			return nil, err
 		}
-		allPermissions = append(allPermissions, permissions...)
-
-		tags, err := p.PermissionTags()
-		if err != nil {
-			return nil, err
-		}
-		allTags = append(allTags, tags...)
-
-		groups, err := p.PermissionGroups()
-		if err != nil {
-			return nil, err
-		}
-
-		allGroups = appendGroups(allGroups, groups)
+		appendPermissionData(&all, data)
 	}
-	return cache.Save(allPermissions, allTags, allGroups), nil
+	return cache.Save(all.Permissions, all.Tags, all.Groups), nil
 }
 
 func (cache *PermissionCache) data() (*permissionCacheData, error) {
@@ -280,53 +265,48 @@ func (cache *PermissionCache) Save(permissions []Permission, tags []Tag, groups 
 	return d
 }
 
+var privoders = map[string]PermissionProvider{}
+
 //注册方法
-func RegisterPermissions(privoder PermissionProvider) {
+func RegisterPermissions(name string, privoder PermissionProvider) {
 	if privoder == nil {
 		panic("provider is nil")
 	}
-	privoders = append(privoders, privoder)
+	if _, ok := privoders[name]; ok {
+		panic("privoder '" + name + "' is already exists.")
+	}
+	privoders[name] = privoder
 }
 
-var privoders []PermissionProvider
+type PermissionData struct {
+	Permissions []Permission `json:"permissions"`
+	Groups      []Group      `json:"groups"`
+	Tags        []Tag        `json:"tags"`
+}
 
 type PermissionProvider interface {
-	Name() string
-	PermissionObjects() ([]Permission, error)
-	PermissionGroups() ([]Group, error)
-	PermissionTags() ([]Tag, error)
+	Get() (*PermissionData, error)
 }
 
-type PermissionProviderFunc struct {
-	ProviderName string
-	Permissions  func() ([]Permission, error)
-	Groups       func() ([]Group, error)
-	Tags         func() ([]Tag, error)
-}
+type PermissionProviderFunc func() (*PermissionData, error)
 
-func (f PermissionProviderFunc) Name() string {
-	return f.ProviderName
-}
-
-func (f PermissionProviderFunc) PermissionObjects() ([]Permission, error) {
-	if f.Permissions == nil {
+func (f PermissionProviderFunc) Get() (*PermissionData, error) {
+	if f == nil {
 		return nil, nil
 	}
-	return f.Permissions()
+	return f()
 }
 
-func (f PermissionProviderFunc) PermissionGroups() ([]Group, error) {
-	if f.Groups == nil {
-		return nil, nil
+func appendPermissionData(all, data *PermissionData) {
+	if len(data.Permissions) > 0 {
+		all.Permissions = append(all.Permissions, data.Permissions...)
 	}
-	return f.Groups()
-}
-
-func (f PermissionProviderFunc) PermissionTags() ([]Tag, error) {
-	if f.Tags == nil {
-		return nil, nil
+	if len(data.Groups) > 0 {
+		all.Groups = appendGroups(all.Groups, data.Groups)
 	}
-	return f.Tags()
+	if len(data.Tags) > 0 {
+		all.Tags = append(all.Tags, data.Tags...)
+	}
 }
 
 func appendGroups(allGroups, groups []Group) []Group {

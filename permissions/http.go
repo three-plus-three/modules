@@ -15,17 +15,18 @@ import (
 )
 
 type HTTPConfig struct {
+	file string
 	Name string `json:"name"`
 	URL  string `json:"url"`
 }
 
-func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, error) {
+func LoadHTTP(dirname string, args map[string]interface{}) error {
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return nil
 		}
-		return nil, errors.Wrap(err, "载入 PermissionProvider 失败")
+		return errors.Wrap(err, "载入 PermissionProvider 失败")
 	}
 
 	var configs []HTTPConfig
@@ -33,37 +34,22 @@ func LoadHTTP(dirname string, args map[string]interface{}) (PermissionProvider, 
 	for _, file := range files {
 		config, err := ReadHTTPConfigFromFile(filepath.Join(dirname, file.Name()), args)
 		if err != nil {
-			return nil, errors.Wrap(err, "载入 PermissionProvider 失败")
+			return errors.Wrap(err, "载入 PermissionProvider 失败")
 		}
+		config.file = file.Name()
 		configs = append(configs, *config)
 	}
 
-	return PermissionProviderFunc{
-		ProviderName: "http",
-
-		Permissions: func() ([]Permission, error) {
-			var allPermissions []Permission
-			for _, config := range configs {
-				permissions, _, err := ReadPermissionsFromHTTP(config.Name, config.URL)
-				if err != nil {
-					return nil, errors.Wrap(err, "从 HTTP 载入 Permissions 失败")
-				}
-				allPermissions = append(allPermissions, permissions...)
+	for _, config := range configs {
+		RegisterPermissions("directory:"+config.file+":"+config.Name, PermissionProviderFunc(func() (*PermissionData, error) {
+			data, err := ReadPermissionsFromHTTP(config.Name, config.URL)
+			if err != nil {
+				return nil, errors.Wrap(err, "从 HTTP 载入 Permissions 失败")
 			}
-			return allPermissions, nil
-		},
-
-		Groups: func() ([]Group, error) {
-			var allGroups []Group
-			for _, config := range configs {
-				_, groups, err := ReadPermissionsFromHTTP(config.Name, config.URL)
-				if err != nil {
-					return nil, errors.Wrap(err, "从 HTTP 载入 PermissionGroups 失败")
-				}
-				allGroups = appendGroups(allGroups, groups)
-			}
-			return allGroups, nil
-		}}, nil
+			return data, nil
+		}))
+	}
+	return nil
 }
 
 func ReadHTTPConfigFromFile(filename string, args map[string]interface{}) (*HTTPConfig, error) {
@@ -95,32 +81,29 @@ func ReadHTTPConfigFromFile(filename string, args map[string]interface{}) (*HTTP
 	return &config, nil
 }
 
-func ReadPermissionsFromHTTP(filename, url string) ([]Permission, []Group, error) {
+func ReadPermissionsFromHTTP(filename, url string) (*PermissionData, error) {
 	response, err := http.Get(url)
 	if err != nil {
-		return nil, nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
+		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
 	}
 	if response.StatusCode != http.StatusOK {
 		bs, _ := ioutil.ReadAll(response.Body)
 		if len(bs) == 0 {
-			return nil, nil, errors.New("read web in '" + filename + "' fail: " + response.Status)
+			return nil, errors.New("read web in '" + filename + "' fail: " + response.Status)
 		}
-		return nil, nil, errors.New("read web in '" + filename + "' fail: " + response.Status + "\r\n" + string(bs))
+		return nil, errors.New("read web in '" + filename + "' fail: " + response.Status + "\r\n" + string(bs))
 	}
 
 	var buf bytes.Buffer
 	_, err = io.Copy(&buf, response.Body)
 	if err != nil {
-		return nil, nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
+		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
 	}
 
-	var data struct {
-		Permissions []Permission
-		Groups      []Group
-	}
-	err = json.NewDecoder(&buf).Decode(&data)
+	var data = &PermissionData{}
+	err = json.NewDecoder(&buf).Decode(data)
 	if err != nil {
-		return nil, nil, errors.New("read web in '" + filename + "' fail: " + err.Error() + "\r\n" + buf.String())
+		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error() + "\r\n" + buf.String())
 	}
-	return data.Permissions, data.Groups, nil
+	return data, nil
 }
