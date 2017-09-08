@@ -141,10 +141,10 @@ func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFoun
 		case "daemon":
 			daemon_address := stringWith(cfg, "daemon.host", "127.0.0.1")
 			daemon_port := stringWith(cfg, "daemon.port", "37072")
-			flagSet.Set("daemon", "http://"+daemon_address+":"+daemon_port)
+			flagSet.Set("daemon", "http://"+daemon_address+":"+daemon_port) // nolint
 		case "redis_address", "redis":
 			redis_address := stringWith(cfg, "redis.host", db_defaults["redis.host"])
-			redis_port := stringWith(cfg, "redis.port", db_defaults["redis.port"])
+			redis_port := stringWith(cfg, "redis.port", db_defaults["redis.port"]) // nolint
 			flagSet.Set(k, redis_address+":"+redis_port)
 		case "data_db.url", "db_url": // for tsdb
 			drv, url, e := CreateDBUrl("data.", cfg, db_defaults)
@@ -159,27 +159,27 @@ func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFoun
 				drv_name = "db_driver"
 			}
 
-			flagSet.Set(url_name, url)
-			flagSet.Set(drv_name, drv)
+			flagSet.Set(url_name, url) // nolint
+			flagSet.Set(drv_name, drv) // nolint
 		case "db.url": // for ds
 			drv, url, e := CreateDBUrl("models.", cfg, db_defaults)
 			if nil != e {
 				return e
 			}
 
-			flagSet.Set("db.url", url)
-			flagSet.Set("db.driver", drv)
+			flagSet.Set("db.url", url)    // nolint
+			flagSet.Set("db.driver", drv) // nolint
 		case "ds.listen": // for db
 			if v, ok := cfg["models.port"]; ok {
-				flagSet.Set(k, ":"+v)
+				flagSet.Set(k, ":"+v) // nolint
 			}
 		case "tsdb.listen": // for tsdb
 			if v, ok := cfg["repo.port"]; ok {
-				flagSet.Set(k, ":"+v)
+				flagSet.Set(k, ":"+v) // nolint
 			}
 		case "sampling.listen": // for sampling
 			if v, ok := cfg["sampling.port"]; ok {
-				flagSet.Set(k, ":"+v)
+				flagSet.Set(k, ":"+v) // nolint
 			}
 		case "ds.url": // for sampling
 			if v, ok := cfg["models.port"]; ok {
@@ -188,7 +188,7 @@ func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFoun
 					host = "127.0.0.1"
 				}
 
-				flagSet.Set(k, "http://"+host+":"+v)
+				flagSet.Set(k, "http://"+host+":"+v) // nolint
 			}
 
 		case "ds": // for poller
@@ -198,7 +198,7 @@ func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFoun
 					host = "127.0.0.1"
 				}
 
-				flagSet.Set(k, "http://"+host+":"+v)
+				flagSet.Set(k, "http://"+host+":"+v) // nolint
 			}
 
 		case "sampling": // for poller
@@ -208,7 +208,7 @@ func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFoun
 					host = "127.0.0.1"
 				}
 
-				flagSet.Set(k, "http://"+host+":"+v+"/batch")
+				flagSet.Set(k, "http://"+host+":"+v+"/batch") // nolint
 			}
 
 		case "tsdb.url": // for poller
@@ -218,17 +218,17 @@ func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFoun
 					host = "127.0.0.1"
 				}
 
-				flagSet.Set(k, "http://"+host+":"+v)
+				flagSet.Set(k, "http://"+host+":"+v) // nolint
 			}
 		case "listen": // delayed_jobs
 			if ":39086" == k_var {
 				if v, ok := cfg["delayed_jobs.port"]; ok {
-					flagSet.Set(k, ":"+v)
+					flagSet.Set(k, ":"+v) // nolint
 				}
 			}
 		default:
 			if v, ok := cfg[k]; ok {
-				flagSet.Set(k, v)
+				flagSet.Set(k, v) // nolint
 			}
 		}
 	}

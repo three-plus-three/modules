@@ -117,18 +117,18 @@ func (p *Paginator) Pages() []int {
 			start := pageNums - 9
 			pages = make([]int, 9)
 			for i := range pages {
-				pages[i] = start + int(i)
+				pages[i] = start + i
 			}
 		case page >= 5 && pageNums > 9:
 			start := page - 5
 			pages = make([]int, int(math.Min(9, float64(page+4+1))))
 			for i := range pages {
-				pages[i] = start + int(i)
+				pages[i] = start + i
 			}
 		default:
 			pages = make([]int, int(math.Min(9, float64(pageNums))))
 			for i := range pages {
-				pages[i] = int(i)
+				pages[i] = i
 			}
 		}
 		p.pageRange = pages

@@ -597,7 +597,6 @@ func empty(given interface{}) bool {
 	case reflect.Struct:
 		return false
 	}
-	return true
 }
 
 // typeIs returns true if the src is the type named in target.

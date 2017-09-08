@@ -18,7 +18,7 @@ func TestLoadTableDefinitions(t *testing.T) {
 		return
 	}
 	if 4 != len(definitions.definitions) {
-		t.Errorf("unmarshal xml 'test/test1.xml' error, len of classDefinitions is not 2", len(definitions.definitions))
+		t.Error("unmarshal xml 'test/test1.xml' error, len of classDefinitions is not 2", len(definitions.definitions))
 		return
 	}
 
@@ -165,7 +165,7 @@ func TestPropertyOverrideForTableDefinitions(t *testing.T) {
 		return
 	}
 	if 3 != len(definitions.definitions) {
-		t.Errorf("unmarshal xml 'test/test_property_override.xml' error, len of classDefinitions is not 2", len(definitions.definitions))
+		t.Error("unmarshal xml 'test/test_property_override.xml' error, len of classDefinitions is not 2", len(definitions.definitions))
 		return
 	}
 

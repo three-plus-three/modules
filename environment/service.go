@@ -13,6 +13,7 @@ import (
 
 var UnknownServiceConfig = &ServiceConfig{Id: ENV_MAX_PROXY_ID}
 
+// ServiceConfig 服务的配置
 type ServiceConfig struct {
 	env  *Environment
 	Id   ENV_PROXY_TYPE
@@ -45,6 +46,7 @@ func (cfg *ServiceConfig) copyFrom(src *ServiceConfig) {
 	cfg.listeners.PushBackList(&src.listeners)
 }
 
+// Notify 发送变动通知
 func (cfg *ServiceConfig) Notify() {
 	if cfg.Id >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
@@ -76,6 +78,7 @@ func (s serviceListener) Close() error {
 	return nil
 }
 
+// On 注册变动事件
 func (cfg *ServiceConfig) On(cb func(*ServiceConfig)) io.Closer {
 	if cfg.Id >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
@@ -89,6 +92,7 @@ func (cfg *ServiceConfig) On(cb func(*ServiceConfig)) io.Closer {
 	return serviceListener{cfg, el}
 }
 
+// RemoveAllListener 清空所有监听器
 func (cfg *ServiceConfig) RemoveAllListener() {
 	if cfg.Id >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
@@ -99,6 +103,7 @@ func (cfg *ServiceConfig) RemoveAllListener() {
 	cfg.listeners.Init()
 }
 
+// ListenAddr 服务的监听地址
 func (cfg *ServiceConfig) ListenAddr(s string) string {
 	if cfg.Id >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
@@ -109,6 +114,7 @@ func (cfg *ServiceConfig) ListenAddr(s string) string {
 	return ":" + cfg.Port
 }
 
+// ListenAddr 服务的连接地址
 func (cfg *ServiceConfig) RemoteAddr(s string) string {
 	if cfg.Id >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
@@ -125,24 +131,28 @@ func (cfg *ServiceConfig) RemoteAddr(s string) string {
 	return net.JoinHostPort(cfg.Host, cfg.Port)
 }
 
+// SetHost 指定地址
 func (cfg *ServiceConfig) SetHost(s string) {
 	cfg.Host = s
 	cfg.surl.Store("")
 	cfg.Notify()
 }
 
+// SetPort 指定端口
 func (cfg *ServiceConfig) SetPort(s string) {
 	cfg.Port = s
 	cfg.surl.Store("")
 	cfg.Notify()
 }
 
+// SetPath 指定路径
 func (cfg *ServiceConfig) SetPath(s string) {
 	cfg.Path = s
 	cfg.surl.Store("")
 	cfg.Notify()
 }
 
+// SetUrl 指定 URL
 func (cfg *ServiceConfig) SetUrl(s string) {
 	if cfg.Id >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
@@ -152,6 +162,7 @@ func (cfg *ServiceConfig) SetUrl(s string) {
 	cfg.Notify()
 }
 
+// Url 服务的访问 URL
 func (cfg *ServiceConfig) Url() string {
 	if cfg.Id >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
@@ -192,11 +203,13 @@ func (cfg *ServiceConfig) Url() string {
 	return s
 }
 
+// UrlFor 服务的访问 URL
 func (cfg *ServiceConfig) UrlFor(s ...string) string {
 	baseUrl := cfg.Url()
 	return urlutil.JoinWith(baseUrl, s)
 }
 
+// UrlFor 服务的访问 URL
 func (cfg *ServiceConfig) URI() *url.URL {
 	s := cfg.Url()
 	if u, e := url.Parse(s); nil != e {
@@ -206,6 +219,7 @@ func (cfg *ServiceConfig) URI() *url.URL {
 	}
 }
 
+// Client 服务的访问
 func (cfg *ServiceConfig) Client(paths ...string) HttpClient {
 	return HttpClient{
 		cfg:      cfg,

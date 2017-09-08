@@ -162,7 +162,7 @@ func (cmd *subscribeCmd) Run(args []string) error {
 		return err
 	}
 
-	cb := func(sub *hub.Subscription, msg []byte) {
+	cb := func(sub *hub.Subscription, msg hub.Message) {
 		if cmd.console {
 			fmt.Println(string(msg))
 		}
@@ -188,7 +188,6 @@ func (cmd *subscribeCmd) Run(args []string) error {
 			}
 		}
 	}
-
 	return subscription.Run(cb)
 }
 

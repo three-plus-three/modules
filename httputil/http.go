@@ -49,7 +49,7 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 			} else {
 				cachedBuffer.Reset()
 			}
-			e := json.NewEncoder(cachedBuffer).Encode(body)
+			e = json.NewEncoder(cachedBuffer).Encode(body)
 			if nil != e {
 				return errors.NewApplicationError(http.StatusBadRequest, e.Error())
 			}
@@ -82,8 +82,8 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 
 	if resp.StatusCode != exceptedCode {
 		if exceptedCode != 0 || resp.StatusCode < http.StatusOK || resp.StatusCode > 299 {
-
-			respBody, e := ioutil.ReadAll(resp.Body)
+			var respBody []byte
+			respBody, e = ioutil.ReadAll(resp.Body)
 			if nil != e {
 				panic(e.Error())
 			}
@@ -99,7 +99,7 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 	}
 
 	if cb, ok := result.(HandleFunc); ok {
-		e := cb(req, resp)
+		e = cb(req, resp)
 		if e != nil {
 			return errors.ToRuntimeError(e)
 		}
@@ -107,7 +107,7 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 	}
 
 	if w, ok := result.(io.Writer); ok {
-		_, e := io.Copy(w, resp.Body)
+		_, e = io.Copy(w, resp.Body)
 		if e != nil {
 			return errors.ToRuntimeError(e)
 		}

@@ -10,11 +10,6 @@ import (
 	"github.com/three-plus-three/modules/environment"
 )
 
-var DBURL = flag.String("db.url", "host=127.0.0.1 dbname=tpt_models_test user=tpt password=extreme sslmode=disable", "the db url")
-var DBDRV = flag.String("db.driver", "postgres", "the db driver")
-var data_db_url = flag.String("data_db.url", "host=127.0.0.1 dbname=tpt_data_test user=tpt password=extreme sslmode=disable", "the db url")
-var data_db_drv = flag.String("data_db.driver", "postgres", "the db driver")
-
 var env_file = flag.String("env_file", "test_postgres.properties", "")
 
 func Clone(env *environment.Environment) *environment.Environment {

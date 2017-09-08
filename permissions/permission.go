@@ -1,6 +1,7 @@
 package permissions
 
 import (
+	"log"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -148,7 +149,9 @@ func (cache *PermissionCache) data() (*permissionCacheData, error) {
 		if atomic.CompareAndSwapInt32(&cache.isLoading, 0, 1) {
 			go func() {
 				defer atomic.StoreInt32(&cache.isLoading, 0)
-				cache.load()
+				if _, err := cache.load(); err != nil {
+					log.Println("[warn] permissions - ", err)
+				}
 			}()
 		}
 	}

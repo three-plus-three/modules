@@ -13,36 +13,6 @@ import (
 	"github.com/three-plus-three/modules/urlutil"
 )
 
-func marshalError(e error) Result {
-	return ReturnError(http.StatusBadRequest, "marshal failed, "+e.Error())
-}
-
-func unmarshalError(e error) Result {
-	return ReturnError(http.StatusInternalServerError, "unmarshal failed, "+e.Error())
-}
-
-func networkError(fmts string, params ...interface{}) Result {
-	if 0 == len(params) {
-		return ReturnError(http.StatusServiceUnavailable, fmts)
-	}
-	return ReturnError(http.StatusServiceUnavailable, fmt.Sprintf(fmts, params))
-}
-
-func httpError(code int, fmts string, params ...interface{}) Result {
-	if 0 == len(params) {
-		return ReturnError(code, fmts)
-	}
-	return ReturnError(code, fmt.Sprintf(fmts, params))
-}
-
-func readAllBytes(r io.Reader) []byte {
-	bs, e := ioutil.ReadAll(r)
-	if nil != e {
-		panic(e.Error())
-	}
-	return bs
-}
-
 type HttpClient struct {
 	Url      string
 	Warnings interface{}

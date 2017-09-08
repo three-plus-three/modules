@@ -1,11 +1,9 @@
 package engine
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"math"
-	"net/http"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -14,14 +12,6 @@ import (
 
 	"golang.org/x/net/websocket"
 )
-
-func checkOrigin(config *websocket.Config, req *http.Request) (err error) {
-	config.Origin, err = websocket.Origin(config, req)
-	if err == nil && config.Origin == nil {
-		return fmt.Errorf("null origin")
-	}
-	return err
-}
 
 type engineStub struct {
 	srv        websocket.Server
@@ -113,7 +103,7 @@ func (stub *engineStub) publish(producer chan<- hub.Message) {
 				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed -", e)
 			}
 			isRunning = false
-			break
+			continue
 		}
 
 		msg := hub.CreateDataMessage(data)
@@ -142,8 +132,7 @@ func (stub *engineStub) sendToTopic(producer Producer) {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
-	isRunning := true
-	for isRunning {
+	for {
 		var data []byte
 		if e := websocket.Message.Receive(stub.conn, &data); nil != e {
 			if e == io.EOF {
@@ -153,7 +142,6 @@ func (stub *engineStub) sendToTopic(producer Producer) {
 			} else {
 				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed -", e)
 			}
-			isRunning = false
 			break
 		}
 

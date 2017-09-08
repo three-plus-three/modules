@@ -27,7 +27,8 @@ func bindByte(params *revel.Params, name string, typ reflect.Type) reflect.Value
 	if len(value) != 1 {
 		panic(errors.New("'" + value + "' is invalid byte."))
 	}
-	return reflect.ValueOf(byte(value[0]))
+	b := value[0]
+	return reflect.ValueOf(b)
 }
 
 func unbindByte(output map[string]string, name string, val interface{}) {

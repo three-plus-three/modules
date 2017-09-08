@@ -1,3 +1,4 @@
+// nolint: comments
 package errors
 
 import (
@@ -7,12 +8,14 @@ import (
 	"net/http"
 )
 
+//  RuntimeError 一个带 Code 的 error
 type RuntimeError interface {
 	HTTPCode() int
 	Code() int
 	Error() string
 }
 
+//  ErrNotFound 对象找不到
 type ErrNotFound struct {
 	id interface{}
 }
@@ -32,20 +35,24 @@ func (err *ErrNotFound) Error() string {
 	return "record with id is '" + fmt.Sprint(err.id) + "' isn't found"
 }
 
+//  NotFound 创建一个 ErrNotFound
 func NotFound(id interface{}) RuntimeError {
 	return &ErrNotFound{id: id}
 }
 
+//  New 创建一个 error
 func New(msg string) error {
 	return native.New(msg)
 }
 
+//  PGError postgresql error
 type PGError interface {
 	Error() string
 	Fatal() bool
 	Get(k byte) (v string)
 }
 
+//  Wrap 为 error 增加上下文信息
 func Wrap(e error, s string, args ...interface{}) error {
 	if "" == s {
 		return e
@@ -53,6 +60,7 @@ func Wrap(e error, s string, args ...interface{}) error {
 	return native.New(fmt.Sprintf(s, args...) + ": " + e.Error())
 }
 
+//  MutiErrors 拼接多个错误
 type MutiErrors struct {
 	msg  string
 	errs []error
@@ -65,6 +73,7 @@ func (self *MutiErrors) Errors() []error {
 	return self.errs
 }
 
+// Concat 拼接多个错误
 func Concat(msg string, errs []error) error {
 	if len(errs) == 1 {
 		return errs[0]
@@ -86,6 +95,7 @@ func Concat(msg string, errs []error) error {
 	return &MutiErrors{msg: buffer.String(), errs: errs}
 }
 
+// ApplicationError 应用错误
 type ApplicationError struct {
 	ErrCode    int    `json:"code"`
 	ErrMessage string `json:"message"`
@@ -103,10 +113,12 @@ func (err *ApplicationError) Error() string {
 	return err.ErrMessage
 }
 
+// NewApplicationError 创建一个 RuntimeError
 func NewApplicationError(code int, msg string) RuntimeError {
 	return &ApplicationError{ErrCode: code, ErrMessage: msg}
 }
 
+// ToRuntimeError 转换成 RuntimeError
 func ToRuntimeError(e error) RuntimeError {
 	if re, ok := e.(RuntimeError); ok {
 		return re

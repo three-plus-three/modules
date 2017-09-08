@@ -41,5 +41,4 @@ func (sub *Subscription) Run(cb func(*Subscription, Message)) error {
 
 		cb(sub, CreateDataMessage(bs))
 	}
-	return nil
 }

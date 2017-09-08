@@ -57,7 +57,7 @@ func (self *integerType) CreateEnumerationValidator(ss []string) (Validator, err
 		if nil != err {
 			return nil, fmt.Errorf("value[%d] '%v' is syntex error, %s", i, s, err.Error())
 		}
-		values = append(values, int64(v))
+		values = append(values, v)
 	}
 	return &EnumerationValidator{Values: values}, nil
 }
@@ -116,7 +116,7 @@ func ToInteger64(value interface{}) (int64, error) {
 	case string:
 		i64, err := strconv.ParseInt(v, 10, 64)
 		if nil == err {
-			return int64(i64), nil
+			return i64, nil
 		}
 	case int:
 		return int64(v), nil
@@ -143,7 +143,7 @@ func ToInteger64(value interface{}) (int64, error) {
 	case []byte:
 		i64, err := strconv.ParseInt(string(v), 10, 64)
 		if nil == err {
-			return int64(i64), nil
+			return i64, nil
 		}
 	case *int64:
 		return *v, nil
@@ -323,7 +323,7 @@ func (self *decimalType) CreateEnumerationValidator(ss []string) (Validator, err
 		if nil != err {
 			return nil, fmt.Errorf("value[%d] '%v' is syntex error, %s", i, s, err.Error())
 		}
-		values = append(values, float64(v))
+		values = append(values, v)
 	}
 	return &EnumerationValidator{Values: values}, nil
 }
@@ -387,17 +387,17 @@ func (self *decimalType) ToInternal(value interface{}) (interface{}, error) {
 	case float32:
 		return float64(v), nil
 	case float64:
-		return float64(v), nil
+		return v, nil
 	case string:
 		f64, err := strconv.ParseFloat(v, 64)
 		if nil == err {
-			return float64(f64), nil
+			return f64, nil
 		}
 		return float64(0), err
 	case []byte:
 		i64, err := strconv.ParseFloat(string(v), 64)
 		if nil == err {
-			return float64(i64), nil
+			return i64, nil
 		}
 	case *float64:
 		return *v, nil
@@ -441,7 +441,7 @@ func (self *stringType) CreateEnumerationValidator(values []string) (Validator, 
 		if "" == s {
 			return nil, fmt.Errorf("value[%d] is empty", i)
 		}
-		new_values = append(new_values, string(s))
+		new_values = append(new_values, s)
 	}
 	return &StringEnumerationValidator{Values: new_values}, nil
 }
@@ -502,7 +502,7 @@ func (self *stringType) ToInternal(value interface{}) (interface{}, error) {
 	case uint32:
 		return strconv.FormatUint(uint64(v), 10), nil
 	case uint64:
-		return strconv.FormatUint(uint64(v), 10), nil
+		return strconv.FormatUint(v, 10), nil
 	case int:
 		return strconv.FormatInt(int64(v), 10), nil
 	case int8:
@@ -512,11 +512,11 @@ func (self *stringType) ToInternal(value interface{}) (interface{}, error) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10), nil
 	case int64:
-		return strconv.FormatInt(int64(v), 10), nil
+		return strconv.FormatInt(v, 10), nil
 	case float32:
 		return strconv.FormatFloat(float64(v), 'e', -1, 64), nil
 	case float64:
-		return strconv.FormatFloat(float64(v), 'e', -1, 64), nil
+		return strconv.FormatFloat(v, 'e', -1, 64), nil
 	case *sql.NullString:
 		if !v.Valid {
 			return nil, InvalidValueError
@@ -751,7 +751,7 @@ func (self *durationType) ToInternal(value interface{}) (interface{}, error) {
 	case string:
 		i64, err := time.ParseDuration(v)
 		if nil == err {
-			return time.Duration(i64), nil
+			return i64, nil
 		}
 	case time.Duration:
 		return v, nil
@@ -841,7 +841,8 @@ func (n NullIPAddress) Value() (driver.Value, error) {
 
 	ip := net.ParseIP(n.String)
 	if nil == ip {
-		if ip, _, e := net.ParseCIDR(n.String); nil == e {
+		var e error
+		if ip, _, e = net.ParseCIDR(n.String); nil == e {
 			return IPAddress(ip.String()), nil
 		}
 		return nil, InvalidIPError

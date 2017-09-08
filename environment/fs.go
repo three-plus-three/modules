@@ -18,67 +18,6 @@ type FileSystem interface {
 	SearchConfig(s ...string) []string
 }
 
-type winFs struct {
-	rootDir string
-}
-
-func (wfs *winFs) FromRun(s ...string) string {
-	return filepath.Join(wfs.rootDir, filepath.Join(s...))
-}
-
-func (wfs *winFs) FromInstallRoot(s ...string) string {
-	return filepath.Join(wfs.rootDir, filepath.Join(s...))
-}
-
-func (wfs *winFs) FromWebConfig(s ...string) string {
-	return filepath.Join(wfs.rootDir, "web", "conf", filepath.Join(s...))
-}
-
-func (wfs *winFs) FromBin(s ...string) string {
-	return filepath.Join(wfs.rootDir, "bin", filepath.Join(s...))
-}
-
-func (wfs *winFs) FromLib(s ...string) string {
-	return filepath.Join(wfs.rootDir, "lib", filepath.Join(s...))
-}
-
-func (wfs *winFs) FromLogDir(s ...string) string {
-	return filepath.Join(wfs.rootDir, "logs", filepath.Join(s...))
-}
-
-func (wfs *winFs) FromRuntimeEnv(s ...string) string {
-	return filepath.Join(wfs.rootDir, "runtime_env", filepath.Join(s...))
-}
-
-func (wfs *winFs) FromData(s ...string) string {
-	return filepath.Join(wfs.rootDir, "data", filepath.Join(s...))
-}
-
-func (wfs *winFs) FromTMP(s ...string) string {
-	return filepath.Join(wfs.rootDir, "data", "tmp", filepath.Join(s...))
-}
-
-func (wfs *winFs) FromConfig(s ...string) string {
-	return filepath.Join(wfs.rootDir, "conf", filepath.Join(s...))
-}
-
-func (wfs *winFs) FromDataConfig(s ...string) string {
-	return filepath.Join(wfs.rootDir, "data", "conf", filepath.Join(s...))
-}
-
-func (wfs *winFs) SearchConfig(s ...string) []string {
-	var files []string
-	for _, nm := range []string{filepath.Join(wfs.rootDir, "conf", filepath.Join(s...)),
-		filepath.Join(wfs.rootDir, "etc", filepath.Join(s...)),
-		filepath.Join(wfs.rootDir, "data", "conf", filepath.Join(s...)),
-		filepath.Join(wfs.rootDir, "data", "etc", filepath.Join(s...))} {
-		if FileExists(nm) {
-			files = append(files, nm)
-		}
-	}
-	return files
-}
-
 type linuxFs struct {
 	installDir string
 	binDir     string

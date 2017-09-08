@@ -109,6 +109,7 @@ var (
 	}
 )
 
+// Options
 type Options struct {
 	ConfigFiles          []string
 	ConfDir              string
@@ -119,6 +120,7 @@ type Options struct {
 	IsTest               bool
 }
 
+// EngineConfig
 type EngineConfig struct {
 	IsEnabled       bool
 	IsMasterHost    bool
@@ -132,6 +134,7 @@ func (self EngineConfig) IsMaster() bool {
 	return strings.ToLower(strings.TrimSpace(self.Name)) == "default"
 }
 
+// DbConfig
 type DbConfig struct {
 	DbType   string
 	Address  string
@@ -175,6 +178,7 @@ func (db *DbConfig) Url() (string, string) {
 	}
 }
 
+// Environment
 type Environment struct {
 	Fs FileSystem
 
@@ -445,17 +449,6 @@ func loadEngineRegistry(cfg *Config) EngineConfig {
 	return engine
 }
 
-func boolWith(cfg map[string]string, key string, value bool) bool {
-	v, ok := cfg[key]
-	if !ok {
-		return value
-	}
-	if "yes" == strings.ToLower(v) || "true" == strings.ToLower(v) {
-		return true
-	}
-	return false
-}
-
 func hostWith(cfg map[string]string, key, value string) string {
 	v := stringWith(cfg, key, value)
 	if ip := net.ParseIP(v); nil == ip {
@@ -472,10 +465,12 @@ func portWith(cfg map[string]string, key, value string) string {
 	return v
 }
 
+// Config 配置
 type Config struct {
 	settings map[string]interface{}
 }
 
+// PasswordWithDefault 读配置
 func (self *Config) PasswordWithDefault(key, defValue string) string {
 	if s, ok := self.settings[key]; ok {
 		return as.StringWithDefault(s, defValue)
@@ -483,6 +478,7 @@ func (self *Config) PasswordWithDefault(key, defValue string) string {
 	return defValue
 }
 
+// StringWithDefault 读配置
 func (self *Config) StringWithDefault(key, defValue string) string {
 	if s, ok := self.settings[key]; ok {
 		return as.StringWithDefault(s, defValue)
@@ -490,6 +486,7 @@ func (self *Config) StringWithDefault(key, defValue string) string {
 	return defValue
 }
 
+// IntWithDefault 读配置
 func (self *Config) IntWithDefault(key string, defValue int) int {
 	if s, ok := self.settings[key]; ok {
 		return as.IntWithDefault(s, defValue)
@@ -497,6 +494,7 @@ func (self *Config) IntWithDefault(key string, defValue int) int {
 	return defValue
 }
 
+// BoolWithDefault 读配置
 func (self *Config) BoolWithDefault(key string, defValue bool) bool {
 	if s, ok := self.settings[key]; ok {
 		return as.BoolWithDefault(s, defValue)
@@ -504,6 +502,7 @@ func (self *Config) BoolWithDefault(key string, defValue bool) bool {
 	return defValue
 }
 
+// DurationWithDefault 读配置
 func (self *Config) DurationWithDefault(key string, defValue time.Duration) time.Duration {
 	if s, ok := self.settings[key]; ok {
 		return as.DurationWithDefault(s, defValue)
@@ -511,10 +510,12 @@ func (self *Config) DurationWithDefault(key string, defValue time.Duration) time
 	return defValue
 }
 
+// Set 写配置
 func (self *Config) Set(key string, value interface{}) {
 	self.settings[key] = value
 }
 
+// Get 读配置
 func (self *Config) Get(key string, subKeys ...string) interface{} {
 	o := self.settings[key]
 	if len(subKeys) == 0 {
@@ -538,37 +539,44 @@ func (self *Config) Get(key string, subKeys ...string) interface{} {
 	return o
 }
 
+// GetAsString 读配置
 func (self *Config) GetAsString(keys []string, defaultValue string) string {
 	o := self.Get(keys[0], keys[1:]...)
 	return as.StringWithDefault(o, defaultValue)
 }
 
+// GetAsInt 读配置
 func (self *Config) GetAsInt(keys []string, defaultValue int) int {
 	o := self.Get(keys[0], keys[1:]...)
 	return as.IntWithDefault(o, defaultValue)
 }
 
+// GetAsBool 读配置
 func (self *Config) GetAsBool(keys []string, defaultValue bool) bool {
 	o := self.Get(keys[0], keys[1:]...)
 	return as.BoolWithDefault(o, defaultValue)
 }
 
+// GetAsDuration 读配置
 func (self *Config) GetAsDuration(keys []string, defaultValue time.Duration) time.Duration {
 	o := self.Get(keys[0], keys[1:]...)
 	return as.DurationWithDefault(o, defaultValue)
 }
 
+// GetAsTime 读配置
 func (self *Config) GetAsTime(keys []string, defaultValue time.Time) time.Time {
 	o := self.Get(keys[0], keys[1:]...)
 	return as.TimeWithDefault(o, defaultValue)
 }
 
+// DurationWithDefault 读配置
 func (self *Config) ForEach(cb func(key string, value interface{})) {
 	for k, v := range self.settings {
 		cb(k, v)
 	}
 }
 
+// FileExists 文件是否存在
 func FileExists(dir string) bool {
 	info, err := os.Stat(dir)
 	if err != nil {
@@ -578,6 +586,7 @@ func FileExists(dir string) bool {
 	return !info.IsDir()
 }
 
+// DirExists 目录是否存在
 func DirExists(dir string) bool {
 	d, e := os.Stat(dir)
 	switch {

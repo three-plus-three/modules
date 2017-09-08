@@ -435,7 +435,7 @@ func Uint64(value interface{}) (uint64, error) {
 	case uint32:
 		return uint64(v), nil
 	case uint64:
-		return uint64(v), nil
+		return v, nil
 	case int:
 		if v >= 0 {
 			return uint64(v), nil
@@ -536,7 +536,7 @@ func Float64(value interface{}) (float64, error) {
 	case float32:
 		return float64(v), nil
 	case float64:
-		return float64(v), nil
+		return v, nil
 	case uint:
 		return float64(v), nil
 	case uint8:
@@ -592,7 +592,7 @@ func String(value interface{}) (string, error) {
 	case uint32:
 		return strconv.FormatUint(uint64(v), 10), nil
 	case uint64:
-		return strconv.FormatUint(uint64(v), 10), nil
+		return strconv.FormatUint(v, 10), nil
 	case int:
 		return strconv.FormatInt(int64(v), 10), nil
 	case int8:
@@ -602,11 +602,11 @@ func String(value interface{}) (string, error) {
 	case int32:
 		return strconv.FormatInt(int64(v), 10), nil
 	case int64:
-		return strconv.FormatInt(int64(v), 10), nil
+		return strconv.FormatInt(v, 10), nil
 	case float32:
 		return strconv.FormatFloat(float64(v), 'e', -1, 64), nil
 	case float64:
-		return strconv.FormatFloat(float64(v), 'e', -1, 64), nil
+		return strconv.FormatFloat(v, 'e', -1, 64), nil
 	case bool:
 		if v {
 			return "true", nil

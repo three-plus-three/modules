@@ -19,7 +19,6 @@ type Client interface {
 type Core struct {
 	options Options
 
-	closer    []io.Closer
 	waitGroup sync.WaitGroup
 
 	watcher      Watcher
@@ -62,26 +61,26 @@ func (core *Core) Close() error {
 	}
 
 	closers = func() []io.Closer {
-		var closers []io.Closer
+		var closerList []io.Closer
 		core.queues_lock.Lock()
 		defer core.queues_lock.Unlock()
 		for _, v := range core.queues {
-			closers = append(closers, v)
+			closerList = append(closerList, v)
 		}
-		return closers
+		return closerList
 	}()
 	for _, closer := range closers {
 		closer.Close()
 	}
 
 	closers = func() []io.Closer {
-		var closers []io.Closer
+		var closerList []io.Closer
 		core.topics_lock.Lock()
 		defer core.topics_lock.Unlock()
 		for _, v := range core.topics {
-			closers = append(closers, v)
+			closerList = append(closerList, v)
 		}
-		return closers
+		return closerList
 	}()
 	for _, closer := range closers {
 		closer.Close()

@@ -53,7 +53,7 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 	defer l.Close()
 
 	if cfg.EnableTLS {
-		err = l.StartTLS(&tls.Config{InsecureSkipVerify: true})
+		err = l.StartTLS(&tls.Config{InsecureSkipVerify: true}) // nolint
 		if err != nil {
 			return nil, err
 		}
