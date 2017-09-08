@@ -8,12 +8,17 @@ import (
 )
 
 type RuntimeError interface {
+	HTTPCode() int
 	Code() int
 	Error() string
 }
 
 type ErrNotFound struct {
 	id interface{}
+}
+
+func (err *ErrNotFound) HTTPCode() int {
+	return http.StatusNotFound
 }
 
 func (err *ErrNotFound) Code() int {
@@ -84,6 +89,10 @@ func Concat(msg string, errs []error) error {
 type ApplicationError struct {
 	ErrCode    int    `json:"code"`
 	ErrMessage string `json:"message"`
+}
+
+func (err *ApplicationError) HTTPCode() int {
+	return err.ErrCode
 }
 
 func (err *ApplicationError) Code() int {

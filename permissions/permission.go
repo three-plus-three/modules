@@ -1,12 +1,15 @@
 package permissions
 
 import (
-	"errors"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/three-plus-three/modules/errors"
 )
 
+var ErrUnauthorized = errors.NewApplicationError(http.StatusUnauthorized, "user is unauthorized")
 var ErrCacheInvalid = errors.New("permission cache is invald")
 var ErrTagNotFound = errors.New("permission tag is not found")
 var ErrPermissionNotFound = errors.New("permission is not found")
