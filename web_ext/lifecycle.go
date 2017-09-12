@@ -14,6 +14,12 @@ const DELETE = "delete"
 const UPDATE = "update"
 const QUERY = "query"
 
+// RoleAdministrator administrator 角色名
+const RoleAdministrator = "administrator"
+
+// RoleVisitor visitor 角色名
+const RoleVisitor = "visitor"
+
 // InitUser 初始化用户的回调函数
 var InitUser = func(lifecycle *Lifecycle) func(userName string) User {
 	return func(userName string) User {
