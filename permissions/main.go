@@ -95,6 +95,7 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 		// 	panic(errors.New("query roles with user is " + user + "fail: " + err.Error()))
 		// }
 
+		u.Roles() // 缓存 roleNames
 		return u
 	}
 }
@@ -104,6 +105,7 @@ type user struct {
 	lifecycle            *web_ext.Lifecycle
 	u                    User
 	roles                []Role
+	roleNames            []string
 	permissionsAndRoles  []PermissionGroupAndRole
 	permissionGroupCache *GroupCache
 
@@ -116,6 +118,23 @@ func (u *user) ID() int64 {
 
 func (u *user) Name() string {
 	return u.u.Name
+}
+
+func (u *user) Roles() []string {
+	if len(u.roleNames) != 0 {
+		return u.roleNames
+	}
+	if len(u.roles) == 0 {
+		return nil
+	}
+
+	roleNames := make([]string, 0, len(u.roles))
+	for idx := range u.roles {
+		roleNames = append(roleNames, u.roles[idx].Name)
+	}
+
+	u.roleNames = roleNames
+	return u.roleNames
 }
 
 func (u *user) Data(key string) interface{} {

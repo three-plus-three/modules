@@ -14,18 +14,22 @@ const DELETE = "delete"
 const UPDATE = "update"
 const QUERY = "query"
 
+// InitUser 初始化用户的回调函数
 var InitUser = func(lifecycle *Lifecycle) func(userName string) User {
 	return func(userName string) User {
 		return &user{lifecycle: lifecycle, name: userName}
 	}
 }
 
+// User 用户信息
 type User interface {
 	ID() int64
 
 	Name() string
 
 	Data(key string) interface{}
+
+	Roles() []string
 
 	HasPermission(permissionName, op string) bool
 }
@@ -49,6 +53,10 @@ func (u *user) Name() string {
 
 func (u *user) Data(key string) interface{} {
 	return nil
+}
+
+func (u *user) Roles() []string {
+	return []string{"administrator"}
 }
 
 func (u *user) HasPermission(permissionName, op string) bool {
