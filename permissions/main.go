@@ -21,25 +21,29 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 	permissionGroupCache.Init(5*time.Minute, refresh)
 	refresh()
 
-	var administrator, visitor int64
+	var adminRole Role
+	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&adminRole); e != nil {
+		adminRole.Name = web_ext.RoleAdministrator
+		log.Println("[warn] role administrator isnot found -", e)
+	}
+
+	var visitorRole Role
+	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&visitorRole); e != nil {
+		visitorRole.Name = web_ext.RoleVisitor
+		log.Println("[warn] role visitor isnot found -", e)
+	}
 
 	return func(userName string) web_ext.User {
 		if e := lastErr.Get(); e != nil {
 			panic(e)
 		}
-		if administrator == 0 {
-			var adminRole Role
-			if e := db.Roles().Where(orm.Cond{"name": "administrator"}).One(&adminRole); e == nil {
-				administrator = adminRole.ID
-			} else {
+		if adminRole.ID == 0 {
+			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&adminRole); e != nil {
 				log.Println("[warn] role administrator isnot found -", e)
 			}
 		}
-		if visitor == 0 {
-			var visitorRole Role
-			if e := db.Roles().Where(orm.Cond{"name": "visitor"}).One(&visitorRole); e == nil {
-				visitor = visitorRole.ID
-			} else {
+		if visitorRole.ID == 0 {
+			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&visitorRole); e != nil {
 				log.Println("[warn] role visitor isnot found -", e)
 			}
 		}
@@ -47,14 +51,16 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 		var u = &user{db: db,
 			lifecycle:            lifecycle,
 			permissionGroupCache: permissionGroupCache,
-			administrator:        administrator,
-			visitor:              visitor}
+			administrator:        adminRole.ID,
+			visitor:              visitorRole.ID}
 		err := db.Users().Where(orm.Cond{"name": userName}).One(&u.u)
 		if err != nil {
 			if userName != "admin" {
 				panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
 			}
 			u.u.Name = userName
+			u.roleNames = []string{web_ext.RoleAdministrator}
+			u.roles = []Role{adminRole}
 			return u
 		}
 
