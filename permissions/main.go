@@ -55,7 +55,7 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			visitor:              visitorRole.ID}
 		err := db.Users().Where(orm.Cond{"name": userName}).One(&u.u)
 		if err != nil {
-			if userName != "admin" {
+			if userName != web_ext.UserAdmin {
 				panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
 			}
 			u.u.Name = userName
@@ -77,9 +77,17 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 		if u.administrator != 0 {
 			for _, role := range u.roles {
 				if role.ID == u.administrator {
+					u.Roles() // 缓存 roleNames
 					return u
 				}
 			}
+		}
+
+		if u.u.Name == web_ext.UserAdmin {
+			u.u.Name = userName
+			u.roles = append(u.roles, adminRole)
+			u.Roles() // 缓存 roleNames
+			return u
 		}
 
 		pgRoleCond := orm.Cond{"exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
@@ -168,7 +176,7 @@ func (u *user) Data(key string) interface{} {
 }
 
 func (u *user) HasPermission(permissionID, op string) bool {
-	if u.Name() == "admin" {
+	if u.Name() == web_ext.UserAdmin {
 		return true
 	}
 	if u.administrator != 0 {
