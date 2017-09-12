@@ -14,6 +14,9 @@ const DELETE = "delete"
 const UPDATE = "update"
 const QUERY = "query"
 
+// UserAdmin admin 用户名
+const UserAdmin = "admin"
+
 // RoleAdministrator administrator 角色名
 const RoleAdministrator = "administrator"
 
