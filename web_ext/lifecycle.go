@@ -17,11 +17,17 @@ const QUERY = "query"
 // UserAdmin admin 用户名
 const UserAdmin = "admin"
 
+// UserGuest guest 用户名
+const UserGuest = "guest"
+
 // RoleAdministrator administrator 角色名
 const RoleAdministrator = "administrator"
 
 // RoleVisitor visitor 角色名
 const RoleVisitor = "visitor"
+
+// RoleGuest guest 角色名
+const RoleGuest = "guest"
 
 // InitUser 初始化用户的回调函数
 var InitUser = func(lifecycle *Lifecycle) func(userName string) User {

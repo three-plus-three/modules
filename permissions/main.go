@@ -33,6 +33,12 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 		log.Println("[warn] role visitor isnot found -", e)
 	}
 
+	var guestRole Role
+	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&guestRole); e != nil {
+		guestRole.Name = web_ext.RoleGuest
+		log.Println("[warn] role visitor isnot found -", e)
+	}
+
 	return func(userName string) web_ext.User {
 		if e := lastErr.Get(); e != nil {
 			panic(e)
@@ -47,6 +53,11 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 				log.Println("[warn] role visitor isnot found -", e)
 			}
 		}
+		if guestRole.ID == 0 {
+			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&guestRole); e != nil {
+				log.Println("[warn] role guest isnot found -", e)
+			}
+		}
 
 		var u = &user{db: db,
 			lifecycle:            lifecycle,
@@ -55,13 +66,20 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			visitor:              visitorRole.ID}
 		err := db.Users().Where(orm.Cond{"name": userName}).One(&u.u)
 		if err != nil {
-			if userName != web_ext.UserAdmin {
+			switch userName {
+			case web_ext.UserAdmin:
+				u.u.Name = userName
+				u.roleNames = []string{web_ext.RoleAdministrator}
+				u.roles = []Role{adminRole}
+				return u
+			case web_ext.UserGuest:
+				u.u.Name = userName
+				u.roleNames = []string{web_ext.RoleGuest}
+				u.roles = []Role{guestRole}
+				return u
+			default:
 				panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
 			}
-			u.u.Name = userName
-			u.roleNames = []string{web_ext.RoleAdministrator}
-			u.roles = []Role{adminRole}
-			return u
 		}
 
 		cond := orm.Cond{"exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
