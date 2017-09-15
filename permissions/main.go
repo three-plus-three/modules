@@ -153,7 +153,7 @@ func (u *user) Name() string {
 }
 
 func (u *user) Nickname() string {
-	return u.u.Name
+	return u.u.Nickname
 }
 
 func (u *user) Roles() []string {
