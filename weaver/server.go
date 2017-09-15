@@ -1,4 +1,4 @@
-package menus
+package weaver
 
 import (
 	"encoding/json"
@@ -8,14 +8,17 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/cheekybits/genny/generic"
 	"github.com/three-plus-three/modules/environment"
-	"github.com/three-plus-three/modules/toolbox"
 )
+
+// WeaveType 用于泛型替换的类型
+type WeaveType generic.Type
 
 // Weaver 菜单的组织工具
 type Weaver interface {
-	Update(group string, menuList interface{}) error
-	Generate() (interface{}, error)
+	Update(group string, value WeaveType) error
+	Generate() (WeaveType, error)
 }
 
 // Server 菜单的服备
@@ -47,17 +50,6 @@ func text(w http.ResponseWriter, code int, txt string) {
 }
 
 func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
-	// o := srv.value.Load()
-	// if o == nil {
-	// 	http.Error(w, "server is initialing.", http.StatusServiceUnavailable)
-	// 	return
-	// }
-	// weaver, ok := o.(*menuWeaver)
-	// if !ok || weaver == nil {
-	// 	http.Error(w, "weaver is initialing.", http.StatusServiceUnavailable)
-	// 	return
-	// }
-
 	results, err := srv.weaver.Generate()
 	if err != nil {
 		http.Error(w, "weaver is initialing.", http.StatusServiceUnavailable)
@@ -79,7 +71,7 @@ func (srv *Server) write(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data []toolbox.Menu
+	var data WeaveType
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

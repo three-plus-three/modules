@@ -2,13 +2,18 @@ package toolbox
 
 // Menu 表示一个菜单
 type Menu struct {
-	Name       string `json:"name"`
-	Title      string `json:"title"`
-	Permission string `json:"permission,omitempty"`
-	URL        string `json:"url"`
-	Icon       string `json:"icon,omitempty"`
+	Name       string `json:"name" xorm:"name unique notnull"`
+	Title      string `json:"title" xorm:"title notnull"`
+	Permission string `json:"permission,omitempty" xorm:"permission"`
+	URL        string `json:"url" xorm:"url"`
+	Icon       string `json:"icon,omitempty" xorm:"icon"`
 
-	Children []Menu `json:"children,omitempty"`
+	Children []Menu `json:"children,omitempty" xorm:"-"`
+}
+
+// TableName 用于 xorm 的表名
+func (menu *Menu) TableName() string {
+	return "tpt_menus"
 }
 
 // IsActiveWith 判断这个菜单是否是展开的
@@ -79,4 +84,56 @@ func IsSameMenu(newMenu, oldMenu Menu) bool {
 		return false
 	}
 	return IsSameMenuArray(newMenu.Children, oldMenu.Children)
+}
+
+// MergeMenus 合并菜单列表
+func MergeMenus(allList, newList []Menu) []Menu {
+	for _, menu := range newList {
+		foundIdx := -1
+		for idx := range allList {
+			if allList[idx].Name == menu.Name {
+				foundIdx = idx
+			}
+		}
+		if foundIdx < 0 {
+			allList = append(allList, menu)
+		} else {
+			MergeMenuWithNoChildren(&allList[foundIdx], &menu)
+			allList[foundIdx].Children = MergeMenus(allList[foundIdx].Children, menu.Children)
+		}
+	}
+	return allList
+}
+
+// MergeMenuWithNoChildren 合并菜单，但子菜单不合并
+func MergeMenuWithNoChildren(to, from *Menu) {
+	if to.Title == "" {
+		to.Title = from.Title
+	}
+	if to.Permission == "" {
+		to.Permission = from.Permission
+	}
+	if to.URL == "" || to.URL == "#" {
+		to.URL = from.URL
+	}
+	if to.Icon == "" {
+		to.Icon = from.Icon
+	}
+}
+
+// Remove 从列表中删除指定的菜单
+func Remove(menuList []Menu, name string) []Menu {
+	offset := 0
+	for i := 0; i < len(menuList); i++ {
+		if menuList[i].Name == name {
+			continue
+		}
+		offset++
+	}
+
+	for i := 0; i < offset; i++ {
+		menuList[i].Children = Remove(menuList[i].Children, name)
+	}
+
+	return menuList[:offset]
 }
