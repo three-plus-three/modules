@@ -152,6 +152,10 @@ func (u *user) Name() string {
 	return u.u.Name
 }
 
+func (u *user) Nickname() string {
+	return u.u.Name
+}
+
 func (u *user) Roles() []string {
 	if len(u.roleNames) != 0 {
 		return u.roleNames

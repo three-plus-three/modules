@@ -42,6 +42,8 @@ type User interface {
 
 	Name() string
 
+	Nickname() string
+
 	Data(key string) interface{}
 
 	Roles() []string
@@ -59,6 +61,14 @@ func (u *user) ID() int64 {
 }
 
 func (u *user) Name() string {
+	if u.name == "" {
+		return "admin"
+	}
+
+	return u.name
+}
+
+func (u *user) Nickname() string {
 	if u.name == "" {
 		return "admin"
 	}

@@ -124,7 +124,7 @@ func (cw *CloseWrapper) Close() error {
 	if o == nil {
 		return nil
 	}
-	if closer, ok := o.(io.Closer); ok {
+	if closer, ok := o.(io.Closer); ok && closer != nil {
 		err := closer.Close()
 		cw.Set(nil)
 		return err
