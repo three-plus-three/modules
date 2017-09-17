@@ -36,7 +36,8 @@ func (user *User) TableName() string {
 
 func (user *User) Validate(validation *revel.Validation) bool {
 	validation.Required(user.Name).Key("user.Name")
-	if user.Source != "AD" {
+	validation.Required(user.Nickname).Key("user.Nickname")
+	if user.Source != "ldap" {
 		validation.MinSize(user.Password, 8).Key("user.Password")
 		validation.MaxSize(user.Password, 250).Key("user.Password")
 	}
