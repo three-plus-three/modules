@@ -7,7 +7,6 @@ package menus
 import (
 	"io"
 	"log"
-	"os"
 	"sync/atomic"
 	"time"
 
@@ -28,7 +27,8 @@ type Client interface {
 type Callback func() ([]toolbox.Menu, error)
 
 // Connect 连接到 weaver 服务
-func Connect(env *environment.Environment, appID environment.ENV_PROXY_TYPE, cb Callback, mode string) Client {
+func Connect(env *environment.Environment, appID environment.ENV_PROXY_TYPE,
+	cb Callback, mode, queueName, urlPath string, logger *log.Logger) Client {
 	//wsrv := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
 
 	// hubURL := so.UrlFor(env.DaemonUrlPath, "/mq/")
@@ -38,12 +38,12 @@ func Connect(env *environment.Environment, appID environment.ENV_PROXY_TYPE, cb 
 	case "apart":
 		wsrv := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
 		apart := &apartClient{
-			logger:    log.New(os.Stderr, "[menus]", log.LstdFlags),
+			logger:    logger, // log.New(os.Stderr, "[menus]", log.LstdFlags),
 			env:       env,
 			wsrv:      wsrv,
 			appSrv:    env.GetServiceConfig(appID),
-			client:    wsrv.Client(env.DaemonUrlPath, "/menu/"),
-			queueName: "menus.changed",
+			client:    wsrv.Client(urlPath),
+			queueName: queueName,
 			cb:        cb,
 			shutdown:  make(chan struct{}),
 		}

@@ -25,6 +25,7 @@ type Weaver interface {
 type Server struct {
 	env    *environment.Environment
 	weaver Weaver
+	logger *log.Logger
 }
 
 func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +53,8 @@ func text(w http.ResponseWriter, code int, txt string) {
 func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
 	results, err := srv.weaver.Generate()
 	if err != nil {
-		http.Error(w, "weaver is initialing.", http.StatusServiceUnavailable)
+		srv.logger.Println(err)
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 
@@ -60,7 +62,7 @@ func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(results)
 	if err != nil {
-		log.Println("[menus]", err)
+		srv.logger.Println(err)
 	}
 }
 
@@ -74,23 +76,27 @@ func (srv *Server) write(w http.ResponseWriter, r *http.Request) {
 	var data WeaveType
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
+		srv.logger.Println("update", group, "fail,", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = srv.weaver.Update(group, data)
 	if err != nil {
+		srv.logger.Println("update", group, "fail,", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	text(w, http.StatusOK, "OK")
+	srv.logger.Println("update", group, "is successful")
 }
 
 // NewServer 创建一个菜单服备
-func NewServer(env *environment.Environment, weaver Weaver) (*Server, error) {
+func NewServer(env *environment.Environment, weaver Weaver, logger *log.Logger) (*Server, error) {
 	return &Server{
 		env:    env,
 		weaver: weaver,
+		logger: logger,
 	}, nil
 }
