@@ -10,6 +10,7 @@ func SaveDefaultPermissionGroups(db *DB) error {
 	if err != nil {
 		return errors.Wrap(err, "载入缺省权限组")
 	}
+
 	var allPermissionGroups []PermissionGroup
 	err = db.PermissionGroups().
 		Where(orm.Cond{"is_default": "true"}).
@@ -17,7 +18,8 @@ func SaveDefaultPermissionGroups(db *DB) error {
 	if err != nil {
 		return errors.Wrap(err, "GetAllPermissionGroups")
 	}
-	err = syncGroups(db, allDefaultGroups, allPermissionGroups)
+
+	err = syncGroups(db, allDefaultGroups, allPermissionGroups, 0)
 	if err != nil {
 		return errors.Wrap(err, "载入缺省权限组")
 	}
@@ -25,28 +27,71 @@ func SaveDefaultPermissionGroups(db *DB) error {
 }
 
 func syncGroups(db *DB, allDefaultGroups []Group,
-	allPermissionGroups []PermissionGroup) error {
+	allPermissionGroups []PermissionGroup, parentID int64) error {
 	for _, defaultGroup := range allDefaultGroups {
 		foundIndex := -1
-
 		for idx := range allPermissionGroups {
-			if defaultGroup.Name == allPermissionGroups[idx].Name {
+			if defaultGroup.Name == allPermissionGroups[idx].Name && allPermissionGroups[idx].ParentID == parentID {
 				foundIndex = idx
 				break
 			}
 		}
-
 		if foundIndex >= 0 {
 			err := updatePermissionGroups(db, defaultGroup,
 				allPermissionGroups[foundIndex])
 			if err != nil {
 				return err
 			}
+			if len(defaultGroup.Children) > 0 {
+				syncGroups(db, defaultGroup.Children, allPermissionGroups, allPermissionGroups[foundIndex].ID)
+			}
 		} else {
-			err := insertPermissionGroups(db, defaultGroup, 0)
+			err := insertPermissionGroups(db, defaultGroup, parentID)
 			if err != nil {
 				return err
 			}
+		}
+	}
+
+	for idx := range allPermissionGroups {
+		foundIndex := -1
+		for _, defaultGroup := range allDefaultGroups {
+			if defaultGroup.Name == allPermissionGroups[idx].Name && allPermissionGroups[idx].ParentID == parentID {
+				foundIndex = idx
+				break
+			}
+		}
+		if foundIndex < 0 && allPermissionGroups[idx].ParentID == parentID {
+			err := delectPermissionGroups(db, allPermissionGroups[idx].ID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func delectPermissionGroups(db *DB, groupID int64) error {
+	var roleAndpermissionGroups []PermissionGroupAndRole
+	err := db.PermissionGroupsAndRoles().Where(orm.Cond{"group_id": groupID}).All(&roleAndpermissionGroups)
+	if err != nil {
+		return errors.Wrap(err, "获取角色与权限组关系")
+	}
+	if len(roleAndpermissionGroups) > 0 {
+		var permissionGroup PermissionGroup
+		err = db.PermissionGroups().Id(groupID).Get(&permissionGroup)
+		if err != nil {
+			return errors.Wrap(err, "获取权限组")
+		}
+		permissionGroup.Name = permissionGroup.Name + "(已删除)"
+		err := db.PermissionGroups().Id(permissionGroup.ID).Nullable("parent_id").Update(&permissionGroup)
+		if err != nil {
+			return errors.Wrap(err, "更新权限组失败")
+		}
+	} else {
+		err = db.PermissionGroups().Id(groupID).Delete()
+		if err != nil {
+			return errors.Wrap(err, "删除权限组")
 		}
 	}
 	return nil
@@ -111,14 +156,81 @@ func insertPerssionsAndGroup(db *DB, permissionIDs []string,
 	return nil
 }
 
-func updatePermissionGroups(db *DB, group Group, peg PermissionGroup) error {
-	err := db.PermissionGroups().Id(peg.ID).Delete()
+func updatePermissionGroups(db *DB, group Group, permissionGroup PermissionGroup) error {
+	permissionGroup.Name = group.Name
+	permissionGroup.Description = group.Description
+	err := db.PermissionGroups().Id(permissionGroup.ID).Nullable("parent_id").Update(&permissionGroup)
 	if err != nil {
-		return errors.New("Delete PermissionGroups fail" + err.Error())
+		return errors.Wrap(err, "更新权限组失败")
 	}
-	err = insertPermissionGroups(db, group, 0)
+	if len(group.PermissionIDs) > 0 {
+		err := updatePerssionsAndGroup(db, group.PermissionTags, permissionGroup.ID, PERMISSION_TAG)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(group.PermissionIDs) > 0 {
+		err := updatePerssionsAndGroup(db, group.PermissionIDs, permissionGroup.ID, PERMISSION_ID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//更新权限组与权限关系
+func updatePerssionsAndGroup(db *DB, ids []string,
+	groupID int64, permissionAndGroupType int64) error {
+
+	var permissionsAndGroupsInDB []PermissionAndGroup
+	err := db.PermissionsAndGroups().Where(orm.Cond{"group_id": groupID, "type": permissionAndGroupType}).All(&permissionsAndGroupsInDB)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "获取权限组与权限关系")
+	}
+
+	var created, deleted []string
+
+	for _, permissionsAndGroup := range permissionsAndGroupsInDB {
+		found := false
+		for _, permissionID := range ids {
+			if permissionID == permissionsAndGroup.PermissionObject {
+				found = true
+				break
+			}
+		}
+		if !found {
+			deleted = append(deleted, permissionsAndGroup.PermissionObject)
+		}
+	}
+
+	for _, permissionID := range ids {
+		found := false
+		for _, permissionsAndGroup := range permissionsAndGroupsInDB {
+			if permissionID == permissionsAndGroup.PermissionObject {
+				found = true
+				break
+			}
+		}
+		if !found {
+			created = append(created, permissionID)
+		}
+	}
+
+	_, err = db.PermissionsAndGroups().Where(orm.Cond{"group_id": groupID}).And(orm.Cond{"permission_object IN": deleted}).Delete()
+	if err != nil {
+		return errors.Wrap(err, "删除全权限组与权限关系")
+	}
+
+	for _, v := range created {
+		var permissionAndGroup PermissionAndGroup
+		permissionAndGroup.GroupID = groupID
+		permissionAndGroup.PermissionObject = v
+		permissionAndGroup.Type = permissionAndGroupType
+		_, err = db.PermissionsAndGroups().Insert(&permissionAndGroup)
+		if err != nil {
+			return errors.Wrap(err, "InsertPermissionsAndGroups")
+		}
 	}
 	return nil
 }
