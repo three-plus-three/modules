@@ -1,18 +1,23 @@
 package permissions
 
 import (
+	"fmt"
+
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/errors"
 )
 
-func SaveDefaultPermissionGroups(db *DB) error {
+func SaveDefaultPermissionGroups(db *DB, allDefaultGroups []Group) error {
 	allDefaultGroups, err := GetDefaultPermissionGroups()
 	if err != nil {
 		return errors.Wrap(err, "载入缺省权限组")
 	}
+	return saveDefaultPermissionGroups(db, allDefaultGroups)
+}
 
+func saveDefaultPermissionGroups(db *DB, allDefaultGroups []Group) error {
 	var allPermissionGroups []PermissionGroup
-	err = db.PermissionGroups().
+	err := db.PermissionGroups().
 		Where(orm.Cond{"is_default": "true"}).
 		All(&allPermissionGroups)
 	if err != nil {
@@ -28,6 +33,7 @@ func SaveDefaultPermissionGroups(db *DB) error {
 
 func syncGroups(db *DB, allDefaultGroups []Group,
 	allPermissionGroups []PermissionGroup, parentID int64) error {
+
 	for _, defaultGroup := range allDefaultGroups {
 		foundIndex := -1
 		for idx := range allPermissionGroups {
@@ -56,13 +62,15 @@ func syncGroups(db *DB, allDefaultGroups []Group,
 	for idx := range allPermissionGroups {
 		foundIndex := -1
 		for _, defaultGroup := range allDefaultGroups {
+			fmt.Println("========================", defaultGroup.Name, ":", allPermissionGroups[idx].Name, "--", allPermissionGroups[idx].ParentID == parentID)
 			if defaultGroup.Name == allPermissionGroups[idx].Name && allPermissionGroups[idx].ParentID == parentID {
 				foundIndex = idx
 				break
 			}
 		}
 		if foundIndex < 0 && allPermissionGroups[idx].ParentID == parentID {
-			err := delectPermissionGroups(db, allPermissionGroups[idx].ID)
+			fmt.Println("========================", allPermissionGroups[idx].ID)
+			err := deletePermissionGroups(db, allPermissionGroups[idx].ID)
 			if err != nil {
 				return err
 			}
@@ -71,7 +79,7 @@ func syncGroups(db *DB, allDefaultGroups []Group,
 	return nil
 }
 
-func delectPermissionGroups(db *DB, groupID int64) error {
+func deletePermissionGroups(db *DB, groupID int64) error {
 	var roleAndpermissionGroups []PermissionGroupAndRole
 	err := db.PermissionGroupsAndRoles().Where(orm.Cond{"group_id": groupID}).All(&roleAndpermissionGroups)
 	if err != nil {
@@ -163,19 +171,17 @@ func updatePermissionGroups(db *DB, group Group, permissionGroup PermissionGroup
 	if err != nil {
 		return errors.Wrap(err, "更新权限组失败")
 	}
-	if len(group.PermissionIDs) > 0 {
-		err := updatePerssionsAndGroup(db, group.PermissionTags, permissionGroup.ID, PERMISSION_TAG)
-		if err != nil {
-			return err
-		}
+
+	err = updatePerssionsAndGroup(db, group.PermissionTags, permissionGroup.ID, PERMISSION_TAG)
+	if err != nil {
+		return err
 	}
 
-	if len(group.PermissionIDs) > 0 {
-		err := updatePerssionsAndGroup(db, group.PermissionIDs, permissionGroup.ID, PERMISSION_ID)
-		if err != nil {
-			return err
-		}
+	err = updatePerssionsAndGroup(db, group.PermissionIDs, permissionGroup.ID, PERMISSION_ID)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	fixtures "github.com/AreaHQ/go-fixtures"
+	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/environment/env_tests"
 	"github.com/three-plus-three/modules/web_ext"
 )
@@ -38,16 +39,15 @@ func TestHasPermission(t *testing.T) {
 		return
 	}
 
-	permissionProvider := PermissionProviderFunc{
-		Permissions: func() ([]Permission, error) {
-			allPermissions := []Permission{Permission{"um_1", "1", "2", []string{"um"}},
-				Permission{"um_2", "2", "2", []string{"um"}},
-				Permission{"as_1", "3", "2", []string{"as"}},
-				Permission{"as_2", "4", "2", []string{"as"}}}
-			return allPermissions, nil
-		}}
+	permissionProvider := PermissionProviderFunc(func() (*PermissionData, error) {
+		allPermissions := []Permission{Permission{"um_1", "1", "2", []string{"um"}},
+			Permission{"um_2", "2", "2", []string{"um"}},
+			Permission{"as_1", "3", "2", []string{"as"}},
+			Permission{"as_2", "4", "2", []string{"as"}}}
+		return &PermissionData{Permissions: allPermissions}, nil
+	})
 
-	RegisterPermissions(permissionProvider)
+	RegisterPermissions("test", permissionProvider)
 
 	u := readUser("admin")
 	if !u.HasPermission("perm_not_exists_in_db", CREATE) {
@@ -194,27 +194,25 @@ func TestHasPermission(t *testing.T) {
 
 func TestSaveDefaultPermissionGroups(t *testing.T) {
 	env := env_tests.Clone(nil)
-
 	lifecycle, err := web_ext.NewLifecycle(env)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
 	var db = DB{Engine: lifecycle.ModelEngine}
+	DropTables(lifecycle.ModelEngine)
+	InitTables(lifecycle.ModelEngine)
 
 	var allPermissions = []Permission{Permission{"um_1", "1", "2", []string{"um"}},
 		Permission{"um_2", "2", "2", []string{"um"}},
-		Permission{"um_3", "3", "2", []string{"um"}},
-		Permission{"um_4", "4", "2", []string{"um"}}}
+		Permission{"um_3", "3", "2", []string{"um"}}}
 
 	var allGroups = []Group{Group{Name: "分组1", Children: []Group{
-		Group{Name: "分组1-1", PermissionIDs: []string{"um_3", "um_4"}},
-		Group{Name: "分组1-2", PermissionIDs: []string{"um_1", "um_2"}}}},
-		Group{Name: "分组2", Children: []Group{
-			Group{Name: "分组2-1", PermissionTags: []string{"um"}},
-			Group{Name: "分组2-2", PermissionIDs: []string{"um_3", "um_3"}}}}}
+		Group{Name: "分组1-1", PermissionIDs: []string{"um_3"}},
+		Group{Name: "分组1-2", PermissionIDs: []string{"um_2"}}}}}
 
-	RegisterPermissions("um_bultin",
+	RegisterPermissions("um_bultin1",
 		PermissionProviderFunc(func() (*PermissionData, error) {
 			return &PermissionData{
 				Permissions: allPermissions,
@@ -222,8 +220,120 @@ func TestSaveDefaultPermissionGroups(t *testing.T) {
 			}, nil
 		}))
 
-	err = SaveDefaultPermissionGroups(&db)
+	//测试是否通过
+	err = saveDefaultPermissionGroups(&db, allGroups)
 	if err != nil {
 		t.Error(err)
 	}
+
+	var group1 PermissionGroup
+	err = db.PermissionGroups().Where(orm.Cond{"name": "分组1"}).One(&group1)
+	if err != nil {
+		t.Error(err)
+	}
+	var group2 PermissionGroup
+	err = db.PermissionGroups().Where(orm.Cond{"name": "分组1-1"}).One(&group2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var group3 PermissionGroup
+	err = db.PermissionGroups().Where(orm.Cond{"name": "分组1-2"}).One(&group3)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var groupAndPermission1 PermissionAndGroup
+	err = db.PermissionsAndGroups().Where(orm.Cond{"group_id": group2.ID, "permission_object": "um_3"}).One(&groupAndPermission1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var groupAndPermission2 PermissionAndGroup
+	err = db.PermissionsAndGroups().Where(orm.Cond{"group_id": group3.ID, "permission_object": "um_2"}).One(&groupAndPermission2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//测试删除组
+	var allGroupA = []Group{Group{Name: "分组1", Children: []Group{
+		Group{Name: "分组1-1", PermissionIDs: []string{"um_3"}}}}}
+	err = saveDefaultPermissionGroups(&db, allGroupA)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var group PermissionGroup
+	err = db.PermissionGroups().Where(orm.Cond{"name": "分组1-2"}).One(&group)
+	if err != nil {
+		if err != orm.ErrNotFound {
+			t.Error(err)
+		}
+	}
+
+	if group.Name != "" {
+		t.Error("删除组失败")
+	}
+
+	//测试增加组
+	var allGroupB = []Group{Group{Name: "分组1", Children: []Group{
+		Group{Name: "分组1-1", PermissionIDs: []string{"um_3"}},
+		Group{Name: "分组1-2", PermissionIDs: []string{"um_2"}}}}}
+
+	err = saveDefaultPermissionGroups(&db, allGroupB)
+	if err != nil {
+		t.Error(err)
+	}
+	var groupB PermissionGroup
+	err = db.PermissionGroups().Where(orm.Cond{"name": "分组1-2"}).One(&groupB)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if groupB.Name == "" {
+		t.Error(err)
+	}
+
+	//增加权限
+	var allGroupC = []Group{Group{Name: "分组1", Children: []Group{
+		Group{Name: "分组1-1", PermissionIDs: []string{"um_3", "um_1"}},
+		Group{Name: "分组1-2", PermissionIDs: []string{"um_2"}}}}}
+
+	err = saveDefaultPermissionGroups(&db, allGroupC)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var permissionAndGroupA PermissionAndGroup
+	err = db.PermissionsAndGroups().Where(orm.Cond{"permission_object": "um_1"}).One(&permissionAndGroupA)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if permissionAndGroupA.ID == 0 {
+		t.Error("添加失败")
+	}
+
+	//删除权限
+	var allGroupD = []Group{Group{Name: "分组1", Children: []Group{
+		Group{Name: "分组1-1", PermissionIDs: []string{"um_3"}},
+		Group{Name: "分组1-2", PermissionIDs: []string{"um_2"}}}}}
+
+	err = saveDefaultPermissionGroups(&db, allGroupD)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var permissionAndGroup PermissionAndGroup
+	err = db.PermissionsAndGroups().Where(orm.Cond{"permission_object": "um_1"}).One(&permissionAndGroup)
+	if err != nil {
+		if err != orm.ErrNotFound {
+			t.Error(err)
+		}
+	}
+
+	if permissionAndGroup.PermissionObject != "" {
+		t.Error("没有删除权限")
+	}
+
 }
