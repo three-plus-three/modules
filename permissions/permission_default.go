@@ -1,13 +1,13 @@
 package permissions
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/errors"
 )
 
-func SaveDefaultPermissionGroups(db *DB, allDefaultGroups []Group) error {
+func SaveDefaultPermissionGroups(db *DB) error {
 	allDefaultGroups, err := GetDefaultPermissionGroups()
 	if err != nil {
 		return errors.Wrap(err, "载入缺省权限组")
@@ -62,14 +62,12 @@ func syncGroups(db *DB, allDefaultGroups []Group,
 	for idx := range allPermissionGroups {
 		foundIndex := -1
 		for _, defaultGroup := range allDefaultGroups {
-			fmt.Println("========================", defaultGroup.Name, ":", allPermissionGroups[idx].Name, "--", allPermissionGroups[idx].ParentID == parentID)
 			if defaultGroup.Name == allPermissionGroups[idx].Name && allPermissionGroups[idx].ParentID == parentID {
 				foundIndex = idx
 				break
 			}
 		}
-		if foundIndex < 0 && allPermissionGroups[idx].ParentID == parentID {
-			fmt.Println("========================", allPermissionGroups[idx].ID)
+		if foundIndex < 0 && allPermissionGroups[idx].ParentID == parentID && parentID != 0 {
 			err := deletePermissionGroups(db, allPermissionGroups[idx].ID)
 			if err != nil {
 				return err
@@ -91,7 +89,9 @@ func deletePermissionGroups(db *DB, groupID int64) error {
 		if err != nil {
 			return errors.Wrap(err, "获取权限组")
 		}
-		permissionGroup.Name = permissionGroup.Name + "(已删除)"
+		if strings.Index(permissionGroup.Name, "(已删除)") < 0 {
+			permissionGroup.Name = permissionGroup.Name + "(已删除)"
+		}
 		err := db.PermissionGroups().Id(permissionGroup.ID).Nullable("parent_id").Update(&permissionGroup)
 		if err != nil {
 			return errors.Wrap(err, "更新权限组失败")
