@@ -134,7 +134,8 @@ func (srv *apartClient) write() error {
 
 	return srv.client.
 		SetParam("app", srv.appSrv.Name).
-		POST(value)
+		SetBody(value).
+		POST(nil)
 }
 
 func (srv *apartClient) runSub() {
@@ -149,6 +150,11 @@ func (srv *apartClient) runSub() {
 			errCount++
 			if errCount%50 < 3 {
 				srv.logger.Println("subscribe", srv.queueName, "fail,", err)
+			}
+
+			select {
+			case <-srv.shutdown:
+			case <-time.After(1 * time.Second):
 			}
 			continue
 		}
