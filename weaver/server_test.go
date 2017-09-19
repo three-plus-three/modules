@@ -36,7 +36,7 @@ func (w *testWeaver) Generate() (WeaveType, error) {
 func TestServerSimple(t *testing.T) {
 	env := env_tests.Clone(nil)
 
-	srv, err := NewServer(env, &testWeaver{}, log.New(os.Stderr, "[menus]", log.LstdFlags))
+	srv, err := NewServer(env, &testWeaver{}, log.New(os.Stderr, "[menus]", log.LstdFlags), nil)
 	if err != nil {
 		t.Error(err)
 		return
