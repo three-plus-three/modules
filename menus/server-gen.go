@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/toolbox"
@@ -24,9 +25,10 @@ type Weaver interface {
 
 // Server 菜单的服备
 type Server struct {
-	env    *environment.Environment
-	weaver Weaver
-	logger *log.Logger
+	env        *environment.Environment
+	weaver     Weaver
+	renderHTML func(w http.ResponseWriter, r *http.Request, data []toolbox.Menu)
+	logger     *log.Logger
 }
 
 func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +46,15 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func isConsumeHTML(r *http.Request) bool {
+	contentType := r.Header.Get("Content-Type")
+	if strings.Contains(contentType, "text/html") {
+		return true
+	}
+	accept := r.Header.Get("Accept")
+	return strings.Contains(accept, "text/html")
+}
+
 func text(w http.ResponseWriter, code int, txt string) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -56,6 +67,11 @@ func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		srv.logger.Println(err)
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+
+	if srv.renderHTML != nil && isConsumeHTML(r) {
+		srv.renderHTML(w, r, results)
 		return
 	}
 
@@ -94,10 +110,12 @@ func (srv *Server) write(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewServer 创建一个菜单服备
-func NewServer(env *environment.Environment, weaver Weaver, logger *log.Logger) (*Server, error) {
+func NewServer(env *environment.Environment, weaver Weaver, logger *log.Logger,
+	renderHTML func(w http.ResponseWriter, r *http.Request, data []toolbox.Menu)) (*Server, error) {
 	return &Server{
-		env:    env,
-		weaver: weaver,
-		logger: logger,
+		env:        env,
+		weaver:     weaver,
+		renderHTML: renderHTML,
+		logger:     logger,
 	}, nil
 }
