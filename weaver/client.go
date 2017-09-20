@@ -114,7 +114,9 @@ func (srv *apartClient) Read() (ValueType, error) {
 
 func (srv *apartClient) read() (ValueType, error) {
 	var value ValueType
-	err := srv.client.GET(&value)
+	err := srv.client.
+		SetParam("app", srv.appSrv.Name).
+		GET(&value)
 	return value, err
 }
 
@@ -126,7 +128,7 @@ func (srv *apartClient) write() error {
 	o := srv.cached.Load()
 	if o != nil {
 		if result, ok := o.(*apartResult); ok {
-			if !isSame(value, result.value) {
+			if contains(result.value, value) {
 				return nil
 			}
 		}
@@ -194,8 +196,6 @@ func (srv *apartClient) run() {
 			if value, err := srv.read(); err != nil {
 				srv.logger.Println("read value fail", err)
 			} else {
-				writed = true
-
 				srv.cached.Store(&apartResult{
 					value: value,
 					err:   err,

@@ -1,5 +1,5 @@
 package weaver
 
-func isSame(newItems, oldItems ValueType) bool {
+func contains(allItems, items ValueType) bool {
 	return false
 }

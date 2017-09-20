@@ -13,6 +13,7 @@ import (
 type HttpClient struct {
 	cfg          *ServiceConfig
 	basePath     string
+	headers      map[string]string
 	params       url.Values
 	body         interface{}
 	cached       *bytes.Buffer
@@ -184,7 +185,7 @@ func (hc HttpClient) POST(result interface{}) errors.RuntimeError {
 	return hc.Do("POST", result)
 }
 
-func (hc HttpClient) Create(result interface{}) errors.RuntimeError {
+func (hc HttpClient) CREATE(result interface{}) errors.RuntimeError {
 	return hc.Do("POST", result)
 }
 

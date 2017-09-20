@@ -3,7 +3,6 @@ package cfg
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -127,26 +126,21 @@ func Read(r io.Reader) (map[string]string, error) {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		txt := scanner.Text()
-		fmt.Println(txt)
 		key, retain := readString(txt, true)
 		if len(key) == 0 {
-			fmt.Println("key is empty")
 			continue
 		}
 
 		hasEqualChar, retain := readEqualChar(retain)
 		if !hasEqualChar {
-			fmt.Println("= is unfound")
 			continue
 		}
 
 		value, retain := readString(retain, false)
 		if len(value) == 0 {
-			fmt.Println("value is empty")
 			continue
 		}
 		if skipWhitespace(retain) != "" {
-			fmt.Println("value invalid")
 			continue
 		}
 		cfg[key] = os.ExpandEnv(value)

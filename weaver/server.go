@@ -79,12 +79,15 @@ func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(results)
 	if err != nil {
 		srv.logger.Println(err)
+	} else {
+		srv.logger.Println("query is ok -", r.URL.Query().Get("app"))
 	}
 }
 
 func (srv *Server) write(w http.ResponseWriter, r *http.Request) {
 	group := r.URL.Query().Get("app")
 	if group == "" {
+		srv.logger.Println("app is missing")
 		http.Error(w, "app is missing", http.StatusBadRequest)
 		return
 	}

@@ -26,10 +26,10 @@ func NewWeaver(core *hub_engine.Core, db *DB) (Weaver, error) {
 
 // Menu 数据库中的一个菜单项
 type Menu struct {
-	ID       int64  `json:"id" xorm:"id pk autoincr"`
-	ParentID int64  `json:"parent_id,omitempty" xorm:"parent_id"`
-	Group    string `json:"group" xorm:"group"`
-	Seqence  int64  `json:"seqence,omitempty" xorm:"seqence"`
+	ID          int64  `json:"id" xorm:"id pk autoincr"`
+	ParentID    int64  `json:"parent_id,omitempty" xorm:"parent_id"`
+	Application string `json:"application" xorm:"application"`
+	Seqence     int64  `json:"seqence,omitempty" xorm:"seqence"`
 
 	toolbox.Menu `xorm:"extends"`
 }
@@ -43,7 +43,7 @@ type menuWeaver struct {
 	byGroups map[string]map[string]*Menu
 }
 
-func upsertMenuList(db *DB, group string, parentID int64, menuList []toolbox.Menu, oldInGroup map[string]*Menu) (map[string]*Menu, error) {
+func upsertMenuList(db *DB, app string, parentID int64, menuList []toolbox.Menu, oldInGroup map[string]*Menu) (map[string]*Menu, error) {
 	newInGroup := map[string]*Menu{}
 	for _, menuItem := range menuList {
 
@@ -53,7 +53,7 @@ func upsertMenuList(db *DB, group string, parentID int64, menuList []toolbox.Men
 		} else {
 			old = &Menu{}
 
-			err := db.Menus().Where(orm.Cond{"group": group, "name": menuItem.Name}).One(old)
+			err := db.Menus().Where(orm.Cond{"application": app, "name": menuItem.Name}).One(old)
 			if err != nil {
 				if orm.ErrNotFound != err {
 					return nil, err
@@ -63,7 +63,7 @@ func upsertMenuList(db *DB, group string, parentID int64, menuList []toolbox.Men
 			}
 		}
 
-		old.Group = group
+		old.Application = app
 		toolbox.MergeMenuWithNoChildren(&old.Menu, &menuItem)
 
 		var err error
@@ -85,7 +85,7 @@ func upsertMenuList(db *DB, group string, parentID int64, menuList []toolbox.Men
 	}
 
 	for name := range oldInGroup {
-		_, err := db.Menus().Where(orm.Cond{"group": group, "name": name}).Delete()
+		_, err := db.Menus().Where(orm.Cond{"application": app, "name": name}).Delete()
 		if err != nil {
 			return nil, err
 		}
@@ -105,12 +105,12 @@ func (weaver *menuWeaver) LoadFromDB() error {
 	for idx, menu := range allList {
 		byID[menu.ID] = &allList[idx]
 
-		newInGroup := byGroups[menu.Group]
+		newInGroup := byGroups[menu.Application]
 		if newInGroup == nil {
 			newInGroup = map[string]*Menu{}
 		}
 		newInGroup[menu.Name] = &allList[idx]
-		byGroups[menu.Group] = newInGroup
+		byGroups[menu.Application] = newInGroup
 	}
 
 	menuList := generateMenuTree(0, allList)
@@ -122,19 +122,19 @@ func (weaver *menuWeaver) LoadFromDB() error {
 	return nil
 }
 
-func (weaver *menuWeaver) Update(group string, menuList []toolbox.Menu) error {
+func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 	newInGroup, err := func() (map[string]*Menu, error) {
 		tx, err := weaver.db.Begin()
 		defer util.CloseWith(tx)
 		inGroup := map[string]*Menu{}
 
 		weaver.mu.RLock()
-		for k, v := range weaver.byGroups[group] {
+		for k, v := range weaver.byGroups[app] {
 			inGroup[k] = v
 		}
 		weaver.mu.RUnlock()
 
-		newList, err := upsertMenuList(tx, group, 0, menuList, inGroup)
+		newList, err := upsertMenuList(tx, app, 0, menuList, inGroup)
 		if err != nil {
 			return nil, err
 		}
@@ -143,14 +143,14 @@ func (weaver *menuWeaver) Update(group string, menuList []toolbox.Menu) error {
 	}()
 
 	if err != nil {
-		return errors.New("update menu list in group \"" + group + "\" to db fail, " + err.Error())
+		return errors.New("update menu list in app \"" + app + "\" to db fail, " + err.Error())
 	}
 
 	weaver.mu.Lock()
 	defer weaver.mu.Unlock()
 
-	oldInGroup := weaver.byGroups[group]
-	weaver.byGroups[group] = newInGroup
+	oldInGroup := weaver.byGroups[app]
+	weaver.byGroups[app] = newInGroup
 	weaver.menuList = toolbox.MergeMenus(weaver.menuList, menuList)
 
 	for name := range oldInGroup {
@@ -170,8 +170,14 @@ func (weaver *menuWeaver) Generate() ([]toolbox.Menu, error) {
 	return weaver.menuList, nil
 }
 
-func isSame(newItems, oldItems []toolbox.Menu) bool {
-	return toolbox.IsSameMenuArray(newItems, oldItems)
+func contains(allItems, items []toolbox.Menu) bool {
+	for _, item := range items {
+		raw := toolbox.SearchMenuInTree(allItems, item.Name)
+		if raw == nil || !toolbox.IsSameMenu(item, *raw) {
+			return false
+		}
+	}
+	return true
 }
 
 func generateMenuTree(parentID int64, byID []Menu) []toolbox.Menu {

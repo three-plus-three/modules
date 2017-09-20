@@ -52,6 +52,21 @@ func (menu Menu) Fail() interface{} {
 	panic("菜单的级数太多了，最多只支持 3 级")
 }
 
+// SearchMenuInTree 在菜单树中查找指定的菜单
+func SearchMenuInTree(allList []Menu, name string) *Menu {
+	for idx := range allList {
+		if allList[idx].Name == name {
+			return &allList[idx]
+		}
+		found := SearchMenuInTree(allList[idx].Children, name)
+		if found != nil {
+			return found
+		}
+	}
+
+	return nil
+}
+
 // IsSameMenuArray 判断两个菜单列表是否相等
 func IsSameMenuArray(newList, oldList []Menu) bool {
 	if len(newList) != len(oldList) {

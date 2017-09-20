@@ -10,16 +10,19 @@ import (
 	"github.com/revel/revel"
 	_ "github.com/three-plus-three/modules/bind"
 	"github.com/three-plus-three/modules/environment"
+	"github.com/three-plus-three/modules/menus"
 	"github.com/three-plus-three/modules/toolbox"
+	"github.com/three-plus-three/modules/urlutil"
 	"github.com/three-plus-three/sessions"
 	sso "github.com/three-plus-three/sso/client"
 )
 
 var lifecycleData *Lifecycle
+var menuClient menus.Client
 
 func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 	cb func(*Lifecycle) error,
-	createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
+	mode string, createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
 
 	// Filters is the default set of global filters.
 	revel.Filters = []revel.Filter{
@@ -131,10 +134,22 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 				revel.Server.Addr = serviceObject.ListenAddr("")
 			}
 		}
+
+		menuClient = menus.Connect(lifecycleData.Env,
+			serviceID,
+			menus.Callback(func() ([]toolbox.Menu, error) {
+				return createMenuList(lifecycleData)
+			}),
+			mode,
+			"menus.changed",
+			urlutil.Join(lifecycleData.Env.DaemonUrlPath, "/menu/"),
+			log.New(os.Stderr, "[menus]", log.LstdFlags))
+
+		lifecycleData.OnClosing(menuClient)
 	}, 0)
 
 	revel.OnAppStart(func() {
-		menuList, err := createMenuList(lifecycleData)
+		menuList, err := menuClient.Read()
 		if err != nil {
 			log.Println(err)
 			os.Exit(-1)

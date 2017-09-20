@@ -43,9 +43,4 @@ func TestLDAP(t *testing.T) {
 	}
 
 	t.Log(roles)
-
-	// "ldapServer": "192.168.1.151:389",
-	// "username":"Administrator@hengwei.com.cn",
-	// "password":"Shhw#Tpt_8498b2c7",
-	// "baseDN":"dc=hengwei,dc=com,dc=cn"
 }
