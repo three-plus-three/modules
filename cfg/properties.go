@@ -2,10 +2,116 @@ package cfg
 
 import (
 	"bufio"
+	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"strings"
+	"unicode"
 )
+
+func readQouteString(txt string) (string, string) {
+	var buf bytes.Buffer
+
+	isEscape := false
+	for idx, c := range txt {
+		switch c {
+		case '\\':
+			if isEscape {
+				isEscape = false
+				buf.WriteRune(c)
+			} else {
+				isEscape = true
+			}
+		case 't':
+			if isEscape {
+				isEscape = false
+				buf.WriteRune('\t')
+			} else {
+				buf.WriteRune(c)
+			}
+		case 'r':
+			if isEscape {
+				isEscape = false
+				buf.WriteRune('\r')
+			} else {
+				buf.WriteRune(c)
+			}
+		case 'n':
+			if isEscape {
+				isEscape = false
+				buf.WriteRune('\n')
+			} else {
+				buf.WriteRune(c)
+			}
+		case '"':
+			if !isEscape {
+				return buf.String(), txt[idx+1:]
+			}
+
+			isEscape = false
+			buf.WriteRune('"')
+		default:
+			buf.WriteRune(c)
+		}
+	}
+	return buf.String(), ""
+}
+
+func skipWhitespace(txt string) string {
+	for idx, c := range txt {
+		if !unicode.IsSpace(c) {
+			return txt[idx:]
+		}
+	}
+	return ""
+}
+
+func readString(txt string, breakIfEqualChar bool) (string, string) {
+	var buf bytes.Buffer
+	for idx, c := range skipWhitespace(txt) {
+		switch c {
+		case '"':
+			if buf.Len() == 0 {
+				return readQouteString(txt[idx+1:])
+			}
+			buf.WriteRune(c)
+		case '#':
+			if buf.Len() == 0 {
+				return "", ""
+			}
+			buf.WriteRune(c)
+		case '=':
+			if breakIfEqualChar {
+				return buf.String(), txt[idx:]
+			}
+			buf.WriteRune(c)
+		case '\\':
+			return "", ""
+		default:
+			if unicode.IsSpace(c) {
+				return buf.String(), txt[idx+1:]
+			}
+
+			buf.WriteRune(c)
+		}
+	}
+
+	return buf.String(), ""
+}
+
+func readEqualChar(txt string) (bool, string) {
+	for idx, c := range txt {
+		if unicode.IsSpace(c) {
+			continue
+		}
+		if c == '=' {
+			return true, txt[idx+1:]
+		}
+		return false, ""
+	}
+	return false, ""
+}
 
 func ReadProperties(nm string) (map[string]string, error) {
 	f, e := os.Open(nm)
@@ -13,27 +119,34 @@ func ReadProperties(nm string) (map[string]string, error) {
 		return nil, e
 	}
 	defer f.Close()
+	return Read(f)
+}
 
+func Read(r io.Reader) (map[string]string, error) {
 	cfg := map[string]string{}
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		ss := strings.SplitN(scanner.Text(), "#", 2)
-		//ss = strings.SplitN(ss[0], "//", 2)
-		s := strings.TrimSpace(ss[0])
-		if 0 == len(s) {
-			continue
-		}
-		ss = strings.SplitN(s, "=", 2)
-		if 2 != len(ss) {
+		txt := scanner.Text()
+		fmt.Println(txt)
+		key, retain := readString(txt, true)
+		if len(key) == 0 {
+			fmt.Println("key is empty")
 			continue
 		}
 
-		key := strings.TrimLeft(strings.TrimSpace(ss[0]), ".")
-		value := strings.TrimSpace(ss[1])
-		if 0 == len(key) {
+		hasEqualChar, retain := readEqualChar(retain)
+		if !hasEqualChar {
+			fmt.Println("= is unfound")
 			continue
 		}
-		if 0 == len(value) {
+
+		value, retain := readString(retain, false)
+		if len(value) == 0 {
+			fmt.Println("value is empty")
+			continue
+		}
+		if skipWhitespace(retain) != "" {
+			fmt.Println("value invalid")
 			continue
 		}
 		cfg[key] = os.ExpandEnv(value)

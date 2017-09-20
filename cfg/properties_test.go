@@ -40,3 +40,56 @@ noupdate=a
 		t.Error(buf.String())
 	}
 }
+
+func TestRead(t *testing.T) {
+	input := `
+# asdfsd
+# a=b
+#sdfasdf
+c=b
+d1=d1
+d2 =d2
+d3= d3
+d4= d#4
+d#5= d#5
+"aaaa
+"d6"= d6
+"d7" = d7
+"d 8" = d8
+`
+
+	excepted := map[string]string{"c": "b",
+		"d1":  "d1",
+		"d2":  "d2",
+		"d3":  "d3",
+		"d4":  "d#4",
+		"d#5": "d#5",
+		"d6":  "d6",
+		"d7":  "d7",
+		"d 8": "d8"}
+
+	actual, e := Read(strings.NewReader(input))
+	if e != nil {
+		t.Error(e)
+		return
+	}
+
+	if len(actual) != len(excepted) {
+		t.Error("actual   count is", len(actual))
+		t.Error("excepted count is", len(excepted))
+
+		t.Error("actual   is", actual)
+		t.Error("excepted is", excepted)
+	}
+	for k, v := range excepted {
+		if a, ok := actual[k]; ok {
+			if v != a {
+				t.Error(k, "actual   is", a)
+				t.Error(k, "excepted is", v)
+			}
+		} else {
+			t.Error(k, "actual   is not exists")
+			t.Error(k, "excepted is", v)
+		}
+	}
+}
