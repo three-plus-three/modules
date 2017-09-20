@@ -68,6 +68,7 @@ func ReadUserFromLDAP(env *environment.Environment, username, password string) (
 	}
 
 	ldapRolesFieldName := env.Config.StringWithDefault("users.ldap_roles", "memberOf")
+	exceptedRole := env.Config.StringWithDefault("users.ldap_login_role", "")
 
 	//获取数据
 	sr, err := l.Search(ldap.NewSearchRequest(
@@ -101,6 +102,20 @@ func ReadUserFromLDAP(env *environment.Environment, username, password string) (
 				roles = append(roles, fmt.Sprintf("%#v", dn.RDNs[0].Attributes[0].Value))
 			}
 			rawRoles = roleValues
+		}
+
+		if exceptedRole != "" {
+			found := false
+			for _, role := range roles {
+				if role == exceptedRole {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				continue
+			}
 		}
 
 		users = append(users, User{
