@@ -56,6 +56,7 @@ d#5= d#5
 "d6"= d6
 "d7" = d7
 "d 8" = d8
+"d#9" = d9
 `
 
 	excepted := map[string]string{"c": "b",
@@ -66,7 +67,8 @@ d#5= d#5
 		"d#5": "d#5",
 		"d6":  "d6",
 		"d7":  "d7",
-		"d 8": "d8"}
+		"d 8": "d8",
+		"d#9": "d9"}
 
 	actual, e := Read(strings.NewReader(input))
 	if e != nil {

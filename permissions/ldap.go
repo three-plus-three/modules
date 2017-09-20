@@ -11,12 +11,11 @@ import (
 )
 
 type ldapConfig struct {
-	Address   string
-	EnableTLS bool
-	Username  string
-	Password  string
-	BaseDN    string
-	Filter    string
+	Address    string
+	EnableTLS  bool
+	BaseDN     string
+	Filter     string
+	UserFormat string
 }
 
 //读取AD的配置
@@ -25,21 +24,25 @@ func readLDAPConfig(env *environment.Environment) (ldapConfig, error) {
 	ldapTLS := env.Config.BoolWithDefault("users.ldap_tls", false)
 
 	ldapFilter := env.Config.StringWithDefault("users.ldap_filter", "(&(objectClass=organizationalPerson))")
-	ldapUsername := env.Config.StringWithDefault("users.ldap_username", "")
-	ldapPassword := env.Config.StringWithDefault("users.ldap_password", "")
-	ldapDN := env.Config.StringWithDefault("users.ldap_dn", "")
-
+	ldapDN := env.Config.StringWithDefault("users.ldap_base_dn", "")
+	ldapUserFormat := env.Config.StringWithDefault("users.ldap_user_format", "")
+	if ldapUserFormat == "" {
+		if ldapDN != "" {
+			ldapUserFormat = "cn=%s," + ldapDN
+		} else {
+			ldapUserFormat = "%s"
+		}
+	}
 	return ldapConfig{
-		Address:   ldapServer,
-		EnableTLS: ldapTLS,
-		Username:  ldapUsername,
-		Password:  ldapPassword,
-		BaseDN:    ldapDN,
-		Filter:    ldapFilter,
+		Address:    ldapServer,
+		EnableTLS:  ldapTLS,
+		BaseDN:     ldapDN,
+		Filter:     ldapFilter,
+		UserFormat: ldapUserFormat,
 	}, nil
 }
 
-func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
+func ReadUserFromLDAP(env *environment.Environment, username, password string) ([]User, error) {
 	cfg, err := readLDAPConfig(env)
 	if err != nil {
 		return nil, err
@@ -59,7 +62,7 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 		}
 	}
 
-	err = l.Bind(cfg.Username, cfg.Password)
+	err = l.Bind(fmt.Sprintf(cfg.UserFormat, username), password)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +120,7 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 	return users, nil
 }
 
-func ReadUserFieldsFromLDAP(env *environment.Environment) ([]string, error) {
+func ReadUserFieldsFromLDAP(env *environment.Environment, username, password string) ([]string, error) {
 	cfg, err := readLDAPConfig(env)
 	if err != nil {
 		return nil, err
@@ -137,7 +140,7 @@ func ReadUserFieldsFromLDAP(env *environment.Environment) ([]string, error) {
 		}
 	}
 
-	err = l.Bind(cfg.Username, cfg.Password)
+	err = l.Bind(fmt.Sprintf(cfg.UserFormat, username), password)
 	if err != nil {
 		return nil, err
 	}
