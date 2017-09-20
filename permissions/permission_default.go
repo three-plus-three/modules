@@ -1,8 +1,6 @@
 package permissions
 
 import (
-	"strings"
-
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/errors"
 )
@@ -12,12 +10,9 @@ func SaveDefaultPermissionGroups(db *DB) error {
 	if err != nil {
 		return errors.Wrap(err, "载入缺省权限组")
 	}
-	return saveDefaultPermissionGroups(db, allDefaultGroups)
-}
 
-func saveDefaultPermissionGroups(db *DB, allDefaultGroups []Group) error {
 	var allPermissionGroups []PermissionGroup
-	err := db.PermissionGroups().
+	err = db.PermissionGroups().
 		Where(orm.Cond{"is_default": "true"}).
 		All(&allPermissionGroups)
 	if err != nil {
@@ -33,7 +28,6 @@ func saveDefaultPermissionGroups(db *DB, allDefaultGroups []Group) error {
 
 func syncGroups(db *DB, allDefaultGroups []Group,
 	allPermissionGroups []PermissionGroup, parentID int64) error {
-
 	for _, defaultGroup := range allDefaultGroups {
 		foundIndex := -1
 		for idx := range allPermissionGroups {
@@ -67,8 +61,8 @@ func syncGroups(db *DB, allDefaultGroups []Group,
 				break
 			}
 		}
-		if foundIndex < 0 && allPermissionGroups[idx].ParentID == parentID && parentID != 0 {
-			err := deletePermissionGroups(db, allPermissionGroups[idx].ID)
+		if foundIndex < 0 && allPermissionGroups[idx].ParentID == parentID {
+			err := delectPermissionGroups(db, allPermissionGroups[idx].ID)
 			if err != nil {
 				return err
 			}
@@ -77,7 +71,7 @@ func syncGroups(db *DB, allDefaultGroups []Group,
 	return nil
 }
 
-func deletePermissionGroups(db *DB, groupID int64) error {
+func delectPermissionGroups(db *DB, groupID int64) error {
 	var roleAndpermissionGroups []PermissionGroupAndRole
 	err := db.PermissionGroupsAndRoles().Where(orm.Cond{"group_id": groupID}).All(&roleAndpermissionGroups)
 	if err != nil {
@@ -89,9 +83,7 @@ func deletePermissionGroups(db *DB, groupID int64) error {
 		if err != nil {
 			return errors.Wrap(err, "获取权限组")
 		}
-		if strings.Index(permissionGroup.Name, "(已删除)") < 0 {
-			permissionGroup.Name = permissionGroup.Name + "(已删除)"
-		}
+		permissionGroup.Name = permissionGroup.Name + "(已删除)"
 		err := db.PermissionGroups().Id(permissionGroup.ID).Nullable("parent_id").Update(&permissionGroup)
 		if err != nil {
 			return errors.Wrap(err, "更新权限组失败")
@@ -171,17 +163,19 @@ func updatePermissionGroups(db *DB, group Group, permissionGroup PermissionGroup
 	if err != nil {
 		return errors.Wrap(err, "更新权限组失败")
 	}
-
-	err = updatePerssionsAndGroup(db, group.PermissionTags, permissionGroup.ID, PERMISSION_TAG)
-	if err != nil {
-		return err
+	if len(group.PermissionIDs) > 0 {
+		err := updatePerssionsAndGroup(db, group.PermissionTags, permissionGroup.ID, PERMISSION_TAG)
+		if err != nil {
+			return err
+		}
 	}
 
-	err = updatePerssionsAndGroup(db, group.PermissionIDs, permissionGroup.ID, PERMISSION_ID)
-	if err != nil {
-		return err
+	if len(group.PermissionIDs) > 0 {
+		err := updatePerssionsAndGroup(db, group.PermissionIDs, permissionGroup.ID, PERMISSION_ID)
+		if err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 

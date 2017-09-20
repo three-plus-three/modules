@@ -117,6 +117,56 @@ func ReadUserFromLDAP(env *environment.Environment) ([]User, error) {
 	return users, nil
 }
 
+func ReadUserFieldsFromLDAP(env *environment.Environment) ([]string, error) {
+	cfg, err := readLDAPConfig(env)
+	if err != nil {
+		return nil, err
+	}
+
+	//连接活动目录
+	l, err := ldap.Dial("tcp", cfg.Address)
+	if err != nil {
+		return nil, err
+	}
+	defer l.Close()
+
+	if cfg.EnableTLS {
+		err = l.StartTLS(&tls.Config{InsecureSkipVerify: true}) // nolint
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = l.Bind(cfg.Username, cfg.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	//获取数据
+	sr, err := l.Search(ldap.NewSearchRequest(
+		cfg.BaseDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		cfg.Filter,
+		[]string{},
+		nil,
+	))
+	if err != nil {
+		return nil, err
+	}
+
+	fields := map[string]struct{}{}
+	for i := 0; i < len(sr.Entries); i++ {
+		for _, attr := range sr.Entries[i].Attributes {
+			fields[attr.Name] = struct{}{}
+		}
+	}
+	names := make([]string, 0, len(fields))
+	for field := range fields {
+		names = append(names, field)
+	}
+	return names, nil
+}
+
 func convertToTime(str string) time.Time {
 	if len(str) > 12 {
 		return time.Time{}

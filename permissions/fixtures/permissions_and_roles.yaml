@@ -85,7 +85,7 @@
     group_id: 'PK_REFERENCE(permission_group_key_1)'
     create_operation: true
     delete_operation: true
-    update_operation: false
+    update_operation: true
     query_operation: true
 
 
