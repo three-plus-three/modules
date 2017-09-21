@@ -21,8 +21,7 @@ var lifecycleData *Lifecycle
 var menuClient menus.Client
 
 func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
-	cb func(*Lifecycle) error,
-	mode string, createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
+	cb func(*Lifecycle) error, createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
 
 	// Filters is the default set of global filters.
 	revel.Filters = []revel.Filter{
@@ -135,6 +134,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			}
 		}
 
+		mode := revel.Config.StringDefault("hengwei.menu.mode", "")
 		menuClient = menus.Connect(lifecycleData.Env,
 			serviceID,
 			menus.Callback(func() ([]toolbox.Menu, error) {
