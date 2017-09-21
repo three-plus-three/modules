@@ -3,18 +3,29 @@ package permissions
 import (
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/three-plus-three/modules/environment"
+
+	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/errors"
+	"github.com/three-plus-three/modules/urlutil"
+	"github.com/three-plus-three/modules/web_ext"
 )
 
-var ErrUnauthorized = errors.NewApplicationError(http.StatusUnauthorized, "user is unauthorized")
-var ErrCacheInvalid = errors.New("permission cache is invald")
-var ErrTagNotFound = errors.New("permission tag is not found")
-var ErrPermissionNotFound = errors.New("permission is not found")
+// 常用的错误
+var (
+	ErrUnauthorized       = errors.NewApplicationError(http.StatusUnauthorized, "user is unauthorized")
+	ErrCacheInvalid       = errors.New("permission cache is invald")
+	ErrTagNotFound        = errors.New("permission tag is not found")
+	ErrPermissionNotFound = errors.New("permission is not found")
+	ErrAlreadyClosed      = errors.New("server is closed")
+)
 
+// Group 缺省组信息
 type Group struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
@@ -24,6 +35,7 @@ type Group struct {
 	PermissionTags []string `json:"tags,omitempty"`
 }
 
+// Permission 缺省权限对象
 type Permission struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`
@@ -31,6 +43,7 @@ type Permission struct {
 	Tags        []string `json:"tags,emitempty"`
 }
 
+// Tag 标签对象
 type Tag struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -39,7 +52,7 @@ type Tag struct {
 	Children []Tag `json:"children,omitempty"`
 }
 
-//过滤后的权限对象
+// GetPermissionsByTag 过滤后的权限对象
 func GetPermissionsByTag(tag string) ([]Permission, error) {
 	all, err := GetPermissions()
 	var filterPermissions []Permission
@@ -56,31 +69,33 @@ func GetPermissionsByTag(tag string) ([]Permission, error) {
 	return filterPermissions, nil
 }
 
-//获取所有 tags
+// GetPermissionTags 获取所有 tags
 func GetPermissionTags() ([]Tag, error) {
 	return permissionsCache.PermissionTags()
 }
 
+// GetPermissionTagByID 获取指定的 tag
 func GetPermissionTagByID(id string) (*Tag, error) {
 	return permissionsCache.GetPermissionTagByID(id)
 }
 
-//获取权限
+// GetPermissions 获取权限
 func GetPermissions() ([]Permission, error) {
 	return permissionsCache.Permissions()
 }
 
+// GetPermissionByID 获取指定的权限对象
 func GetPermissionByID(id string) (*Permission, error) {
 	return permissionsCache.GetPermissionByID(id)
 }
 
-//获取权限组
+// GetDefaultPermissionGroups 获取权限组
 func GetDefaultPermissionGroups() ([]Group, error) {
 	return permissionsCache.PermissionGroups()
 }
 
 //缓存
-var permissionsCache PermissionCache
+var permissionsCache permissionCacheImpl
 
 //缓存
 type permissionCacheData struct {
@@ -92,40 +107,47 @@ type permissionCacheData struct {
 	saveTime       int64
 }
 
-type PermissionCache struct {
+type permissionCacheImpl struct {
 	value atomic.Value
 
 	mu        sync.Mutex
+	privoders map[string]PermissionProvider
 	isLoading int32
 }
 
-func (cache *PermissionCache) dataAsync() *permissionCacheData {
-	o := cache.value.Load()
-	if o == nil {
-		return nil
+// func (cache *permissionCacheImpl) tryRead() *permissionCacheData {
+// 	o := cache.value.Load()
+// 	if o == nil {
+// 		return nil
+// 	}
+//
+// 	d, ok := o.(*permissionCacheData)
+// 	if !ok {
+// 		return nil
+// 	}
+// 	if (d.saveTime + 60) < time.Now().Unix() {
+// 		return nil
+// 	}
+// 	return d
+// }
+
+func (cache *permissionCacheImpl) register(group string, privoder PermissionProvider) {
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	if cache.privoders == nil {
+		cache.privoders = map[string]PermissionProvider{}
 	}
 
-	d, ok := o.(*permissionCacheData)
-	if !ok {
-		return nil
-	}
-	if (d.saveTime + 60) < time.Now().Unix() {
-		return nil
-	}
-	return d
+	cache.privoders[group] = privoder
 }
 
-func (cache *PermissionCache) load() (*permissionCacheData, error) {
+func (cache *permissionCacheImpl) load() (*permissionCacheData, error) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
-	if d := cache.dataAsync(); d != nil {
-		return d, nil
-	}
-
 	var all PermissionData
-	for _, p := range privoders {
-		data, err := p.Get()
+	for _, p := range cache.privoders {
+		data, err := p.Read()
 		if err != nil {
 			return nil, err
 		}
@@ -134,7 +156,7 @@ func (cache *PermissionCache) load() (*permissionCacheData, error) {
 	return cache.Save(all.Permissions, all.Tags, all.Groups), nil
 }
 
-func (cache *PermissionCache) data() (*permissionCacheData, error) {
+func (cache *permissionCacheImpl) data() (*permissionCacheData, error) {
 	o := cache.value.Load()
 	if o == nil {
 		return cache.load()
@@ -158,8 +180,8 @@ func (cache *PermissionCache) data() (*permissionCacheData, error) {
 	return d, nil
 }
 
-//从缓存中获取权限对象
-func (cache *PermissionCache) Permissions() ([]Permission, error) {
+// Permissions 从缓存中获取权限对象
+func (cache *permissionCacheImpl) Permissions() ([]Permission, error) {
 	d, err := cache.data()
 	if err != nil {
 		return nil, err
@@ -168,8 +190,8 @@ func (cache *PermissionCache) Permissions() ([]Permission, error) {
 	return d.permissions, nil
 }
 
-//按 ID 从缓存中获取权限对象
-func (cache *PermissionCache) GetPermissionByID(id string) (*Permission, error) {
+// GetPermissionByID 按 ID 从缓存中获取权限对象
+func (cache *permissionCacheImpl) GetPermissionByID(id string) (*Permission, error) {
 	d, err := cache.data()
 	if err != nil {
 		return nil, err
@@ -182,8 +204,8 @@ func (cache *PermissionCache) GetPermissionByID(id string) (*Permission, error) 
 	return perm, nil
 }
 
-//从缓存中获取权限对象
-func (cache *PermissionCache) PermissionTags() ([]Tag, error) {
+// PermissionTags 从缓存中获取权限对象
+func (cache *permissionCacheImpl) PermissionTags() ([]Tag, error) {
 	d, err := cache.data()
 	if err != nil {
 		return nil, err
@@ -192,8 +214,8 @@ func (cache *PermissionCache) PermissionTags() ([]Tag, error) {
 	return d.tags, nil
 }
 
-//按 ID 从缓存中获取权限对象
-func (cache *PermissionCache) GetPermissionTagByID(id string) (*Tag, error) {
+// GetPermissionTagByID 按 ID 从缓存中获取权限对象
+func (cache *permissionCacheImpl) GetPermissionTagByID(id string) (*Tag, error) {
 	d, err := cache.data()
 	if err != nil {
 		return nil, err
@@ -206,8 +228,8 @@ func (cache *PermissionCache) GetPermissionTagByID(id string) (*Tag, error) {
 	return tag, nil
 }
 
-//从缓存中获取权限对象
-func (cache *PermissionCache) PermissionGroups() ([]Group, error) {
+// PermissionGroups 从缓存中获取权限对象
+func (cache *permissionCacheImpl) PermissionGroups() ([]Group, error) {
 	d, err := cache.data()
 	if err != nil {
 		return nil, err
@@ -217,7 +239,7 @@ func (cache *PermissionCache) PermissionGroups() ([]Group, error) {
 }
 
 //缓存过期
-func (cache *PermissionCache) Invalid() {
+func (cache *permissionCacheImpl) Invalid() {
 	cache.Save(nil, nil, nil)
 }
 
@@ -236,7 +258,7 @@ func addTags(tagByID map[string]*Tag, tags []Tag) {
 }
 
 //将权限对象存入缓存中
-func (cache *PermissionCache) Save(permissions []Permission, tags []Tag, groups []Group) *permissionCacheData {
+func (cache *permissionCacheImpl) Save(permissions []Permission, tags []Tag, groups []Group) *permissionCacheData {
 	d := &permissionCacheData{
 		saveTime:       time.Now().Unix(),
 		permissions:    permissions,
@@ -271,80 +293,46 @@ func (cache *PermissionCache) Save(permissions []Permission, tags []Tag, groups 
 	return d
 }
 
-var privoders = map[string]PermissionProvider{}
-
-//注册方法
-func RegisterPermissions(name string, privoder PermissionProvider) {
-	if privoder == nil {
-		panic("provider is nil")
-	}
-	if _, ok := privoders[name]; ok {
-		panic("privoder '" + name + "' is already exists.")
-	}
-	privoders[name] = privoder
-}
-
+// PermissionData 用于返回缺省权限对象
 type PermissionData struct {
 	Permissions []Permission `json:"permissions"`
 	Groups      []Group      `json:"groups"`
 	Tags        []Tag        `json:"tags"`
 }
 
+// PermissionProvider 缺省权限对象的提供者
 type PermissionProvider interface {
-	Get() (*PermissionData, error)
+	Read() (*PermissionData, error)
 }
 
+// PermissionProviderFunc 缺省权限对象的提供者
 type PermissionProviderFunc func() (*PermissionData, error)
 
-func (f PermissionProviderFunc) Get() (*PermissionData, error) {
+func (f PermissionProviderFunc) Read() (*PermissionData, error) {
 	if f == nil {
 		return nil, nil
 	}
 	return f()
 }
 
-func appendPermissionData(all, data *PermissionData) {
-	if len(data.Permissions) > 0 {
-		all.Permissions = append(all.Permissions, data.Permissions...)
-	}
-	if len(data.Groups) > 0 {
-		all.Groups = appendGroups(all.Groups, data.Groups)
-	}
-	if len(data.Tags) > 0 {
-		all.Tags = append(all.Tags, data.Tags...)
-	}
-}
+// Register 注册本 App 的权限信息
+func Register(serviceID environment.ENV_PROXY_TYPE, lifecycleData *web_ext.Lifecycle, privoder PermissionProvider) {
+	srvOpt := lifecycleData.Env.GetServiceConfig(serviceID)
+	client := Connect(lifecycleData.Env,
+		serviceID,
+		Callback(func() (*PermissionData, error) {
+			return privoder.Read()
+		}),
+		revel.Config.StringDefault("hengwei.perm.mode", "apart"),
+		PermissionEventName,
+		urlutil.Join(lifecycleData.Env.DaemonUrlPath, "/perm/"),
+		log.New(os.Stderr, "[perm-client]", log.LstdFlags))
 
-func appendGroups(allGroups, groups []Group) []Group {
-	for _, group := range groups {
-		found := false
-		for idx := range allGroups {
-			if allGroups[idx].Name == group.Name {
-				found = true
+	lifecycleData.OnClosing(client)
 
-				allGroups[idx].PermissionIDs = mergeStrings(allGroups[idx].PermissionIDs, group.PermissionIDs)
-				allGroups[idx].PermissionTags = mergeStrings(allGroups[idx].PermissionTags, group.PermissionTags)
-				allGroups[idx].Children = appendGroups(allGroups[idx].Children, group.Children)
-			}
-		}
-		if !found {
-			allGroups = append(allGroups, group)
-		}
-	}
-	return allGroups
-}
+	client.WhenChanged(func() {
+		permissionsCache.load()
+	})
 
-func mergeStrings(a, b []string) []string {
-	for _, s := range b {
-		found := false
-		for _, v := range a {
-			if v == s {
-				found = true
-			}
-		}
-		if !found {
-			a = append(a, s)
-		}
-	}
-	return a
+	permissionsCache.register(srvOpt.Name, client)
 }

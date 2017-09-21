@@ -3,6 +3,7 @@ package web_ext
 import (
 	"crypto/sha1"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -109,6 +110,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			os.Exit(-1)
 			return
 		}
+		fmt.Println("------")
 
 		lifecycleData = lifecycle
 
@@ -134,6 +136,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			}
 		}
 
+		fmt.Println("------")
 		mode := revel.Config.StringDefault("hengwei.menu.mode", "")
 		menuClient = menus.Connect(lifecycleData.Env,
 			serviceID,
@@ -146,6 +149,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			log.New(os.Stderr, "[menus]", log.LstdFlags))
 
 		lifecycleData.OnClosing(menuClient)
+		fmt.Println("------")
 	}, 0)
 
 	revel.OnAppStart(func() {

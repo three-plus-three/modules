@@ -44,7 +44,7 @@ func TestHasPermission(t *testing.T) {
 		Permission{"as_1", "3", "2", []string{"as"}},
 		Permission{"as_2", "4", "2", []string{"as"}}}
 
-	RegisterPermissions("um_bultin_test1",
+	permissionsCache.register("um_bultin_test1",
 		PermissionProviderFunc(func() (*PermissionData, error) {
 			return &PermissionData{
 				Permissions: allPermissions,
@@ -214,7 +214,7 @@ func TestSaveDefaultPermissionGroups(t *testing.T) {
 		Group{Name: "分组1-1", PermissionIDs: []string{"um_3"}},
 		Group{Name: "分组1-2", PermissionIDs: []string{"um_2"}}}}}
 
-	RegisterPermissions("um_bultin1",
+	permissionsCache.register("um_bultin1",
 		PermissionProviderFunc(func() (*PermissionData, error) {
 			return &PermissionData{
 				Permissions: allPermissions,
@@ -223,7 +223,7 @@ func TestSaveDefaultPermissionGroups(t *testing.T) {
 		}))
 
 	//测试是否通过
-	err = saveDefaultPermissionGroups(&db, allGroups)
+	err = SaveDefaultPermissionGroups(&db, allGroups)
 	if err != nil {
 		t.Error(err)
 	}
@@ -260,7 +260,7 @@ func TestSaveDefaultPermissionGroups(t *testing.T) {
 	//测试删除组
 	var allGroupA = []Group{Group{Name: "分组1", Children: []Group{
 		Group{Name: "分组1-1", PermissionIDs: []string{"um_3"}}}}}
-	err = saveDefaultPermissionGroups(&db, allGroupA)
+	err = SaveDefaultPermissionGroups(&db, allGroupA)
 	if err != nil {
 		t.Error(err)
 	}
@@ -282,7 +282,7 @@ func TestSaveDefaultPermissionGroups(t *testing.T) {
 		Group{Name: "分组1-1", PermissionIDs: []string{"um_3"}},
 		Group{Name: "分组1-2", PermissionIDs: []string{"um_2"}}}}}
 
-	err = saveDefaultPermissionGroups(&db, allGroupB)
+	err = SaveDefaultPermissionGroups(&db, allGroupB)
 	if err != nil {
 		t.Error(err)
 	}
@@ -301,7 +301,7 @@ func TestSaveDefaultPermissionGroups(t *testing.T) {
 		Group{Name: "分组1-1", PermissionIDs: []string{"um_3", "um_1"}},
 		Group{Name: "分组1-2", PermissionIDs: []string{"um_2"}}}}}
 
-	err = saveDefaultPermissionGroups(&db, allGroupC)
+	err = SaveDefaultPermissionGroups(&db, allGroupC)
 	if err != nil {
 		t.Error(err)
 	}
@@ -321,7 +321,7 @@ func TestSaveDefaultPermissionGroups(t *testing.T) {
 		Group{Name: "分组1-1", PermissionIDs: []string{"um_3"}},
 		Group{Name: "分组1-2", PermissionIDs: []string{"um_2"}}}}}
 
-	err = saveDefaultPermissionGroups(&db, allGroupD)
+	err = SaveDefaultPermissionGroups(&db, allGroupD)
 	if err != nil {
 		t.Error(err)
 	}

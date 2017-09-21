@@ -7,6 +7,7 @@ package menus
 import (
 	"io"
 	"log"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -20,7 +21,11 @@ import (
 type Client interface {
 	io.Closer
 
+	WhenChanged(cb func())
+
 	Read() ([]toolbox.Menu, error)
+
+	Flush() error
 }
 
 // Callback 菜单的读取函数
@@ -29,8 +34,7 @@ type Callback func() ([]toolbox.Menu, error)
 // Connect 连接到 weaver 服务
 func Connect(env *environment.Environment, appID environment.ENV_PROXY_TYPE,
 	cb Callback, mode, queueName, urlPath string, logger *log.Logger) Client {
-	//wsrv := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
-
+	// wsrv := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
 	// hubURL := so.UrlFor(env.DaemonUrlPath, "/mq/")
 	// builder := hub.Connect(hubURL)
 
@@ -45,7 +49,7 @@ func Connect(env *environment.Environment, appID environment.ENV_PROXY_TYPE,
 			client:    wsrv.Client(urlPath),
 			queueName: queueName,
 			cb:        cb,
-			shutdown:  make(chan struct{}),
+			c:         make(chan struct{}),
 		}
 		go apart.run()
 		go apart.runSub()
@@ -62,6 +66,13 @@ type standaloneClient struct {
 
 func (srv *standaloneClient) Close() error {
 	return nil
+}
+
+func (srv *standaloneClient) Flush() error {
+	return nil
+}
+
+func (srv *standaloneClient) WhenChanged(cb func()) {
 }
 
 func (srv *standaloneClient) Read() ([]toolbox.Menu, error) {
@@ -85,16 +96,31 @@ type apartClient struct {
 	isClosed int32
 	cw       concurrency.CloseWrapper
 	pad      int32
-	shutdown chan struct{}
+	c        chan struct{}
 	cached   atomic.Value
+	mu       sync.Mutex
+	cbList   []func()
 }
 
 func (srv *apartClient) Close() error {
 	if atomic.CompareAndSwapInt32(&srv.isClosed, 0, 1) {
-		close(srv.shutdown)
+		close(srv.c)
 		return srv.cw.Close()
 	}
 	return nil
+}
+
+func (srv *apartClient) save(value []toolbox.Menu, err error) {
+	srv.cached.Store(&apartResult{
+		value: value,
+		err:   err,
+	})
+	srv.mu.Lock()
+	defer srv.mu.Unlock()
+
+	for _, cb := range srv.cbList {
+		go cb()
+	}
 }
 
 func (srv *apartClient) Read() ([]toolbox.Menu, error) {
@@ -106,10 +132,7 @@ func (srv *apartClient) Read() ([]toolbox.Menu, error) {
 	}
 
 	value, err := srv.read()
-	srv.cached.Store(&apartResult{
-		value: value,
-		err:   err,
-	})
+	srv.save(value, err)
 	return value, err
 }
 
@@ -141,6 +164,27 @@ func (srv *apartClient) write() error {
 		POST(nil)
 }
 
+func (srv *apartClient) WhenChanged(cb func()) {
+	if atomic.LoadInt32(&srv.isClosed) != 0 {
+		panic(ErrAlreadyClosed)
+	}
+
+	srv.mu.Lock()
+	srv.cbList = append(srv.cbList, cb)
+	srv.mu.Unlock()
+}
+
+func (srv *apartClient) Flush() error {
+	if atomic.LoadInt32(&srv.isClosed) != 0 {
+		return ErrAlreadyClosed
+	}
+	select {
+	case srv.c <- struct{}{}:
+	default:
+	}
+	return nil
+}
+
 func (srv *apartClient) runSub() {
 	errCount := 0
 	hubURL := srv.wsrv.UrlFor(srv.env.DaemonUrlPath, "/mq/")
@@ -156,7 +200,10 @@ func (srv *apartClient) runSub() {
 			}
 
 			select {
-			case <-srv.shutdown:
+			case v, ok := <-srv.c:
+				if ok {
+					srv.c <- v
+				}
 			case <-time.After(1 * time.Second):
 			}
 			continue
@@ -166,10 +213,7 @@ func (srv *apartClient) runSub() {
 		errCount = 0
 		err = topic.Run(func(sub *hub.Subscription, msg hub.Message) {
 			value, err := srv.read()
-			srv.cached.Store(&apartResult{
-				value: value,
-				err:   err,
-			})
+			srv.save(value, err)
 		})
 		if err != nil {
 			srv.logger.Println("subscribe", srv.queueName, "fail,", err)
@@ -183,31 +227,35 @@ func (srv *apartClient) run() {
 	defer timer.Stop()
 	writed := false
 
-	for {
+	flush := func() {
+		if err := srv.write(); err != nil {
+			srv.logger.Println("write value fail", err)
+		} else {
+			writed = true
+		}
+
+		if value, err := srv.read(); err != nil {
+			srv.logger.Println("read value fail", err)
+		} else {
+			srv.save(value, err)
+		}
+
+		if writed {
+			timer.Reset(5 * time.Minute)
+		} else {
+			timer.Reset(10 * time.Second)
+		}
+	}
+
+	for atomic.LoadInt32(&srv.isClosed) == 0 {
 		select {
-		case <-srv.shutdown:
-			return
+		case _, ok := <-srv.c:
+			if !ok {
+				return
+			}
+			flush()
 		case <-timer.C:
-			if err := srv.write(); err != nil {
-				srv.logger.Println("write value fail", err)
-			} else {
-				writed = true
-			}
-
-			if value, err := srv.read(); err != nil {
-				srv.logger.Println("read value fail", err)
-			} else {
-				srv.cached.Store(&apartResult{
-					value: value,
-					err:   err,
-				})
-			}
-
-			if writed {
-				timer.Reset(5 * time.Minute)
-			} else {
-				timer.Reset(10 * time.Second)
-			}
+			flush()
 		}
 	}
 }

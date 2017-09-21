@@ -109,7 +109,7 @@ var (
 	}
 )
 
-// Options
+// Options 初始选项
 type Options struct {
 	ConfigFiles          []string
 	ConfDir              string
@@ -120,7 +120,7 @@ type Options struct {
 	IsTest               bool
 }
 
-// EngineConfig
+// EngineConfig 多引擎时的配置
 type EngineConfig struct {
 	IsEnabled       bool
 	IsMasterHost    bool
@@ -134,7 +134,7 @@ func (self EngineConfig) IsMaster() bool {
 	return strings.ToLower(strings.TrimSpace(self.Name)) == "default"
 }
 
-// DbConfig
+// DbConfig 数据库配置
 type DbConfig struct {
 	DbType   string
 	Address  string

@@ -7,15 +7,7 @@ import (
 	"github.com/three-plus-three/modules/errors"
 )
 
-func SaveDefaultPermissionGroups(db *DB) error {
-	allDefaultGroups, err := GetDefaultPermissionGroups()
-	if err != nil {
-		return errors.Wrap(err, "载入缺省权限组")
-	}
-	return saveDefaultPermissionGroups(db, allDefaultGroups)
-}
-
-func saveDefaultPermissionGroups(db *DB, allDefaultGroups []Group) error {
+func SaveDefaultPermissionGroups(db *DB, allDefaultGroups []Group) error {
 	var allPermissionGroups []PermissionGroup
 	err := db.PermissionGroups().
 		Where(orm.Cond{"is_default": "true"}).

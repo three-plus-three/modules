@@ -1,4 +1,4 @@
-package permissions
+package spi
 
 import (
 	"bytes"
@@ -8,11 +8,52 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"text/template"
 
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/urlutil"
 )
+
+var (
+	mu        sync.Mutex
+	privoders = map[string]PermissionProvider{}
+)
+
+func Read() (*PermissionData, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	switch len(privoders) {
+	case 0:
+		return nil, nil
+	case 1:
+		return privoders[0].Read()
+	default:
+		var all = &PermissionData{}
+		for _, p := range privoders {
+			data, err := p.Read()
+			if err != nil {
+				return nil, err
+			}
+			appendPermissionData(&all, data)
+		}
+		return &all, nil
+	}
+}
+
+func Register(name string, privoder PermissionProvider) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if privoder == nil {
+		panic("provider is nil")
+	}
+	if _, ok := privoders[name]; ok {
+		panic("privoder '" + name + "' is already exists.")
+	}
+	privoders[name] = privoder
+}
 
 type HTTPConfig struct {
 	file string
@@ -32,7 +73,7 @@ func LoadHTTP(dirname string, args map[string]interface{}) error {
 	var configs []HTTPConfig
 
 	for _, file := range files {
-		config, err := ReadHTTPConfigFromFile(filepath.Join(dirname, file.Name()), args)
+		config, err := readHTTPConfigFromFile(filepath.Join(dirname, file.Name()), args)
 		if err != nil {
 			return errors.Wrap(err, "载入 PermissionProvider 失败")
 		}
@@ -41,8 +82,8 @@ func LoadHTTP(dirname string, args map[string]interface{}) error {
 	}
 
 	for _, config := range configs {
-		RegisterPermissions("directory:"+config.file+":"+config.Name, PermissionProviderFunc(func() (*PermissionData, error) {
-			data, err := ReadPermissionsFromHTTP(config.Name, config.URL)
+		register("directory:"+config.file+":"+config.Name, PermissionProviderFunc(func() (*PermissionData, error) {
+			data, err := readPermissionsFromHTTP(config.Name, config.URL)
 			if err != nil {
 				return nil, errors.Wrap(err, "从 HTTP 载入 Permissions 失败")
 			}
@@ -52,7 +93,7 @@ func LoadHTTP(dirname string, args map[string]interface{}) error {
 	return nil
 }
 
-func ReadHTTPConfigFromFile(filename string, args map[string]interface{}) (*HTTPConfig, error) {
+func readHTTPConfigFromFile(filename string, args map[string]interface{}) (*HTTPConfig, error) {
 	out, err := os.Open(filename)
 	if err != nil {
 		return nil, errors.New("ReadHTTPConfigFromFile: " + err.Error())
@@ -81,7 +122,7 @@ func ReadHTTPConfigFromFile(filename string, args map[string]interface{}) (*HTTP
 	return &config, nil
 }
 
-func ReadPermissionsFromHTTP(filename, url string) (*PermissionData, error) {
+func readPermissionsFromHTTP(filename, url string) (*PermissionData, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error())

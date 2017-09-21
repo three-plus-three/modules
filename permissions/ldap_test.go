@@ -12,6 +12,9 @@ import (
 var testpassword = flag.String("test.ldap_password", "", "")
 
 func TestLDAP(t *testing.T) {
+	if *testpassword == "" {
+		t.Skip("请设置  ldap 服务的密码")
+	}
 	env := env_tests.Clone(nil)
 
 	env.Config.Set("users.ldap_address", "192.168.1.151:389")

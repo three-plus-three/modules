@@ -14,7 +14,8 @@ import (
 const PermissionEventName = "permissions.changed"
 
 func NewWeaver(core *hub_engine.Core) (Weaver, error) {
-	weaver := &memWeaver{core: core}
+	weaver := &memWeaver{core: core,
+		byGroups: map[string]*PermissionData{}}
 	return weaver, nil
 }
 
@@ -175,4 +176,50 @@ func containTags(allItems, items []Tag) bool {
 		}
 	}
 	return true
+}
+
+func appendPermissionData(all, data *PermissionData) {
+	if len(data.Permissions) > 0 {
+		all.Permissions = append(all.Permissions, data.Permissions...)
+	}
+	if len(data.Groups) > 0 {
+		all.Groups = appendGroups(all.Groups, data.Groups)
+	}
+	if len(data.Tags) > 0 {
+		all.Tags = append(all.Tags, data.Tags...)
+	}
+}
+
+func appendGroups(allGroups, groups []Group) []Group {
+	for _, group := range groups {
+		found := false
+		for idx := range allGroups {
+			if allGroups[idx].Name == group.Name {
+				found = true
+
+				allGroups[idx].PermissionIDs = mergeStrings(allGroups[idx].PermissionIDs, group.PermissionIDs)
+				allGroups[idx].PermissionTags = mergeStrings(allGroups[idx].PermissionTags, group.PermissionTags)
+				allGroups[idx].Children = appendGroups(allGroups[idx].Children, group.Children)
+			}
+		}
+		if !found {
+			allGroups = append(allGroups, group)
+		}
+	}
+	return allGroups
+}
+
+func mergeStrings(a, b []string) []string {
+	for _, s := range b {
+		found := false
+		for _, v := range a {
+			if v == s {
+				found = true
+			}
+		}
+		if !found {
+			a = append(a, s)
+		}
+	}
+	return a
 }
