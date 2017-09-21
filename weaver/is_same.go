@@ -1,5 +1,5 @@
 package weaver
 
-func contains(allItems, items ValueType) bool {
+func isSubset(allItems, items ValueType) bool {
 	return false
 }

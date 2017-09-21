@@ -129,7 +129,7 @@ func (srv *apartClient) write() error {
 	o := srv.cached.Load()
 	if o != nil {
 		if result, ok := o.(*apartResult); ok {
-			if contains(result.value, value) {
+			if isSubset(result.value, value) {
 				return nil
 			}
 		}

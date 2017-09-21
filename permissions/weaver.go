@@ -54,14 +54,14 @@ func (weaver *memWeaver) Generate() (*PermissionData, error) {
 	return &weaver.all, nil
 }
 
-func contains(allItems, items *PermissionData) bool {
-	if !containGroups(allItems.Groups, items.Groups) {
+func isSubset(allItems, subset *PermissionData) bool {
+	if !containGroups(allItems.Groups, subset.Groups) {
 		return false
 	}
-	if !containPermissions(allItems.Permissions, items.Permissions) {
+	if !containPermissions(allItems.Permissions, subset.Permissions) {
 		return false
 	}
-	return containTags(allItems.Tags, items.Tags)
+	return containTags(allItems.Tags, subset.Tags)
 }
 
 func containGroups(allItems, items []Group) bool {

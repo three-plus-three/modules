@@ -170,8 +170,8 @@ func (weaver *menuWeaver) Generate() ([]toolbox.Menu, error) {
 	return weaver.menuList, nil
 }
 
-func contains(allItems, items []toolbox.Menu) bool {
-	for _, item := range items {
+func isSubset(allItems, subset []toolbox.Menu) bool {
+	for _, item := range subset {
 		raw := toolbox.SearchMenuInTree(allItems, item.Name)
 		if raw == nil || !toolbox.IsSameMenu(item, *raw) {
 			return false
