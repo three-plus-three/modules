@@ -36,7 +36,7 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 	var guestRole Role
 	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&guestRole); e != nil {
 		guestRole.Name = web_ext.RoleGuest
-		log.Println("[warn] role visitor isnot found -", e)
+		log.Println("[warn] role guest isnot found -", e)
 	}
 
 	return func(userName string) web_ext.User {
@@ -64,7 +64,7 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			permissionGroupCache: permissionGroupCache,
 			administrator:        adminRole.ID,
 			visitor:              visitorRole.ID}
-		err := db.Users().Where(orm.Cond{"name": userName}).One(&u.u)
+		err := db.Users().Where(orm.Cond{"name": userName}).Omit("profiles").One(&u.u)
 		if err != nil {
 			switch userName {
 			case web_ext.UserAdmin:
@@ -154,6 +154,14 @@ func (u *user) Name() string {
 
 func (u *user) Nickname() string {
 	return u.u.Nickname
+}
+
+func (u *user) WriteProfile(key, value string) error {
+	return nil
+}
+
+func (u *user) ReadProfile(key string) (interface{}, error) {
+	return nil, nil
 }
 
 func (u *user) Roles() []string {

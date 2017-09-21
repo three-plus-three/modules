@@ -40,14 +40,27 @@ var InitUser = func(lifecycle *Lifecycle) func(userName string) User {
 type User interface {
 	ID() int64
 
+	// 用户登录名
 	Name() string
 
+	// 呢称
 	Nickname() string
 
+	// Profile 是用于保存用户在界面上的一些个性化数据
+	// WriteProfile 保存 profiles
+	WriteProfile(key, value string) error
+
+	// Profile 是用于保存用户在界面上的一些个性化数据
+	// ReadProfile 读 profiles
+	ReadProfile(key string) (interface{}, error)
+
+	// 用户扩展属性
 	Data(key string) interface{}
 
+	// 用户角色列表
 	Roles() []string
 
+	// 用户是否有指定的权限
 	HasPermission(permissionName, op string) bool
 }
 
@@ -74,6 +87,14 @@ func (u *user) Nickname() string {
 	}
 
 	return u.name
+}
+
+func (u *user) WriteProfile(key, value string) error {
+	return nil
+}
+
+func (u *user) ReadProfile(key string) (interface{}, error) {
+	return nil, nil
 }
 
 func (u *user) Data(key string) interface{} {

@@ -178,6 +178,8 @@ func containTags(allItems, items []Tag) bool {
 	return true
 }
 
+var MergePermissionData = appendPermissionData
+
 func appendPermissionData(all, data *PermissionData) {
 	if len(data.Permissions) > 0 {
 		all.Permissions = append(all.Permissions, data.Permissions...)

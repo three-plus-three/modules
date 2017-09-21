@@ -24,6 +24,7 @@ type User struct {
 	Password    string                 `json:"password,omitempty" xorm:"password null"`
 	Description string                 `json:"description,omitempty" xorm:"description"`
 	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb"`
+	Profiles    map[string]interface{} `json:"profiles" xorm:"profiles jsonb"`
 	Source      string                 `json:"source,omitempty" xorm:"source"`
 	Disabled    bool                   `json:"disabled,omitempty" xorm:"disabled"`
 	LockedAt    *time.Time             `json:"locked_at,omitempty" xorm:"locked_at null"`

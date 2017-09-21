@@ -12,15 +12,16 @@ import (
 	"text/template"
 
 	"github.com/three-plus-three/modules/errors"
+	"github.com/three-plus-three/modules/permissions"
 	"github.com/three-plus-three/modules/urlutil"
 )
 
 var (
 	mu        sync.Mutex
-	privoders = map[string]PermissionProvider{}
+	privoders = map[string]permissions.PermissionProvider{}
 )
 
-func Read() (*PermissionData, error) {
+func Read() (*permissions.PermissionData, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -28,21 +29,24 @@ func Read() (*PermissionData, error) {
 	case 0:
 		return nil, nil
 	case 1:
-		return privoders[0].Read()
+		for _, p := range privoders {
+			return p.Read()
+		}
+		fallthrough
 	default:
-		var all = &PermissionData{}
+		var all = &permissions.PermissionData{}
 		for _, p := range privoders {
 			data, err := p.Read()
 			if err != nil {
 				return nil, err
 			}
-			appendPermissionData(&all, data)
+			permissions.MergePermissionData(all, data)
 		}
-		return &all, nil
+		return all, nil
 	}
 }
 
-func Register(name string, privoder PermissionProvider) {
+func Register(name string, privoder permissions.PermissionProvider) {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -82,13 +86,14 @@ func LoadHTTP(dirname string, args map[string]interface{}) error {
 	}
 
 	for _, config := range configs {
-		register("directory:"+config.file+":"+config.Name, PermissionProviderFunc(func() (*PermissionData, error) {
-			data, err := readPermissionsFromHTTP(config.Name, config.URL)
-			if err != nil {
-				return nil, errors.Wrap(err, "从 HTTP 载入 Permissions 失败")
-			}
-			return data, nil
-		}))
+		Register("directory:"+config.file+":"+config.Name,
+			permissions.PermissionProviderFunc(func() (*permissions.PermissionData, error) {
+				data, err := readPermissionsFromHTTP(config.Name, config.URL)
+				if err != nil {
+					return nil, errors.Wrap(err, "从 HTTP 载入 Permissions 失败")
+				}
+				return data, nil
+			}))
 	}
 	return nil
 }
@@ -122,7 +127,7 @@ func readHTTPConfigFromFile(filename string, args map[string]interface{}) (*HTTP
 	return &config, nil
 }
 
-func readPermissionsFromHTTP(filename, url string) (*PermissionData, error) {
+func readPermissionsFromHTTP(filename, url string) (*permissions.PermissionData, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
@@ -141,7 +146,7 @@ func readPermissionsFromHTTP(filename, url string) (*PermissionData, error) {
 		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error())
 	}
 
-	var data = &PermissionData{}
+	var data = &permissions.PermissionData{}
 	err = json.NewDecoder(&buf).Decode(data)
 	if err != nil {
 		return nil, errors.New("read web in '" + filename + "' fail: " + err.Error() + "\r\n" + buf.String())
