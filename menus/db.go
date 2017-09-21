@@ -48,9 +48,9 @@ func (db *DB) Close() error {
 }
 
 func (db *DB) Query(sqlStr string, args ...interface{}) orm.Queryer {
-	return orm.New(func() interface{} {
-		return nil
-	})(db.Engine).WithSession(db.session).Query(sqlStr, args...)
+	return orm.NewWithNoInstance()(db.Engine).
+		WithSession(db.session).
+		Query(sqlStr, args...)
 }
 
 func (db *DB) Menus() *orm.Collection {

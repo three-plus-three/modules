@@ -48,6 +48,12 @@ func (db *DB) Close() error {
 	return db.Rollback()
 }
 
+func (db *DB) Query(sqlStr string, args ...interface{}) orm.Queryer {
+	return orm.NewWithNoInstance()(db.Engine).
+		WithSession(db.session).
+		Query(sqlStr, args...)
+}
+
 func (db *DB) PermissionGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionGroup{}
