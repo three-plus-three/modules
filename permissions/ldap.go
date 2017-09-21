@@ -102,7 +102,7 @@ func ReadUserFromLDAP(env *environment.Environment, username, password string, f
 				if len(dn.RDNs) == 0 || len(dn.RDNs[0].Attributes) == 0 {
 					continue
 				}
-				roles = append(roles, fmt.Sprintf("%#v", dn.RDNs[0].Attributes[0].Value))
+				roles = append(roles, dn.RDNs[0].Attributes[0].Value)
 			}
 			rawRoles = roleValues
 		}
