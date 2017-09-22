@@ -30,7 +30,16 @@ type memWeaver struct {
 func (weaver *memWeaver) Update(app string, data *PermissionData) error {
 	weaver.mu.Lock()
 	defer weaver.mu.Unlock()
-	weaver.byGroups[app] = data
+	if data == nil {
+		_, ok := weaver.byGroups[app]
+		if !ok {
+			return
+		}
+
+		delete(weaver.byGroups, app)
+	} else {
+		weaver.byGroups[app] = data
+	}
 
 	if len(weaver.all.Groups) > 0 {
 		weaver.all.Groups = weaver.all.Groups[:0]
