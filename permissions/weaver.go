@@ -33,7 +33,7 @@ func (weaver *memWeaver) Update(app string, data *PermissionData) error {
 	if data == nil {
 		_, ok := weaver.byGroups[app]
 		if !ok {
-			return
+			return nil
 		}
 
 		delete(weaver.byGroups, app)
