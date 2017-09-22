@@ -46,6 +46,35 @@ type menuWeaver struct {
 	byGroups map[string]map[string]*Menu
 }
 
+func (weaver *menuWeaver) LoadFromDB() error {
+	var allList []Menu
+	err := weaver.db.Menus().Where().All(allList)
+	if err != nil {
+		return err
+	}
+
+	byID := map[int64]*Menu{}
+	byGroups := map[string]map[string]*Menu{}
+	for idx, menu := range allList {
+		byID[menu.ID] = &allList[idx]
+
+		newInGroup := byGroups[menu.Application]
+		if newInGroup == nil {
+			newInGroup = map[string]*Menu{}
+		}
+		newInGroup[menu.Name] = &allList[idx]
+		byGroups[menu.Application] = newInGroup
+	}
+
+	menuList := generateMenuTree(0, allList)
+
+	weaver.mu.Lock()
+	defer weaver.mu.Unlock()
+	weaver.byGroups = byGroups
+	weaver.menuList = menuList
+	return nil
+}
+
 func upsertMenuList(db *DB, app string, parentID int64, menuList []toolbox.Menu, oldInGroup map[string]*Menu) (map[string]*Menu, error) {
 	newInGroup := map[string]*Menu{}
 	for _, menuItem := range menuList {
@@ -96,46 +125,18 @@ func upsertMenuList(db *DB, app string, parentID int64, menuList []toolbox.Menu,
 	return newInGroup, nil
 }
 
-func (weaver *menuWeaver) LoadFromDB() error {
-	var allList []Menu
-	err := weaver.db.Menus().Where().All(allList)
-	if err != nil {
-		return err
-	}
-
-	byID := map[int64]*Menu{}
-	byGroups := map[string]map[string]*Menu{}
-	for idx, menu := range allList {
-		byID[menu.ID] = &allList[idx]
-
-		newInGroup := byGroups[menu.Application]
-		if newInGroup == nil {
-			newInGroup = map[string]*Menu{}
-		}
-		newInGroup[menu.Name] = &allList[idx]
-		byGroups[menu.Application] = newInGroup
-	}
-
-	menuList := generateMenuTree(0, allList)
-
-	weaver.mu.Lock()
-	defer weaver.mu.Unlock()
-	weaver.byGroups = byGroups
-	weaver.menuList = menuList
-	return nil
-}
-
 func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
-	newInGroup, err := func() (map[string]*Menu, error) {
+	weaver.mu.RLock()
+	oldList := weaver.byGroups[app]
+	weaver.mu.RUnlock()
+
+	if len(menuList) == 0 && len(oldList) == 0 {
+		return nil
+	}
+
+	newInGroup, err := func(inGroup map[string]*Menu) (map[string]*Menu, error) {
 		tx, err := weaver.db.Begin()
 		defer util.CloseWith(tx)
-		inGroup := map[string]*Menu{}
-
-		weaver.mu.RLock()
-		for k, v := range weaver.byGroups[app] {
-			inGroup[k] = v
-		}
-		weaver.mu.RUnlock()
 
 		newList, err := upsertMenuList(tx, app, 0, menuList, inGroup)
 		if err != nil {
@@ -143,7 +144,7 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 		}
 
 		return newList, tx.Commit()
-	}()
+	}(oldList)
 
 	if err != nil {
 		return errors.New("update menu list in app \"" + app + "\" to db fail, " + err.Error())
