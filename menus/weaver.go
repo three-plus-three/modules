@@ -78,11 +78,17 @@ func (weaver *menuWeaver) LoadFromDB() error {
 func upsertMenuList(db *DB, app string, parentID int64, menuList []toolbox.Menu, oldInGroup map[string]*Menu) (map[string]*Menu, error) {
 	newInGroup := map[string]*Menu{}
 	for _, menuItem := range menuList {
+		var old *Menu
+		var ok bool
 
-		old, ok := oldInGroup[menuItem.Name]
-		if ok {
-			delete(oldInGroup, menuItem.Name)
-		} else {
+		if oldInGroup != nil {
+			old, ok = oldInGroup[menuItem.Name]
+			if ok {
+				delete(oldInGroup, menuItem.Name)
+			}
+		}
+
+		if !ok {
 			old = &Menu{}
 
 			err := db.Menus().Where(orm.Cond{"application": app, "name": menuItem.Name}).One(old)
@@ -116,10 +122,12 @@ func upsertMenuList(db *DB, app string, parentID int64, menuList []toolbox.Menu,
 		newInGroup[menuItem.Name] = old
 	}
 
-	for name := range oldInGroup {
-		_, err := db.Menus().Where(orm.Cond{"application": app, "name": name}).Delete()
-		if err != nil {
-			return nil, err
+	if oldInGroup != nil {
+		for name := range oldInGroup {
+			_, err := db.Menus().Where(orm.Cond{"application": app, "name": name}).Delete()
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return newInGroup, nil
@@ -157,9 +165,11 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 	weaver.byGroups[app] = newInGroup
 	weaver.menuList = toolbox.MergeMenus(weaver.menuList, menuList)
 
-	for name := range oldInGroup {
-		if _, ok := newInGroup[name]; !ok {
-			toolbox.Remove(weaver.menuList, name)
+	if oldInGroup != nil {
+		for name := range oldInGroup {
+			if _, ok := newInGroup[name]; !ok {
+				toolbox.Remove(weaver.menuList, name)
+			}
 		}
 	}
 
