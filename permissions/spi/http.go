@@ -46,7 +46,7 @@ func Read() (*permissions.PermissionData, error) {
 	}
 }
 
-func ClearRegisters(name string, privoder permissions.PermissionProvider) {
+func ClearRegisters() {
 	mu.Lock()
 	defer mu.Unlock()
 	privoder = map[string]permissions.PermissionProvider{}
