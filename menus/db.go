@@ -44,7 +44,12 @@ func (db *DB) Rollback() error {
 }
 
 func (db *DB) Close() error {
-	return db.Rollback()
+	if db.session == nil {
+		return sql.ErrTxDone
+	}
+	db.session.Close()
+	db.session = nil
+	return nil
 }
 
 func (db *DB) Query(sqlStr string, args ...interface{}) orm.Queryer {
