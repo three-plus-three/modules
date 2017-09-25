@@ -105,21 +105,14 @@ func LoadHTTP(dirname string, args map[string]interface{}) error {
 }
 
 func readHTTPConfigFromFile(filename string, args map[string]interface{}) (*HTTPConfig, error) {
-	out, err := os.Open(filename)
+	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errors.New("ReadHTTPConfigFromFile: " + err.Error())
-	}
-	defer out.Close()
-
-	var config HTTPConfig
-	err = json.NewDecoder(out).Decode(&config)
-	if err != nil {
-		return nil, errors.New("read '" + filename + "' fail: " + err.Error())
 	}
 
 	t, err := template.New("default").Funcs(template.FuncMap{
 		"join": urlutil.Join,
-	}).Parse(config.URL)
+	}).Parse(string(bs))
 	if err != nil {
 		return nil, errors.New("parse url template in '" + filename + "' fail: " + err.Error())
 	}
@@ -128,8 +121,12 @@ func readHTTPConfigFromFile(filename string, args map[string]interface{}) (*HTTP
 		return nil, errors.New("generate url in '" + filename + "' fail: " + err.Error())
 	}
 
+	var config HTTPConfig
+	err = json.NewDecoder(&buf).Decode(&config)
+	if err != nil {
+		return nil, errors.New("read '" + filename + "' fail: " + err.Error())
+	}
 	config.Name = filename + ":" + config.Name
-	config.URL = buf.String()
 	return &config, nil
 }
 
