@@ -94,6 +94,10 @@ func GetDefaultPermissionGroups() ([]Group, error) {
 	return permissionsCache.PermissionGroups()
 }
 
+func WhenChanged(cb func()) {
+	permissionsCache.WhenChanged(cb)
+}
+
 //缓存
 var permissionsCache permissionCacheImpl
 
@@ -110,9 +114,10 @@ type permissionCacheData struct {
 type permissionCacheImpl struct {
 	value atomic.Value
 
-	mu        sync.Mutex
-	privoders map[string]PermissionProvider
-	isLoading int32
+	mu          sync.Mutex
+	privoders   map[string]PermissionProvider
+	isLoading   int32
+	changedFunc func()
 }
 
 // func (cache *permissionCacheImpl) tryRead() *permissionCacheData {
@@ -139,6 +144,20 @@ func (cache *permissionCacheImpl) register(group string, privoder PermissionProv
 	}
 
 	cache.privoders[group] = privoder
+}
+
+func (cache *permissionCacheImpl) WhenChanged(cb func()) {
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+
+	cache.changedFunc = cb
+}
+
+func (cache *permissionCacheImpl) changed() {
+	cache.mu.Lock()
+	cb := cache.changedFunc
+	cache.mu.Unlock()
+	cb()
 }
 
 func (cache *permissionCacheImpl) load() (*permissionCacheData, error) {
@@ -332,6 +351,7 @@ func Register(serviceID environment.ENV_PROXY_TYPE, lifecycleData *web_ext.Lifec
 
 	client.WhenChanged(func() {
 		permissionsCache.load()
+		permissionsCache.changed()
 	})
 
 	permissionsCache.register(srvOpt.Name, client)

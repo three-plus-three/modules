@@ -31,12 +31,17 @@ func (weaver *memWeaver) Update(app string, data *PermissionData) error {
 	weaver.mu.Lock()
 	defer weaver.mu.Unlock()
 	if data == nil {
-		_, ok := weaver.byGroups[app]
+		old, ok := weaver.byGroups[app]
 		if !ok {
 			return nil
 		}
-
+		if len(old.Groups) == 0 &&
+			len(old.Permissions) == 0 &&
+			len(old.Tags) == 0 {
+			return nil
+		}
 		delete(weaver.byGroups, app)
+
 	} else {
 		weaver.byGroups[app] = data
 	}
@@ -190,6 +195,10 @@ func containTags(allItems, items []Tag) bool {
 var MergePermissionData = appendPermissionData
 
 func appendPermissionData(all, data *PermissionData) {
+	if data == nil {
+		return
+	}
+
 	if len(data.Permissions) > 0 {
 		all.Permissions = append(all.Permissions, data.Permissions...)
 	}
