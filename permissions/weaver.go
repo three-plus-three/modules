@@ -69,6 +69,10 @@ func (weaver *memWeaver) Generate() (*PermissionData, error) {
 	return &weaver.all, nil
 }
 
+func IsSubset(allItems, subset *PermissionData) bool {
+	return isSubset(allItems, subset)
+}
+
 func isSubset(allItems, subset *PermissionData) bool {
 	if !containGroups(allItems.Groups, subset.Groups) {
 		return false
