@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"text/template"
 
 	"github.com/three-plus-three/modules/errors"
@@ -17,14 +18,24 @@ import (
 )
 
 var (
-	mu        sync.Mutex
-	privoders = map[string]permissions.PermissionProvider{}
+	mu         sync.Mutex
+	gprivoders atomic.Value
 )
 
-func Read() (*permissions.PermissionData, error) {
-	mu.Lock()
-	defer mu.Unlock()
+func Privoders() map[string]permissions.PermissionProvider {
+	o := gprivoders.Load()
+	if o == nil {
+		return nil
+	}
+	values, ok := o.(map[string]permissions.PermissionProvider)
+	if ok {
+		return values
+	}
+	return nil
+}
 
+func Read() (*permissions.PermissionData, error) {
+	privoders := Privoders()
 	switch len(privoders) {
 	case 0:
 		return nil, nil
@@ -49,7 +60,9 @@ func Read() (*permissions.PermissionData, error) {
 func ClearRegisters() {
 	mu.Lock()
 	defer mu.Unlock()
-	privoders = map[string]permissions.PermissionProvider{}
+
+	values := map[string]permissions.PermissionProvider{}
+	gprivoders.Store(&values)
 }
 
 func Register(name string, privoder permissions.PermissionProvider) {
@@ -59,10 +72,24 @@ func Register(name string, privoder permissions.PermissionProvider) {
 	if privoder == nil {
 		panic("provider is nil")
 	}
-	if _, ok := privoders[name]; ok {
-		panic("privoder '" + name + "' is already exists.")
+
+	oldPrivoders := Privoders()
+
+	if oldPrivoders != nil {
+		if _, ok := oldPrivoders[name]; ok {
+			panic("privoder '" + name + "' is already exists.")
+		}
 	}
+
+	privoders := map[string]permissions.PermissionProvider{}
+	if len(oldPrivoders) != 0 {
+		for k, v := range oldPrivoders {
+			privoders[k] = v
+		}
+	}
+
 	privoders[name] = privoder
+	gprivoders.Store(&privoders)
 }
 
 type HTTPConfig struct {
