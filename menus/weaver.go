@@ -185,6 +185,10 @@ func (weaver *menuWeaver) Generate() ([]toolbox.Menu, error) {
 }
 
 func isSubset(allItems, subset []toolbox.Menu) bool {
+	return IsSubset(allItems, subset)
+}
+
+func IsSubset(allItems, subset []toolbox.Menu) bool {
 	for _, item := range subset {
 		raw := toolbox.SearchMenuInTree(allItems, item.Name)
 		if raw == nil || !toolbox.IsSameMenu(item, *raw) {
