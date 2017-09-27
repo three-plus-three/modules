@@ -293,6 +293,7 @@ func generateMenuTree(byApps map[string]map[string]*Menu) []toolbox.Menu {
 	for _, menu := range topMenuList {
 		results = append(results, menu.Menu)
 	}
+	results = clearMenuDividerFromList(results)
 	return results
 }
 
@@ -323,4 +324,37 @@ func copyToMenuList(list []*Menu) []toolbox.Menu {
 		results = append(results, menu.Menu)
 	}
 	return results
+}
+
+func clearMenuDividerFromList(list []toolbox.Menu) []toolbox.Menu {
+	if len(list) == 0 {
+		return nil
+	}
+
+	offset := 0
+	prev := true
+	for idx := range list {
+		list[idx].Children = clearMenuDividerFromList(list[idx].Children)
+		if list[idx].Name == toolbox.MenuDivider {
+			if prev {
+				continue
+			}
+			prev = true
+		} else {
+			prev = false
+		}
+
+		if idx != offset {
+			list[offset] = list[idx]
+		}
+		offset++
+	}
+
+	if prev {
+		offset--
+	}
+	if offset <= 0 {
+		return nil
+	}
+	return list[:offset]
 }
