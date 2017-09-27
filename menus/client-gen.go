@@ -46,7 +46,7 @@ func Connect(env *environment.Environment, appID environment.ENV_PROXY_TYPE,
 			env:       env,
 			wsrv:      wsrv,
 			appSrv:    env.GetServiceConfig(appID),
-			client:    wsrv.Client(urlPath),
+			urlPath:   urlPath,
 			queueName: queueName,
 			cb:        cb,
 			c:         make(chan struct{}),
@@ -89,7 +89,7 @@ type apartClient struct {
 	env       *environment.Environment
 	wsrv      *environment.ServiceConfig
 	appSrv    *environment.ServiceConfig
-	client    environment.HttpClient
+	urlPath   string
 	queueName string
 	cb        Callback
 
@@ -138,7 +138,7 @@ func (srv *apartClient) Read() ([]toolbox.Menu, error) {
 
 func (srv *apartClient) read() ([]toolbox.Menu, error) {
 	var value []toolbox.Menu
-	err := srv.client.
+	err := srv.wsrv.Client(srv.urlPath).
 		SetParam("app", srv.appSrv.Name).
 		GET(&value)
 	return value, err
@@ -158,7 +158,7 @@ func (srv *apartClient) write() error {
 		}
 	}
 
-	return srv.client.
+	return srv.wsrv.Client(srv.urlPath).
 		SetParam("app", srv.appSrv.Name).
 		SetBody(value).
 		POST(nil)

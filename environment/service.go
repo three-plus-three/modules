@@ -220,8 +220,8 @@ func (cfg *ServiceConfig) URI() *url.URL {
 }
 
 // Client 服务的访问
-func (cfg *ServiceConfig) Client(paths ...string) HttpClient {
-	return HttpClient{
+func (cfg *ServiceConfig) Client(paths ...string) *HttpClient {
+	return &HttpClient{
 		cfg:      cfg,
 		basePath: urlutil.Join(paths...),
 	}

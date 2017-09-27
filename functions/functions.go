@@ -159,6 +159,7 @@ Crypto Functions:
 package functions
 
 import (
+	"bytes"
 	"crypto/dsa"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -341,10 +342,16 @@ var genericMap = map[string]interface{}{
 	"quote":     quote,
 	"squote":    squote,
 	"cat":       cat,
-	"concat":    cat,
-	"indent":    indent,
-	"replace":   replace,
-	"plural":    plural,
+	"concat": func(values ...interface{}) string {
+		var buf bytes.Buffer
+		for _, v := range values {
+			fmt.Fprint(&buf, v)
+		}
+		return buf.String()
+	},
+	"indent":  indent,
+	"replace": replace,
+	"plural":  plural,
 
 	// Wrap Atoi to stop errors.
 	"atoi":  func(a string) int { i, _ := strconv.Atoi(a); return i },
