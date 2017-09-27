@@ -19,11 +19,16 @@ import (
 
 var (
 	mu         sync.Mutex
-	gprivoders atomic.Value
+	gproviders atomic.Value
 )
 
+// Privoders 这个是旧接口，稍后删除它
 func Privoders() map[string]permissions.PermissionProvider {
-	o := gprivoders.Load()
+	return Providers()
+}
+
+func Providers() map[string]permissions.PermissionProvider {
+	o := gproviders.Load()
 	if o == nil {
 		return nil
 	}
@@ -35,7 +40,7 @@ func Privoders() map[string]permissions.PermissionProvider {
 }
 
 func Read() (*permissions.PermissionData, error) {
-	privoders := Privoders()
+	privoders := Providers()
 	switch len(privoders) {
 	case 0:
 		return nil, nil
@@ -62,7 +67,7 @@ func ClearRegisters() {
 	defer mu.Unlock()
 
 	values := map[string]permissions.PermissionProvider{}
-	gprivoders.Store(&values)
+	gproviders.Store(&values)
 }
 
 func Register(name string, privoder permissions.PermissionProvider) {
@@ -73,7 +78,7 @@ func Register(name string, privoder permissions.PermissionProvider) {
 		panic("provider is nil")
 	}
 
-	oldPrivoders := Privoders()
+	oldPrivoders := Providers()
 
 	if oldPrivoders != nil {
 		if _, ok := oldPrivoders[name]; ok {
@@ -89,7 +94,7 @@ func Register(name string, privoder permissions.PermissionProvider) {
 	}
 
 	privoders[name] = privoder
-	gprivoders.Store(&privoders)
+	gproviders.Store(&privoders)
 }
 
 type HTTPConfig struct {

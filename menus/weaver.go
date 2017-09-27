@@ -1,11 +1,14 @@
 package menus
 
 import (
-	"errors"
+	"bytes"
+	"fmt"
+	"sort"
 	"strconv"
 	"sync"
 
 	"github.com/runner-mei/orm"
+	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/hub"
 	hub_engine "github.com/three-plus-three/modules/hub/engine"
 	"github.com/three-plus-three/modules/toolbox"
@@ -30,20 +33,23 @@ func NewWeaver(core *hub_engine.Core, db *DB) (Weaver, error) {
 // Menu 数据库中的一个菜单项
 type Menu struct {
 	ID          int64  `json:"id" xorm:"id pk autoincr"`
-	ParentID    int64  `json:"parent_id,omitempty" xorm:"parent_id"`
 	Application string `json:"application" xorm:"application"`
-	Seqence     int64  `json:"seqence,omitempty" xorm:"seqence"`
+
+	ParentID int64 `json:"parent_id,omitempty" xorm:"parent_id"`
+	Seqence  int64 `json:"seqence,omitempty" xorm:"seqence"`
 
 	toolbox.Menu `xorm:"extends"`
+
+	Container []*Menu
 }
 
 type menuWeaver struct {
 	core *hub_engine.Core
 	db   *DB
 
-	mu       sync.RWMutex
-	menuList []toolbox.Menu
-	byGroups map[string]map[string]*Menu
+	mu             sync.RWMutex
+	menuList       []toolbox.Menu
+	byApplications map[string]map[string]*Menu
 }
 
 func (weaver *menuWeaver) LoadFromDB() error {
@@ -53,100 +59,109 @@ func (weaver *menuWeaver) LoadFromDB() error {
 		return errors.New("LoadFromDB: " + err.Error())
 	}
 
-	byID := map[int64]*Menu{}
-	byGroups := map[string]map[string]*Menu{}
+	byApplications := map[string]map[string]*Menu{}
 	for idx, menu := range allList {
-		byID[menu.ID] = &allList[idx]
-
-		newInGroup := byGroups[menu.Application]
+		newInGroup := byApplications[menu.Application]
 		if newInGroup == nil {
 			newInGroup = map[string]*Menu{}
 		}
 		newInGroup[menu.Name] = &allList[idx]
-		byGroups[menu.Application] = newInGroup
+		byApplications[menu.Application] = newInGroup
 	}
 
-	menuList := generateMenuTree(0, allList)
+	menuList := generateMenuTree(byApplications)
 
 	weaver.mu.Lock()
 	defer weaver.mu.Unlock()
-	weaver.byGroups = byGroups
+	weaver.byApplications = byApplications
 	weaver.menuList = menuList
 	return nil
 }
 
-func upsertMenuList(db *DB, app string, parentID int64, menuList []toolbox.Menu, oldInGroup map[string]*Menu) (map[string]*Menu, error) {
-	newInGroup := map[string]*Menu{}
-	for _, menuItem := range menuList {
+func upsertMenuListRecursive(db *DB, parentID int64, app string, menuList []toolbox.Menu,
+	oldInGroup, newInGroup map[string]*Menu, idList *[]int64) error {
+	for idx, menuItem := range menuList {
 		var old *Menu
 		var ok bool
 
 		if oldInGroup != nil {
 			old, ok = oldInGroup[menuItem.Name]
-			if ok {
-				delete(oldInGroup, menuItem.Name)
-			}
 		}
-
-		if !ok {
+		if !ok || old == nil {
 			old = &Menu{}
 
 			err := db.Menus().Where(orm.Cond{"application": app, "name": menuItem.Name}).One(old)
 			if err != nil {
 				if orm.ErrNotFound != err {
-					return nil, err
+					return err
 				}
-				old.ParentID = parentID
+
 				old.ID = 0
+				old.ParentID = 0
 			}
 		}
 
 		old.Application = app
+		old.Seqence = int64(idx) + 1
 		toolbox.MergeMenuWithNoChildren(&old.Menu, &menuItem)
 
 		var err error
 		if old.ID == 0 {
 			var id interface{}
 			old.ParentID = parentID
-			old.Seqence = 0
-			id, err = db.Menus().Nullable("parent_id").Insert(old)
+			//old.Seqence = 0
+			id, err = db.Menus().
+				Nullable("parent_id").
+				Insert(old)
 			old.ID = id.(int64)
 		} else {
 			err = db.Menus().ID(old.ID).Update(old)
 		}
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 
+		*idList = append(*idList, old.ID)
 		newInGroup[menuItem.Name] = old
+
+		err = upsertMenuListRecursive(db, old.ID, app, menuItem.Children, oldInGroup, newInGroup, idList)
+		if err != nil {
+			return err
+		}
 	}
 
-	if oldInGroup != nil {
-		for name := range oldInGroup {
-			_, err := db.Menus().Where(orm.Cond{"application": app, "name": name}).Delete()
-			if err != nil {
-				return nil, err
-			}
-		}
+	return nil
+}
+
+func upsertMenuList(db *DB, parentID int64, app string, menuList []toolbox.Menu, oldInGroup map[string]*Menu) (map[string]*Menu, error) {
+	newInGroup := map[string]*Menu{}
+	idList := make([]int64, 0, len(menuList))
+	err := upsertMenuListRecursive(db, parentID, app, menuList, oldInGroup, newInGroup, &idList)
+	if err != nil {
+		return nil, err
+	}
+	_, err = db.Menus().Where(orm.Cond{"application": app, "id NOT IN": idList}).Delete()
+	if err != nil {
+		return nil, err
 	}
 	return newInGroup, nil
 }
 
 func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 	weaver.mu.RLock()
-	oldList := weaver.byGroups[app]
+	oldList := weaver.byApplications[app]
 	weaver.mu.RUnlock()
 
 	if len(menuList) == 0 && len(oldList) == 0 {
 		return nil
 	}
 
-	newInGroup, err := func(inGroup map[string]*Menu) (map[string]*Menu, error) {
+	newInGroup, err := func(oldListOfApp map[string]*Menu) (map[string]*Menu, error) {
 		tx, err := weaver.db.Begin()
 		defer util.CloseWith(tx)
 
-		newList, err := upsertMenuList(tx, app, 0, menuList, inGroup)
+		newList, err := upsertMenuList(tx, 0, app, menuList, oldListOfApp)
 		if err != nil {
 			return nil, err
 		}
@@ -161,17 +176,8 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 	weaver.mu.Lock()
 	defer weaver.mu.Unlock()
 
-	oldInGroup := weaver.byGroups[app]
-	weaver.byGroups[app] = newInGroup
-	weaver.menuList = toolbox.MergeMenus(weaver.menuList, menuList)
-
-	if oldInGroup != nil {
-		for name := range oldInGroup {
-			if _, ok := newInGroup[name]; !ok {
-				toolbox.Remove(weaver.menuList, name)
-			}
-		}
-	}
+	weaver.byApplications[app] = newInGroup
+	weaver.menuList = generateMenuTree(weaver.byApplications)
 
 	weaver.core.CreateTopicIfNotExists("menus.changed").
 		Send(hub.Message([]byte(strconv.Itoa(len(menuList)))))
@@ -198,13 +204,123 @@ func IsSubset(allItems, subset []toolbox.Menu) bool {
 	return true
 }
 
-func generateMenuTree(parentID int64, byID []Menu) []toolbox.Menu {
-	var results []toolbox.Menu
-	for _, menu := range byID {
-		if menu.ParentID == parentID {
-			menu.Menu.Children = generateMenuTree(menu.ID, byID)
-			results = append(results, menu.Menu)
+func generateMenuTree(byApps map[string]map[string]*Menu) []toolbox.Menu {
+	byID := map[int64]*Menu{}
+	for _, menuList := range byApps {
+		for _, menu := range menuList {
+			if menu == nil {
+				continue
+			}
+
+			byID[menu.ID] = menu
 		}
+	}
+
+	byContainerName := map[string]*Menu{}
+	for _, menu := range byID {
+		if !toolbox.IsMenuContainer(&menu.Menu) {
+			continue
+		}
+
+		if old, ok := byContainerName[menu.Name]; ok && old != nil {
+			var buf bytes.Buffer
+			buf.WriteString("容器 ")
+			buf.WriteString(menu.Name)
+			buf.WriteString(" 已存在")
+
+			buf.WriteString(", 之前的应用为 ")
+			buf.WriteString(old.Application)
+			if old.ParentID != 0 {
+				if parent := byID[old.ParentID]; parent != nil {
+					buf.WriteString(", 父节点为 ")
+					buf.WriteString(parent.Name)
+				}
+			}
+			buf.WriteString(", 当前的应用为 ")
+			buf.WriteString(menu.Application)
+			if menu.ParentID != 0 {
+				if parent := byID[menu.ParentID]; parent != nil {
+					buf.WriteString(", 父节点为 ")
+					buf.WriteString(parent.Name)
+				}
+			}
+
+			panic(buf.String())
+		}
+	}
+
+	topMenuList := make([]*Menu, 0, 16)
+	for _, menu := range byID {
+		if menu.ParentID == 0 {
+			if menu.Category == "" {
+				topMenuList = append(topMenuList, menu)
+				continue
+			}
+
+			if menu.Category == toolbox.MenuCategoryLinkto {
+				container := byContainerName[menu.Name]
+				if container == nil {
+					panic(errors.New("应用 " + menu.Application + " 的菜单容器 " + menu.Name + " 没有找到"))
+				}
+				switch container.Category {
+				case toolbox.MenuCategoryChildrenContainer:
+					container.Container = append(container.Container, menu.Container...)
+				case toolbox.MenuCategoryInlineContainer:
+					if container.ParentID != 0 {
+						parent := byID[container.ParentID]
+						if parent != nil {
+							parent.Container = append(parent.Container, menu.Container...)
+							break
+						}
+					}
+					container.Container = append(container.Container, menu.Container...)
+				default:
+					panic(errors.New("应用 " + container.Application + " 的菜单容器 " + container.Name + " 的 category 不可识别"))
+				}
+			}
+
+			panic(errors.New("菜单 " + menu.Name + " 的 category 不可识别"))
+		}
+
+		parent := byID[menu.ParentID]
+		if parent == nil {
+			panic(fmt.Errorf("菜单(%d:%s) 找不到父节点 %d", menu.ID, menu.Name, menu.ParentID))
+		}
+		parent.Container = append(parent.Container, menu)
+	}
+
+	results := make([]toolbox.Menu, 0, len(topMenuList))
+	for _, menu := range topMenuList {
+		results = append(results, menu.Menu)
+	}
+	return results
+}
+
+func sortMenuList(list []*Menu) {
+	if len(list) == 0 {
+		return
+	}
+
+	sort.Slice(list, func(a, b int) bool {
+		return list[a].Application < list[b].Application ||
+			(list[a].Application == list[b].Application &&
+				list[a].Seqence < list[b].Seqence)
+	})
+
+	for _, menu := range list {
+		sortMenuList(menu.Container)
+	}
+}
+
+func copyToMenuList(list []*Menu) []toolbox.Menu {
+	if len(list) == 0 {
+		return nil
+	}
+
+	results := make([]toolbox.Menu, 0, len(list))
+	for _, menu := range list {
+		menu.Children = copyToMenuList(menu.Container)
+		results = append(results, menu.Menu)
 	}
 	return results
 }

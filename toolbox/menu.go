@@ -1,10 +1,26 @@
 package toolbox
 
+// 菜单的分类
+const (
+	MenuCategoryChildrenContainer = "children_container"
+	MenuCategoryInlineContainer   = "inline_container"
+	MenuCategoryLinkto            = "link_to"
+
+	MenuDivider = "divider"
+)
+
+func IsMenuContainer(menu *Menu) bool {
+	return menu.Category == MenuCategoryChildrenContainer ||
+		menu.Category == MenuCategoryInlineContainer
+}
+
 // Menu 表示一个菜单
 type Menu struct {
+	Category   string `json:"category,omitempty" xorm:"category"`
 	Name       string `json:"name" xorm:"name unique notnull"`
 	Title      string `json:"title" xorm:"title notnull"`
 	Permission string `json:"permission,omitempty" xorm:"permission"`
+	License    string `json:"license,omitempty" xorm:"license"`
 	URL        string `json:"url" xorm:"url"`
 	Icon       string `json:"icon,omitempty" xorm:"icon"`
 
@@ -122,11 +138,17 @@ func MergeMenus(allList, newList []Menu) []Menu {
 
 // MergeMenuWithNoChildren 合并菜单，但子菜单不合并
 func MergeMenuWithNoChildren(to, from *Menu) {
+	if to.Category == "" {
+		to.Category = from.Category
+	}
 	if to.Title == "" {
 		to.Title = from.Title
 	}
 	if to.Permission == "" {
 		to.Permission = from.Permission
+	}
+	if to.License == "" {
+		to.License = from.License
 	}
 	if to.URL == "" || to.URL == "#" {
 		to.URL = from.URL
