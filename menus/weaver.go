@@ -50,7 +50,7 @@ func (weaver *menuWeaver) LoadFromDB() error {
 	var allList []Menu
 	err := weaver.db.Menus().Where().All(allList)
 	if err != nil {
-		return err
+		return errors.New("LoadFromDB: " + err.Error())
 	}
 
 	byID := map[int64]*Menu{}
