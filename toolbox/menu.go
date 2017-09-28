@@ -141,6 +141,9 @@ func MergeMenuWithNoChildren(to, from *Menu) {
 	if to.Category == "" {
 		to.Category = from.Category
 	}
+	if to.Name == "" {
+		to.Name = from.Name
+	}
 	if to.Title == "" {
 		to.Title = from.Title
 	}

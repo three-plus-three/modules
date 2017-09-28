@@ -54,7 +54,7 @@ type menuWeaver struct {
 
 func (weaver *menuWeaver) LoadFromDB() error {
 	var allList []Menu
-	err := weaver.db.Menus().Where().All(allList)
+	err := weaver.db.Menus().Where().All(&allList)
 	if err != nil {
 		return errors.New("LoadFromDB: " + err.Error())
 	}
@@ -289,10 +289,8 @@ func generateMenuTree(byApps map[string]map[string]*Menu) []toolbox.Menu {
 		parent.Container = append(parent.Container, menu)
 	}
 
-	results := make([]toolbox.Menu, 0, len(topMenuList))
-	for _, menu := range topMenuList {
-		results = append(results, menu.Menu)
-	}
+	sortMenuList(topMenuList)
+	results := copyToMenuList(topMenuList)
 	results = clearMenuDividerFromList(results)
 	return results
 }
