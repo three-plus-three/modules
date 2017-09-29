@@ -66,9 +66,11 @@ func skipWhitespace(txt string) string {
 	return ""
 }
 
-func readString(txt string, breakIfEqualChar bool) (string, string) {
+func readString(s string, breakIfEqualChar bool) (string, string) {
 	var buf bytes.Buffer
-	for idx, c := range skipWhitespace(txt) {
+
+	txt := skipWhitespace(s)
+	for idx, c := range txt {
 		switch c {
 		case '"':
 			if buf.Len() == 0 {
@@ -91,7 +93,6 @@ func readString(txt string, breakIfEqualChar bool) (string, string) {
 			if unicode.IsSpace(c) {
 				return buf.String(), txt[idx+1:]
 			}
-
 			buf.WriteRune(c)
 		}
 	}
