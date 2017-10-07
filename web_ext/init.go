@@ -70,6 +70,16 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		}
 
 		serviceObject := env.GetServiceConfig(serviceID)
+		wserviceObject := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
+		if !revel.DevMode {
+			if fp := flag.Lookup("port"); nil != fp && fp.Value.String() == fp.DefValue {
+				revel.Server.Addr = serviceObject.ListenAddr("")
+			}
+			serviceObject.SetPort(serviceObject.Port)
+		} else {
+			serviceObject.SetPort("9000")
+		}
+
 		projectContext := serviceObject.Name
 		lifecycle.URLPrefix = env.DaemonUrlPath
 		lifecycle.URLRoot = env.DaemonUrlPath
@@ -85,19 +95,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		lifecycle.Variables["application_context"] = lifecycle.ApplicationContext
 		lifecycle.Variables["application_root"] = lifecycle.ApplicationRoot
 
-		wserviceObject := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
 		lifecycle.Variables["user_logout_url"] = wserviceObject.UrlFor(env.DaemonUrlPath, "/sso/logout")
-
-		lifecycle.GetUser = InitUser(lifecycle)
-
-		lifecycle.CurrentUser = func(c *revel.Controller) User {
-			username := c.Session[sso.SESSION_USER_KEY]
-			if username == "" {
-				return nil
-			}
-			return lifecycle.GetUser(username)
-		}
-		lifecycle.CheckUser = initSSO(env)
 
 		if revel.DevMode {
 			lifecycle.ModelEngine.ShowSQL()
@@ -128,11 +126,15 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 
 		initTemplateFuncs(lifecycle)
 
-		if !revel.DevMode {
-			if fp := flag.Lookup("port"); nil != fp && fp.Value.String() == fp.DefValue {
-				revel.Server.Addr = serviceObject.ListenAddr("")
+		lifecycle.GetUser = InitUser(lifecycle)
+		lifecycle.CurrentUser = func(c *revel.Controller) User {
+			username := c.Session[sso.SESSION_USER_KEY]
+			if username == "" {
+				return nil
 			}
+			return lifecycle.GetUser(username)
 		}
+		lifecycle.CheckUser = initSSO(env)
 
 		mode := revel.Config.StringDefault("hengwei.menu.mode", "")
 		menuClient = menus.Connect(lifecycleData.Env,

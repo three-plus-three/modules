@@ -2,6 +2,8 @@ package web_ext
 
 import (
 	"errors"
+	"fmt"
+	"html/template"
 	"net/url"
 	"strings"
 
@@ -77,11 +79,29 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return urlutil.JoinWith(lifecycle.URLRoot, s)
 	}
 
-	revel.TemplateFuncs["urlParam"] = func(urlStr, key, value string) string {
-		u, err := url.Parse(urlStr)
-		if err != nil {
-			panic(errors.New("url '" + urlStr + "' is invalid url: " + err.Error()))
+	revel.TemplateFuncs["urlParam"] = func(key, value string, urlStr interface{}) string {
+		var u *url.URL
+		switch v := urlStr.(type) {
+		case string:
+			var err error
+			u, err = url.Parse(v)
+			if err != nil {
+				panic(errors.New("url '" + v + "' is invalid url: " + err.Error()))
+			}
+		case url.URL:
+			u = &v
+		case *url.URL:
+			u = v
+		case template.URL:
+			var err error
+			u, err = url.Parse(string(v))
+			if err != nil {
+				panic(errors.New("url '" + string(v) + "' is invalid url: " + err.Error()))
+			}
+		default:
+			panic(fmt.Errorf("url '[%T] %s' is invalid url", urlStr, urlStr))
 		}
+
 		query := u.Query()
 		query.Add(key, value)
 		u.RawQuery = query.Encode()
