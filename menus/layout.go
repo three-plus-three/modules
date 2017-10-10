@@ -225,3 +225,27 @@ func readLayout(in io.Reader) (Layout, error) {
 	}
 	return &layoutImpl{mainLayout: mainLayout}, nil
 }
+
+// Simple 简单布局器
+var Simple Layout = &simpleLayout{}
+
+// Layout 菜单布避生成器
+type simpleLayout struct {
+}
+
+func (layout *simpleLayout) Generate(menuList map[string][]toolbox.Menu) ([]toolbox.Menu, error) {
+	if len(menuList) == 0 {
+		return nil, nil
+	}
+	if len(menuList) == 1 {
+		for _, a := range menuList {
+			return a, nil
+		}
+	}
+
+	results := make([]toolbox.Menu, 0, len(menuList))
+	for _, a := range menuList {
+		results = append(results, a...)
+	}
+	return results, nil
+}

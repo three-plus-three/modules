@@ -9,27 +9,6 @@ import (
 	"github.com/three-plus-three/modules/toolbox"
 )
 
-// Layout 菜单布避生成器
-type simpleLayout struct {
-}
-
-func (layout *simpleLayout) Generate(menuList map[string][]toolbox.Menu) ([]toolbox.Menu, error) {
-	if len(menuList) == 0 {
-		return nil, nil
-	}
-	if len(menuList) == 1 {
-		for _, a := range menuList {
-			return a, nil
-		}
-	}
-
-	results := make([]toolbox.Menu, 0, len(menuList))
-	for _, a := range menuList {
-		results = append(results, a...)
-	}
-	return results, nil
-}
-
 func TestMeneSimple(t *testing.T) {
 	env := env_tests.Clone(nil)
 	dataDrv, dataURL := env.Db.Models.Url()
