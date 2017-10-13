@@ -1,6 +1,8 @@
 package web_ext
 
 import (
+	"sync/atomic"
+
 	"github.com/go-xorm/xorm"
 	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/concurrency"
@@ -125,7 +127,16 @@ type Lifecycle struct {
 	GetUser     func(userName string) User
 	CurrentUser func(c *revel.Controller) User
 	CheckUser   revel_sso.CheckFunc
-	MenuList    []toolbox.Menu
+	menuList    atomic.Value
+}
+
+// Menus 返回所有菜单
+func (lifecycle *Lifecycle) Menus() []toolbox.Menu {
+	o := lifecycle.menuList.Load()
+	if o == nil {
+		return nil
+	}
+	return o.([]toolbox.Menu)
 }
 
 // NewLifecycle 创建一个生命周期
