@@ -18,7 +18,7 @@ const (
 
 // Menu 表示一个菜单
 type Menu struct {
-	ID         string `json:"id,omitempty" xorm:"uid notnull"`
+	UID        string `json:"uid,omitempty" xorm:"uid notnull"`
 	Title      string `json:"title,omitempty" xorm:"title notnull"`
 	Permission string `json:"permission,omitempty" xorm:"permission"`
 	License    string `json:"license,omitempty" xorm:"license"`
@@ -52,7 +52,7 @@ func (menu Menu) IsActiveWith(ctx map[string]interface{}) bool {
 
 // IsActive 判断这个菜单是否是展开的
 func (menu Menu) IsActive(name string) bool {
-	if name == menu.ID {
+	if name == menu.UID {
 		return true
 	}
 

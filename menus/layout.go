@@ -3,6 +3,7 @@ package menus
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -34,7 +35,7 @@ type LayoutItem struct {
 	Location   string `json:"location" xorm:"location"`
 	Target     string `json:"target" xorm:"target"`
 	Inline     bool   `json:"inline" xorm:"inline"`
-	ID         string `json:"id" xorm:"id unique notnull"`
+	UID        string `json:"uid" xorm:"uid unique notnull"`
 	Title      string `json:"title" xorm:"title notnull"`
 	Permission string `json:"permission,omitempty" xorm:"permission"`
 	License    string `json:"license,omitempty" xorm:"license"`
@@ -46,7 +47,7 @@ type LayoutItem struct {
 
 func (menu *LayoutItem) toMenu() toolbox.Menu {
 	return toolbox.Menu{
-		ID:         menu.ID,
+		UID:        menu.UID,
 		Title:      menu.Title,
 		Permission: menu.Permission,
 		License:    menu.License,
@@ -92,7 +93,10 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 	results := toToolboxMenus(layout.mainLayout, byID)
 
 	var remains []toolbox.Menu
+
 	for appName, menuList := range byApps {
+		//for _, appName := range appNames {
+		//	menuList := byApps[appName]
 		c, ok := byID["app."+appName]
 		if ok {
 			c.items = mergeMenuArray(c.items, menuList)
@@ -104,36 +108,36 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 	for len(remains) > 0 {
 		var local []toolbox.Menu
 		for idx := range remains {
-			c, ok := byID[remains[idx].ID]
-			if ok {
-				if c.layout.Title == "" {
-					c.layout.Title = remains[idx].Title
-				}
-				if c.layout.Permission == "" {
-					c.layout.Permission = remains[idx].Permission
-				}
-				if c.layout.License == "" {
-					c.layout.License = remains[idx].License
-				}
-				if c.layout.URL == "" || c.layout.URL == "#" {
-					c.layout.URL = remains[idx].URL
-				}
-				if c.layout.Icon == "" {
-					c.layout.Icon = remains[idx].Icon
-				}
-
-				c.items = mergeMenuArray(c.items, remains[idx].Children)
+			c, ok := byID[remains[idx].UID]
+			if !ok {
+				local = append(local, remains[idx])
 				continue
 			}
 
-			local = append(local, remains[idx])
+			if c.layout.Title == "" {
+				c.layout.Title = remains[idx].Title
+			}
+			if c.layout.Permission == "" {
+				c.layout.Permission = remains[idx].Permission
+			}
+			if c.layout.License == "" {
+				c.layout.License = remains[idx].License
+			}
+			if c.layout.URL == "" || c.layout.URL == "#" {
+				c.layout.URL = remains[idx].URL
+			}
+			if c.layout.Icon == "" {
+				c.layout.Icon = remains[idx].Icon
+			}
+
+			c.items = mergeMenuArray(c.items, remains[idx].Children)
 		}
 
 		if len(remains) == len(local) {
 			var buf bytes.Buffer
 			buf.WriteString("下列菜单不能处理:")
-			for _, menu := range remains {
-				buf.WriteString(menu.ID)
+			for _, menu := range local {
+				buf.WriteString(menu.UID)
 				buf.WriteString("(")
 				buf.WriteString(menu.Title)
 				buf.WriteString("),")
@@ -147,47 +151,91 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 
 	var removeList []*container
 	var watchList []*container
+	var allList []*container
 
 	for _, c := range byID {
-		switch c.layout.Category {
-		case "":
-			for idx := range results {
-				if results[idx].ID == c.layout.ID {
+		allList = append(allList, c)
+	}
+
+	for len(allList) > 0 {
+		var local []*container
+		for _, c := range allList {
+			switch c.layout.Category {
+			case "":
+				foundIdx := -1
+				for idx := range results {
+					if results[idx].UID == c.layout.UID {
+						foundIdx = idx
+						break
+					}
+				}
+				if foundIdx >= 0 {
 					from := c.layout.toMenu()
 					from.Children = c.items
-					mergeMenuRecursive(&results[idx], &from)
-					break
+					mergeMenuRecursive(&results[foundIdx], &from)
+				} else {
+					local = append(local, c)
 				}
-			}
-		case categoryRemove:
-			removeList = append(removeList, c)
-		case categoryWatch:
-			watchList = append(watchList, c)
-		case categoryLocation:
-			switch strings.ToLower(strings.TrimSpace(c.layout.Location)) {
-			case locationAfter:
-				results = insertAfter(results, c, c.layout.Inline)
-			case locationBefore:
-				results = insertBefore(results, c, c.layout.Inline)
-			case locationReplace:
-				results = replaceInTree(results, c, c.layout.Inline)
+			case categoryRemove:
+				removeList = append(removeList, c)
+			case categoryWatch:
+				watchList = append(watchList, c)
+			case categoryLocation:
+
+				var found bool
+
+				switch strings.ToLower(strings.TrimSpace(c.layout.Location)) {
+				case locationAfter:
+					found, results = insertAfter(results, c, c.layout.Inline)
+				case locationBefore:
+					found, results = insertBefore(results, c, c.layout.Inline)
+				case locationReplace:
+					found, results = insertBefore(results, c, c.layout.Inline)
+					if found {
+						removeList = append(removeList, c)
+					}
+				default:
+					return nil, errors.New("菜单 " + c.layout.UID + " 的 location 不正确")
+				}
+
+				if !found {
+					local = append(local, c)
+				}
 			default:
-				return nil, errors.New("菜单 " + c.layout.ID + " 的 location 不正确")
+				return nil, errors.New("菜单 " + c.layout.UID + " 的 category 不正确")
 			}
-		default:
-			return nil, errors.New("菜单 " + c.layout.ID + " 的 category 不正确")
 		}
+
+		if len(local) == len(allList) {
+			var buf bytes.Buffer
+			buf.WriteString("下列 layout 菜单不能处理:")
+			for _, menu := range local {
+				buf.WriteString(menu.layout.UID)
+				buf.WriteString("(")
+				buf.WriteString(menu.layout.Title)
+				buf.WriteString("),")
+			}
+			buf.Truncate(buf.Len() - 1)
+			panic(errors.New(buf.String()))
+		}
+		allList = local
 	}
 
 	for _, c := range removeList {
-		c.layout.forEach(func(menu *LayoutItem) {
-			results = removeInTree(results, menu.ID)
-			results = removeInTree(results, menu.Target)
-		})
-		forEach(c.items, func(menu *toolbox.Menu) {
-			results = removeInTree(results, menu.ID)
-		})
+		if c.layout.Category == categoryLocation && c.layout.Location == locationReplace {
+			fmt.Println(c.layout.Target)
+			results = removeInTree(results, c.layout.Target)
+		} else {
+			c.layout.forEach(func(menu *LayoutItem) {
+				results = removeInTree(results, menu.UID)
+				results = removeInTree(results, menu.Target)
+			})
+			forEach(c.items, func(menu *toolbox.Menu) {
+				results = removeInTree(results, menu.UID)
+			})
+		}
 	}
+
 	for _, c := range watchList {
 		results = watchInTree(results, c, c.layout.Target)
 	}
@@ -207,7 +255,7 @@ func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolb
 			results[len(results)-1].Children =
 				mergeMenuArray(results[len(results)-1].Children, c.items)
 		}
-		byID[layout.ID] = c
+		byID[layout.UID] = c
 	}
 	return results
 }

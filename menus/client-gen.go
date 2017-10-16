@@ -144,21 +144,21 @@ func (srv *apartClient) read() ([]toolbox.Menu, error) {
 	return value, err
 }
 
-func (srv *apartClient) write() error {
+func (srv *apartClient) write() (bool, error) {
 	value, err := srv.cb()
 	if err != nil {
-		return err
+		return false, err
 	}
 	o := srv.cached.Load()
 	if o != nil {
 		if result, ok := o.(*apartResult); ok {
 			if isSubset(result.value, value) {
-				return nil
+				return true, nil
 			}
 		}
 	}
 
-	return srv.wsrv.Client(srv.urlPath).
+	return false, srv.wsrv.Client(srv.urlPath).
 		SetParam("app", srv.appSrv.Name).
 		SetBody(value).
 		POST(nil)
@@ -219,6 +219,15 @@ func (srv *apartClient) runSub() {
 			srv.logger.Println("subscribe", srv.queueName, "fail,", err)
 		}
 		srv.cw.Set(nil)
+
+		defer func() {
+			defer recover()
+
+			select {
+			case srv.c <- struct{}{}:
+			default:
+			}
+		}()
 	}
 }
 
@@ -228,14 +237,20 @@ func (srv *apartClient) run() {
 	writed := false
 
 	flush := func() {
-		if err := srv.write(); err != nil {
-			srv.logger.Println("write value fail", err)
+		if skipped, err := srv.write(); err != nil {
+			srv.logger.Println("write value fail,", err)
+			writed = false
 		} else {
 			writed = true
+			if skipped {
+				srv.logger.Println("write value is skipped!")
+			} else {
+				srv.logger.Println("write value is ok!")
+			}
 		}
 
 		if value, err := srv.read(); err != nil {
-			srv.logger.Println("read value fail", err)
+			srv.logger.Println("read value fail,", err)
 		} else {
 			srv.save(value, err)
 		}

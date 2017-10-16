@@ -103,22 +103,22 @@ var test2 = []testStep{
 	{app: "a1_1",
 		value: []toolbox.Menu{
 			{
-				ID:    "1",
+				UID:   "1",
 				Title: "m1",
 				URL:   "#",
 			},
 			{
-				ID:    "2",
+				UID:   "2",
 				Title: "m2",
 				URL:   "#",
 			},
 			{
-				ID:    "3",
+				UID:   "3",
 				Title: "m3",
 				URL:   "#",
 				Children: []toolbox.Menu{
 					{
-						ID:    "3_1",
+						UID:   "3_1",
 						Title: "m3_1",
 						URL:   "#",
 					},
@@ -127,22 +127,22 @@ var test2 = []testStep{
 		},
 		results: []toolbox.Menu{
 			{
-				ID:    "1",
+				UID:   "1",
 				Title: "m1",
 				URL:   "#",
 			},
 			{
-				ID:    "2",
+				UID:   "2",
 				Title: "m2",
 				URL:   "#",
 			},
 			{
-				ID:    "3",
+				UID:   "3",
 				Title: "m3",
 				URL:   "#",
 				Children: []toolbox.Menu{
 					{
-						ID:    "3_1",
+						UID:   "3_1",
 						Title: "m3_1",
 						URL:   "#",
 					},
@@ -154,22 +154,22 @@ var test2 = []testStep{
 		app: "a1_2",
 		results: []toolbox.Menu{
 			{
-				ID:    "1",
+				UID:   "1",
 				Title: "m1",
 				URL:   "#",
 			},
 			{
-				ID:    "2",
+				UID:   "2",
 				Title: "m2",
 				URL:   "#",
 			},
 			{
-				ID:    "3",
+				UID:   "3",
 				Title: "m3",
 				URL:   "#",
 				Children: []toolbox.Menu{
 					{
-						ID:    "3_1",
+						UID:   "3_1",
 						Title: "m3_1",
 						URL:   "#",
 					},

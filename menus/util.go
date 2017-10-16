@@ -10,15 +10,15 @@ const (
 	actReplaceInTree
 )
 
-func insertAfter(allList []toolbox.Menu, c *container, isInline bool) []toolbox.Menu {
+func insertAfter(allList []toolbox.Menu, c *container, isInline bool) (bool, []toolbox.Menu) {
 	return insertToTree(allList, c, isInline, actInsertAfterInTree)
 }
 
-func insertBefore(allList []toolbox.Menu, c *container, isInline bool) []toolbox.Menu {
+func insertBefore(allList []toolbox.Menu, c *container, isInline bool) (bool, []toolbox.Menu) {
 	return insertToTree(allList, c, isInline, actInsertBeforeInTree)
 }
 
-func replaceInTree(allList []toolbox.Menu, c *container, isInline bool) []toolbox.Menu {
+func replaceInTree(allList []toolbox.Menu, c *container, isInline bool) (bool, []toolbox.Menu) {
 	return insertToTree(allList, c, isInline, actReplaceInTree)
 }
 
@@ -30,9 +30,9 @@ func watchInTree(allList []toolbox.Menu, c *container, target string) []toolbox.
 	return allList
 }
 
-func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) []toolbox.Menu {
+func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) (bool, []toolbox.Menu) {
 	for idx := range allList {
-		if allList[idx].ID == c.layout.Target {
+		if allList[idx].UID == c.layout.Target {
 			if isInline {
 				var results []toolbox.Menu
 				switch act {
@@ -49,7 +49,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 				default:
 					if len(c.items) == 0 {
 						if c.layout.Category == toolbox.MenuNull {
-							results = removeInTree(allList, c.layout.ID)
+							results = removeInTree(allList, c.layout.UID)
 						} else {
 							results = allList
 						}
@@ -60,7 +60,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 						copy(results[idx+len(c.items):], allList[idx+1:])
 					}
 				}
-				return results
+				return true, results
 			}
 
 			var results []toolbox.Menu
@@ -80,7 +80,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 			default:
 				if len(c.items) == 0 {
 					if c.layout.Category == toolbox.MenuNull {
-						results = removeInTree(allList, c.layout.ID)
+						results = removeInTree(allList, c.layout.UID)
 					} else {
 						results = allList
 					}
@@ -90,18 +90,23 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 					results[idx].Children = c.items
 				}
 			}
-			return results
+			return true, results
 		}
-		allList[idx].Children = insertToTree(allList[idx].Children, c, isInline, act)
+
+		found, children := insertToTree(allList[idx].Children, c, isInline, act)
+		allList[idx].Children = children
+		if found {
+			return true, allList
+		}
 	}
 
-	return allList
+	return false, allList
 }
 
 // searchMenuInTree 在菜单树中查找指定的菜单
 func searchMenuInTree(allList []toolbox.Menu, name string) *toolbox.Menu {
 	for idx := range allList {
-		if allList[idx].ID == name {
+		if allList[idx].UID == name {
 			return &allList[idx]
 		}
 		found := searchMenuInTree(allList[idx].Children, name)
@@ -129,7 +134,7 @@ func isSameMenuArray(newList, oldList []toolbox.Menu) bool {
 
 // isSameMenu 判断两个菜单是否相等
 func isSameMenu(newMenu, oldMenu toolbox.Menu) bool {
-	if newMenu.ID != oldMenu.ID {
+	if newMenu.UID != oldMenu.UID {
 		return false
 	}
 	if newMenu.Title != oldMenu.Title {
@@ -155,7 +160,7 @@ func mergeMenuArray(allList, newList []toolbox.Menu) []toolbox.Menu {
 	for menuIdx := range newList {
 		foundIdx := -1
 		for idx := range allList {
-			if allList[idx].ID == newList[menuIdx].ID {
+			if allList[idx].UID == newList[menuIdx].UID {
 				foundIdx = idx
 			}
 		}
@@ -176,8 +181,8 @@ func mergeMenuRecursive(to, from *toolbox.Menu) {
 
 // mergeMenuNonrecursive 合并菜单，但子菜单不合并
 func mergeMenuNonrecursive(to, from *toolbox.Menu) {
-	if to.ID == "" {
-		to.ID = from.ID
+	if to.UID == "" {
+		to.UID = from.UID
 	}
 	if to.Title == "" {
 		to.Title = from.Title
@@ -200,7 +205,7 @@ func mergeMenuNonrecursive(to, from *toolbox.Menu) {
 func removeInTree(menuList []toolbox.Menu, name string) []toolbox.Menu {
 	offset := 0
 	for i := 0; i < len(menuList); i++ {
-		if menuList[i].ID == name {
+		if menuList[i].UID == name {
 			continue
 		}
 
@@ -241,7 +246,7 @@ func clearDividerFromList(list []toolbox.Menu) []toolbox.Menu {
 	prev := true
 	for idx := range list {
 		list[idx].Children = clearDividerFromList(list[idx].Children)
-		if list[idx].ID == toolbox.MenuDivider {
+		if list[idx].UID == toolbox.MenuDivider {
 			if prev {
 				continue
 			}

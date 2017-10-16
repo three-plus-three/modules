@@ -31,7 +31,7 @@ func NewWeaver(core *hub_engine.Core, db *DB, layout Layout, layouts map[string]
 
 // Menu 数据库中的一个菜单项
 type Menu struct {
-	AutoID      int64  `json:"id" xorm:"id pk autoincr"`
+	AutoID      int64  `json:"auto_id" xorm:"id pk autoincr"`
 	Application string `json:"application" xorm:"application"`
 
 	ParentID int64 `json:"parent_id,omitempty" xorm:"parent_id"`
@@ -63,9 +63,9 @@ type menuWeaver struct {
 func (weaver *menuWeaver) Stats() interface{} {
 	weaver.mu.RLock()
 	defer weaver.mu.RUnlock()
-	apps := map[string]map[string]*Menu{}
-	for k, v := range weaver.byApplications {
-		apps[k] = v
+	apps := map[string]interface{}{}
+	for name, app := range weaver.byApplications {
+		apps[name] = toMenuTree(app)
 	}
 
 	layouts := map[string]interface{}{}
@@ -76,6 +76,7 @@ func (weaver *menuWeaver) Stats() interface{} {
 	return map[string]interface{}{
 		"applications": apps,
 		"layout":       layouts,
+		"menuList":     weaver.menuList,
 	}
 }
 
@@ -100,7 +101,7 @@ func (weaver *menuWeaver) LoadFromDB() error {
 		if newInGroup == nil {
 			newInGroup = map[string]*Menu{}
 		}
-		newInGroup[menu.ID] = &allList[idx]
+		newInGroup[menu.UID] = &allList[idx]
 		byApplications[menu.Application] = newInGroup
 	}
 
@@ -121,23 +122,23 @@ func upsertMenuListRecursive(db *DB, parentID int64, app string, menuList []tool
 		var old *Menu
 		var ok bool
 
-		if menuItem.ID == "" {
+		if menuItem.UID == "" {
 			if menuItem.Title != "" && menuItem.Title != toolbox.MenuDivider {
-				menuItem.ID = menuItem.Title
+				menuItem.UID = menuItem.Title
 			} else if menuItem.URL != "" && menuItem.URL != "#" {
-				menuItem.ID = menuItem.URL
+				menuItem.UID = menuItem.URL
 			} else {
-				menuItem.ID = menuItem.Title + "#" + strconv.Itoa(idx)
+				menuItem.UID = menuItem.Title + "#" + strconv.Itoa(idx)
 			}
 		}
 
 		if oldInGroup != nil {
-			old, ok = oldInGroup[menuItem.ID]
+			old, ok = oldInGroup[menuItem.UID]
 		}
 		if !ok || old == nil {
 			old = &Menu{}
 
-			err := db.Menus().Where(orm.Cond{"application": app, "uid": menuItem.ID}).One(old)
+			err := db.Menus().Where(orm.Cond{"application": app, "uid": menuItem.UID}).One(old)
 			if err != nil {
 				if orm.ErrNotFound != err {
 					return err
@@ -170,7 +171,7 @@ func upsertMenuListRecursive(db *DB, parentID int64, app string, menuList []tool
 		}
 
 		*idList = append(*idList, old.AutoID)
-		newInGroup[menuItem.ID] = old
+		newInGroup[menuItem.UID] = old
 
 		err = upsertMenuListRecursive(db, old.AutoID, app, menuItem.Children, oldInGroup, newInGroup, idList)
 		if err != nil {
@@ -287,7 +288,7 @@ func isSubset(allItems, subset []toolbox.Menu) bool {
 
 func IsSubset(allItems, subset []toolbox.Menu) bool {
 	for _, item := range subset {
-		raw := searchMenuInTree(allItems, item.ID)
+		raw := searchMenuInTree(allItems, item.UID)
 		if raw == nil || !isSameMenu(item, *raw) {
 			return false
 		}
@@ -408,7 +409,7 @@ func toMenuTree(menuList map[string]*Menu) []toolbox.Menu {
 
 		parent := byID[menu.ParentID]
 		if parent == nil {
-			panic(fmt.Errorf("菜单(%d:%s) 找不到父节点 %d", menu.AutoID, menu.ID, menu.ParentID))
+			panic(fmt.Errorf("菜单(%d:%s) 找不到父节点 %d", menu.AutoID, menu.UID, menu.ParentID))
 		}
 		parent.Container = append(parent.Container, menu)
 	}

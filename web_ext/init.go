@@ -18,7 +18,6 @@ import (
 )
 
 var lifecycleData *Lifecycle
-var menuClient menus.Client
 
 func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 	cb func(*Lifecycle) error, createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
@@ -137,7 +136,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		lifecycle.CheckUser = initSSO(env)
 
 		mode := revel.Config.StringDefault("hengwei.menu.mode", "")
-		menuClient = menus.Connect(lifecycleData.Env,
+		menuClient := menus.Connect(lifecycleData.Env,
 			serviceID,
 			menus.Callback(func() ([]toolbox.Menu, error) {
 				return createMenuList(lifecycleData)
@@ -148,26 +147,8 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			log.New(os.Stderr, "[menus]", log.LstdFlags))
 
 		lifecycleData.OnClosing(menuClient)
+		lifecycleData.menuClient = menuClient
 	}, 0)
-
-	revel.OnAppStart(func() {
-		menuList, err := menuClient.Read()
-		if err != nil {
-			log.Println(err)
-			os.Exit(-1)
-			return
-		}
-		lifecycleData.menuList.Store(menuList)
-		menuClient.WhenChanged(func() {
-			menuList, err := menuClient.Read()
-			if err != nil {
-				log.Println("[menus] read menu fail,", err)
-				return
-			}
-
-			lifecycleData.menuList.Store(menuList)
-		})
-	}, 2)
 }
 
 // TODO turn this into revel.HeaderFilter
