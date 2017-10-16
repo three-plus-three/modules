@@ -39,6 +39,11 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
+		if strings.HasSuffix(r.URL.Path, "/stats") ||
+			strings.HasSuffix(r.URL.Path, "/stats/") {
+			srv.stats(w, r)
+			return
+		}
 		srv.read(w, r)
 	case "PUT", "POST":
 		srv.write(w, r)
@@ -68,6 +73,14 @@ func renderJSON(w http.ResponseWriter, code int, value interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	return json.NewEncoder(w).Encode(value)
+}
+
+func (srv *Server) stats(w http.ResponseWriter, r *http.Request) {
+	err := renderJSON(w, http.StatusOK, srv.weaver.Stats())
+	if err != nil {
+		srv.logger.Println("stats fail,", err)
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+	}
 }
 
 func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
