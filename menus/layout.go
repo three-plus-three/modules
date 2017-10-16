@@ -143,7 +143,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 				buf.WriteString("),")
 			}
 			buf.Truncate(buf.Len() - 1)
-			panic(errors.New(buf.String()))
+			return nil, errors.New(buf.String())
 		}
 
 		remains = local
@@ -216,7 +216,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 				buf.WriteString("),")
 			}
 			buf.Truncate(buf.Len() - 1)
-			panic(errors.New(buf.String()))
+			return nil, errors.New(buf.String())
 		}
 		allList = local
 	}
