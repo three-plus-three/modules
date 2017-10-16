@@ -51,7 +51,7 @@ func TestMeneSimple(t *testing.T) {
 				return
 			}
 
-			results, err := weaver.Generate()
+			results, err := weaver.Generate("")
 			if err != nil {
 				t.Error("[", tidx, test.name, "] [", idx, step, "]", err)
 				return

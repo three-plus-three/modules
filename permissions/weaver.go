@@ -27,6 +27,19 @@ type memWeaver struct {
 	byGroups map[string]*PermissionData
 }
 
+func (weaver *memWeaver) Stats() interface{} {
+	weaver.mu.RLock()
+	defer weaver.mu.RUnlock()
+	apps := map[string]interface{}{}
+	for k, v := range weaver.byGroups {
+		apps[k] = v
+	}
+
+	return map[string]interface{}{
+		"applications": apps,
+	}
+}
+
 func (weaver *memWeaver) Update(app string, data *PermissionData) error {
 	weaver.mu.Lock()
 	defer weaver.mu.Unlock()
@@ -63,7 +76,7 @@ func (weaver *memWeaver) Update(app string, data *PermissionData) error {
 	return nil
 }
 
-func (weaver *memWeaver) Generate() (*PermissionData, error) {
+func (weaver *memWeaver) Generate(ctx string) (*PermissionData, error) {
 	weaver.mu.RLock()
 	defer weaver.mu.RUnlock()
 	return &weaver.all, nil

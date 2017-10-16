@@ -20,7 +20,8 @@ import (
 // Weaver 菜单的组织工具
 type Weaver interface {
 	Update(group string, value []toolbox.Menu) error
-	Generate() ([]toolbox.Menu, error)
+	Generate(ctx string) ([]toolbox.Menu, error)
+	Stats() interface{}
 }
 
 // Server 菜单的服备
@@ -55,15 +56,32 @@ func isConsumeHTML(r *http.Request) bool {
 	return strings.Contains(accept, "text/html")
 }
 
-func text(w http.ResponseWriter, code int, txt string) {
+func renderTEXT(w http.ResponseWriter, code int, txt string) error {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)
-	fmt.Fprintln(w, txt)
+	_, err := fmt.Fprintln(w, txt)
+	return err
+}
+
+func renderJSON(w http.ResponseWriter, code int, value interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(code)
+	return json.NewEncoder(w).Encode(value)
 }
 
 func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
-	results, err := srv.weaver.Generate()
+	ctx := r.URL.Query().Get("ctx")
+	if ctx == "stats" {
+		err := renderJSON(w, http.StatusOK, srv.weaver.Stats())
+		if err != nil {
+			srv.logger.Println("stats fail,", err)
+			http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		}
+		return
+	}
+
+	results, err := srv.weaver.Generate(ctx)
 	if err != nil {
 		srv.logger.Println(err)
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -108,7 +126,7 @@ func (srv *Server) write(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	text(w, http.StatusOK, "OK")
+	renderTEXT(w, http.StatusOK, "OK")
 	srv.logger.Println("update", group, "is successful")
 }
 

@@ -79,6 +79,10 @@ type container struct {
 	items  []toolbox.Menu
 }
 
+func (layout *layoutImpl) Stats() interface{} {
+	return layout.mainLayout
+}
+
 func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.Menu, error) {
 	if len(byApps) == 0 {
 		return nil, nil
@@ -231,6 +235,10 @@ var Simple Layout = &simpleLayout{}
 
 // Layout 菜单布避生成器
 type simpleLayout struct {
+}
+
+func (layout *simpleLayout) Stats() interface{} {
+	return "simple"
 }
 
 func (layout *simpleLayout) Generate(menuList map[string][]toolbox.Menu) ([]toolbox.Menu, error) {

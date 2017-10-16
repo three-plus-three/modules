@@ -44,6 +44,7 @@ type Menu struct {
 
 // Layout 菜单布避生成器
 type Layout interface {
+	Stats() interface{}
 	Generate(map[string][]toolbox.Menu) ([]toolbox.Menu, error)
 }
 
@@ -57,6 +58,25 @@ type menuWeaver struct {
 	byApplications   map[string]map[string]*Menu
 	menuList         []toolbox.Menu
 	menuListByLayout map[string][]toolbox.Menu
+}
+
+func (weaver *menuWeaver) Stats() interface{} {
+	weaver.mu.RLock()
+	defer weaver.mu.RUnlock()
+	apps := map[string]map[string]*Menu{}
+	for k, v := range weaver.byApplications {
+		apps[k] = v
+	}
+
+	layouts := map[string]interface{}{}
+	for k, v := range weaver.layouts {
+		layouts[k] = v.Stats()
+	}
+
+	return map[string]interface{}{
+		"applications": apps,
+		"layout":       layouts,
+	}
 }
 
 func (weaver *menuWeaver) generate() ([]toolbox.Menu, error) {
@@ -204,11 +224,11 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 	return nil
 }
 
-func (weaver *menuWeaver) Generate() ([]toolbox.Menu, error) {
-	return weaver.read()
+func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
+	return weaver.read(ctx)
 }
 
-func (weaver *menuWeaver) read(args ...interface{}) ([]toolbox.Menu, error) {
+func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbox.Menu, error) {
 	weaver.mu.RLock()
 	defer weaver.mu.RUnlock()
 	if len(args) == 0 {
@@ -217,8 +237,6 @@ func (weaver *menuWeaver) read(args ...interface{}) ([]toolbox.Menu, error) {
 	if len(args) != 1 {
 		return nil, errors.New("arguments is too many")
 	}
-
-	layoutName := fmt.Sprint(args)
 
 	if weaver.menuListByLayout != nil {
 		byLayout, ok := weaver.menuListByLayout[layoutName]
