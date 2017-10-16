@@ -121,6 +121,16 @@ func upsertMenuListRecursive(db *DB, parentID int64, app string, menuList []tool
 		var old *Menu
 		var ok bool
 
+		if menuItem.ID == "" {
+			if menuItem.Title != "" && menuItem.Title != toolbox.MenuDivider {
+				menuItem.ID = menuItem.Title
+			} else if menuItem.URL != "" && menuItem.URL != "#" {
+				menuItem.ID = menuItem.URL
+			} else {
+				menuItem.ID = menuItem.Title + "#" + strconv.Itoa(idx)
+			}
+		}
+
 		if oldInGroup != nil {
 			old, ok = oldInGroup[menuItem.ID]
 		}
@@ -384,6 +394,9 @@ func toMenuTree(menuList map[string]*Menu) []toolbox.Menu {
 		}
 
 		byID[menu.AutoID] = menu
+		if menu.Container != nil {
+			menu.Container = menu.Container[:0]
+		}
 	}
 
 	topMenuList := make([]*Menu, 0, 16)

@@ -2,6 +2,7 @@ package menus
 
 import (
 	"cn/com/hengwei/commons/env_tests"
+	"encoding/json"
 	"testing"
 
 	"github.com/go-xorm/xorm"
@@ -9,7 +10,7 @@ import (
 	"github.com/three-plus-three/modules/toolbox"
 )
 
-func TestMeneSimple(t *testing.T) {
+func TestMenuSimple(t *testing.T) {
 	env := env_tests.Clone(nil)
 	dataDrv, dataURL := env.Db.Models.Url()
 	modelEngine, err := xorm.NewEngine(dataDrv, dataURL)
@@ -61,6 +62,9 @@ func TestMeneSimple(t *testing.T) {
 				t.Error("[", tidx, test.name, "] [", idx, step, "]", "result is diff - ")
 				t.Logf("excepted is %#v", step.results)
 				t.Logf("actual   is %#v", results)
+
+				bs, _ := json.MarshalIndent(weaver.Stats(), "", "  ")
+				t.Log(string(bs))
 			}
 		}
 	}
@@ -74,6 +78,107 @@ type testStep struct {
 	results   []toolbox.Menu
 }
 
+var menuTest1 = []toolbox.Menu{
+	{
+		Title: "m1",
+		URL:   "#",
+	},
+	{
+		Title: "m2",
+		URL:   "#",
+	},
+	{
+		Title: "m3",
+		URL:   "#",
+		Children: []toolbox.Menu{
+			{
+				Title: "m3_1",
+				URL:   "#",
+			},
+		},
+	},
+}
+
+var test2 = []testStep{
+	{app: "a1_1",
+		value: []toolbox.Menu{
+			{
+				ID:    "1",
+				Title: "m1",
+				URL:   "#",
+			},
+			{
+				ID:    "2",
+				Title: "m2",
+				URL:   "#",
+			},
+			{
+				ID:    "3",
+				Title: "m3",
+				URL:   "#",
+				Children: []toolbox.Menu{
+					{
+						ID:    "3_1",
+						Title: "m3_1",
+						URL:   "#",
+					},
+				},
+			},
+		},
+		results: []toolbox.Menu{
+			{
+				ID:    "1",
+				Title: "m1",
+				URL:   "#",
+			},
+			{
+				ID:    "2",
+				Title: "m2",
+				URL:   "#",
+			},
+			{
+				ID:    "3",
+				Title: "m3",
+				URL:   "#",
+				Children: []toolbox.Menu{
+					{
+						ID:    "3_1",
+						Title: "m3_1",
+						URL:   "#",
+					},
+				},
+			},
+		},
+	},
+	{isRestart: true,
+		app: "a1_2",
+		results: []toolbox.Menu{
+			{
+				ID:    "1",
+				Title: "m1",
+				URL:   "#",
+			},
+			{
+				ID:    "2",
+				Title: "m2",
+				URL:   "#",
+			},
+			{
+				ID:    "3",
+				Title: "m3",
+				URL:   "#",
+				Children: []toolbox.Menu{
+					{
+						ID:    "3_1",
+						Title: "m3_1",
+						URL:   "#",
+					},
+				},
+			},
+		},
+	},
+}
+
 var tests = []struct {
 	layout Layout
 	name   string
@@ -84,82 +189,18 @@ var tests = []struct {
 		layout: &simpleLayout{},
 		steps: []testStep{
 			{app: "a1_1",
-				value: []toolbox.Menu{
-					{
-						ID:    "1",
-						Title: "m1",
-						URL:   "#",
-					},
-					{
-						ID:    "2",
-						Title: "m2",
-						URL:   "#",
-					},
-					{
-						ID:    "3",
-						Title: "m3",
-						URL:   "#",
-						Children: []toolbox.Menu{
-							{
-								ID:    "3_1",
-								Title: "m3_1",
-								URL:   "#",
-							},
-						},
-					},
-				},
-				results: []toolbox.Menu{
-					{
-						ID:    "1",
-						Title: "m1",
-						URL:   "#",
-					},
-					{
-						ID:    "2",
-						Title: "m2",
-						URL:   "#",
-					},
-					{
-						ID:    "3",
-						Title: "m3",
-						URL:   "#",
-						Children: []toolbox.Menu{
-							{
-								ID:    "3_1",
-								Title: "m3_1",
-								URL:   "#",
-							},
-						},
-					},
-				},
+				value:   menuTest1,
+				results: menuTest1,
 			},
-			{isRestart: true,
-				app: "a1_2",
-				results: []toolbox.Menu{
-					{
-						ID:    "1",
-						Title: "m1",
-						URL:   "#",
-					},
-					{
-						ID:    "2",
-						Title: "m2",
-						URL:   "#",
-					},
-					{
-						ID:    "3",
-						Title: "m3",
-						URL:   "#",
-						Children: []toolbox.Menu{
-							{
-								ID:    "3_1",
-								Title: "m3_1",
-								URL:   "#",
-							},
-						},
-					},
-				},
+			{app: "a1_1",
+				value:   menuTest1,
+				results: menuTest1,
 			},
 		},
+	},
+	{
+		name:   "a2",
+		layout: &simpleLayout{},
+		steps:  test2,
 	},
 }

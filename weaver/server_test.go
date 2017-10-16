@@ -23,13 +23,17 @@ type testWeaver struct {
 	value WeaveType
 }
 
+func (w *testWeaver) Stats() interface{} {
+	return nil
+}
+
 func (w *testWeaver) Update(group string, value WeaveType) error {
 	w.group = group
 	w.value = value
 	return nil
 }
 
-func (w *testWeaver) Generate() (WeaveType, error) {
+func (w *testWeaver) Generate(ctx string) (WeaveType, error) {
 	return w.value, nil
 }
 
