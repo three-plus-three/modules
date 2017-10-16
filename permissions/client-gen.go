@@ -219,12 +219,13 @@ func (srv *apartClient) runSub() {
 		}
 		srv.cw.Set(nil)
 
-		defer func() {
+		func() {
 			defer recover()
 
 			select {
 			case srv.c <- struct{}{}:
 			default:
+				srv.logger.Println("failed to send flush event.")
 			}
 		}()
 	}
@@ -248,10 +249,11 @@ func (srv *apartClient) run() {
 			}
 		}
 
-		if value, err := srv.read(); err != nil {
+		value, err := srv.read()
+		srv.save(value, err)
+		if err != nil {
 			srv.logger.Println("read value fail,", err)
-		} else {
-			srv.save(value, err)
+			writed = false
 		}
 
 		if writed {

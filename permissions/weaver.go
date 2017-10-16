@@ -43,7 +43,9 @@ func (weaver *memWeaver) Stats() interface{} {
 func (weaver *memWeaver) Update(app string, data *PermissionData) error {
 	weaver.mu.Lock()
 	defer weaver.mu.Unlock()
-	if data == nil {
+	if data == nil || (len(data.Groups) == 0 &&
+		len(data.Permissions) == 0 &&
+		len(data.Tags) == 0) {
 		old, ok := weaver.byGroups[app]
 		if !ok {
 			return nil
@@ -87,6 +89,16 @@ func IsSubset(allItems, subset *PermissionData) bool {
 }
 
 func isSubset(allItems, subset *PermissionData) bool {
+	if allItems == nil {
+		if subset == nil {
+			return true
+		}
+
+		return len(subset.Groups) == 0 &&
+			len(subset.Permissions) == 0 &&
+			len(subset.Tags) == 0
+	}
+
 	if !containGroups(allItems.Groups, subset.Groups) {
 		return false
 	}
