@@ -67,7 +67,7 @@ func ClearRegisters() {
 	defer mu.Unlock()
 
 	values := map[string]permissions.PermissionProvider{}
-	gproviders.Store(&values)
+	gproviders.Store(values)
 }
 
 func Register(name string, privoder permissions.PermissionProvider) {
@@ -94,7 +94,7 @@ func Register(name string, privoder permissions.PermissionProvider) {
 	}
 
 	privoders[name] = privoder
-	gproviders.Store(&privoders)
+	gproviders.Store(privoders)
 }
 
 type HTTPConfig struct {

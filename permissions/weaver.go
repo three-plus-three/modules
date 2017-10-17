@@ -99,6 +99,10 @@ func isSubset(allItems, subset *PermissionData) bool {
 			len(subset.Tags) == 0
 	}
 
+	if subset == nil {
+		return true
+	}
+
 	if !containGroups(allItems.Groups, subset.Groups) {
 		return false
 	}

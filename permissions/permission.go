@@ -157,7 +157,9 @@ func (cache *permissionCacheImpl) changed() {
 	cache.mu.Lock()
 	cb := cache.changedFunc
 	cache.mu.Unlock()
-	cb()
+	if cb != nil {
+		cb()
+	}
 }
 
 func (cache *permissionCacheImpl) load() (*permissionCacheData, error) {
