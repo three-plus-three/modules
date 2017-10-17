@@ -101,12 +101,6 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			lifecycle.DataEngine.ShowSQL()
 		}
 
-		if err := cb(lifecycle); err != nil {
-			log.Println(err)
-			os.Exit(-1)
-			return
-		}
-
 		lifecycleData = lifecycle
 
 		revel.AppRoot = lifecycle.ApplicationRoot
@@ -148,6 +142,12 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 
 		lifecycleData.OnClosing(menuClient)
 		lifecycleData.menuClient = menuClient
+
+		if err := cb(lifecycle); err != nil {
+			log.Println(err)
+			os.Exit(-1)
+			return
+		}
 	}, 0)
 }
 

@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/three-plus-three/modules/errors"
@@ -260,24 +262,6 @@ func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolb
 	return results
 }
 
-// ReadLayout 载入 layout 文件
-func ReadLayout(filename string) (Layout, error) {
-	in, err := os.Open(filename)
-	if err != nil {
-		return nil, errors.Wrap(err, "read layout fail")
-	}
-	defer util.CloseWith(in)
-	return readLayout(in)
-}
-func readLayout(in io.Reader) (Layout, error) {
-	var mainLayout []LayoutItem
-	err := json.NewDecoder(in).Decode(&mainLayout)
-	if err != nil {
-		return nil, errors.Wrap(err, "read layout fail")
-	}
-	return &layoutImpl{mainLayout: mainLayout}, nil
-}
-
 // Simple 简单布局器
 var Simple Layout = &simpleLayout{}
 
@@ -304,4 +288,50 @@ func (layout *simpleLayout) Generate(menuList map[string][]toolbox.Menu) ([]tool
 		results = append(results, a...)
 	}
 	return results, nil
+}
+
+func ReadLayoutFromDirectory(dirname string) (Layout, error) {
+	files, err := ioutil.ReadDir(dirname)
+	if err != nil {
+		return nil, errors.Wrap(err, "read layout from directory fail")
+	}
+
+	var mainLayout []LayoutItem
+
+	for _, fi := range files {
+		filename := fi.Name()
+		if fi.IsDir() ||
+			strings.HasPrefix(filename, ".") ||
+			!strings.HasSuffix(strings.ToLower(filename), ".json") {
+			continue
+		}
+
+		layout, err := ReadLayout(filepath.Join(dirname, filename))
+		if err != nil {
+			return nil, err
+		}
+		items := layout.(*layoutImpl).mainLayout
+		if len(items) > 0 {
+			mainLayout = append(mainLayout, items...)
+		}
+	}
+	return &layoutImpl{mainLayout: mainLayout}, nil
+}
+
+// ReadLayout 载入 layout 文件
+func ReadLayout(filename string) (Layout, error) {
+	in, err := os.Open(filename)
+	if err != nil {
+		return nil, errors.Wrap(err, "read layout fail")
+	}
+	defer util.CloseWith(in)
+	return readLayout(in)
+}
+func readLayout(in io.Reader) (Layout, error) {
+	var mainLayout []LayoutItem
+	err := json.NewDecoder(in).Decode(&mainLayout)
+	if err != nil {
+		return nil, errors.Wrap(err, "read layout fail")
+	}
+	return &layoutImpl{mainLayout: mainLayout}, nil
 }
