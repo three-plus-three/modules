@@ -157,6 +157,28 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		}
 		return u.HasPermission(permissionName, op)
 	}
+
+	revel.TemplateFuncs["fieldClasses"] = func(isRequired bool, typ string) string {
+		classes := []string{}
+
+		if isRequired {
+			classes = append(classes, "required")
+		}
+
+		if typ == "integer" {
+			classes = append(classes, "digits")
+		} else if typ == "decimal" {
+			classes = append(classes, "number")
+		} else if typ == "date" {
+			classes = append(classes, "dateISO")
+		} else if typ == "ipAddress" {
+			classes = append(classes, "ipv4")
+		} else if typ == "physicalAddress" {
+			classes = append(classes, "macaddress")
+		}
+
+		return strings.Join(classes, " ")
+	}
 }
 
 func CurrentUserHasPermission(lifecycle *Lifecycle, ctx map[string]interface{}, permissionName string, opList []string) bool {
