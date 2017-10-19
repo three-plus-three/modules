@@ -1,5 +1,9 @@
 package types
 
+import (
+	"strings"
+)
+
 type ClassSpec struct {
 	Super        string      `json:"super,omitempty" yaml:"super,omitempty"`
 	Name         string      `json:"name" yaml:"name"`
@@ -31,6 +35,47 @@ type RestrictionSpec struct {
 	Length       string   `json:"length,omitempty" yaml:"length,omitempty"`
 	MinLength    string   `json:"minLength,omitempty" yaml:"minLength,omitempty"`
 	MaxLength    string   `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+}
+
+func (p *FieldSpec) HasChoices() bool {
+	if p.Restrictions == nil {
+		return false
+	}
+	return len(p.Restrictions.Enumerations) > 0
+}
+
+func (p *FieldSpec) ToChoices() map[string]interface{} {
+	choices := map[string]interface{}{}
+	if p.Restrictions == nil || len(p.Restrictions.Enumerations) == 0 {
+		return choices
+	}
+
+	for _, value := range p.Restrictions.Enumerations {
+		choices[value] = value
+	}
+	return choices
+}
+
+func (p *FieldSpec) CSSClasses() string {
+	classes := []string{}
+
+	if p.IsRequired {
+		classes = append(classes, "required")
+	}
+
+	if p.Type == "integer" {
+		classes = append(classes, "digits")
+	} else if p.Type == "decimal" {
+		classes = append(classes, "number")
+	} else if p.Type == "date" {
+		classes = append(classes, "dateISO")
+	} else if p.Type == "ipAddress" {
+		classes = append(classes, "ipv4")
+	} else if p.Type == "physicalAddress" {
+		classes = append(classes, "macaddress")
+	}
+
+	return strings.Join(classes, " ")
 }
 
 func (p *FieldSpec) ToXML() *XMLPropertyDefinition {
