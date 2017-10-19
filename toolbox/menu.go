@@ -1,5 +1,7 @@
 package toolbox
 
+import "strings"
+
 // 菜单的分类
 const (
 	// MenuCategoryChildrenContainer = "children_container"
@@ -52,7 +54,7 @@ func (menu Menu) IsActiveWith(ctx map[string]interface{}) bool {
 
 // IsActive 判断这个菜单是否是展开的
 func (menu Menu) IsActive(name string) bool {
-	if name == menu.UID {
+	if name == menu.UID || strings.HasPrefix(menu.UID, name) {
 		return true
 	}
 
