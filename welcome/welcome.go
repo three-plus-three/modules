@@ -41,10 +41,13 @@ func ReadWelcomeConfigs(env *environment.Environment) ([]Config, error) {
 		return nil, errors.New("generate url in '" + filename + "' fail: " + err.Error())
 	}
 
-	var configList []Config
-	err = json.NewDecoder(&buf).Decode(&configList)
+	var config struct {
+		Applications []Config `json:"applications,omitempty"`
+	}
+
+	err = json.NewDecoder(&buf).Decode(&config)
 	if err != nil {
 		return nil, errors.New("read '" + filename + "' fail: " + err.Error())
 	}
-	return configList, nil
+	return config.Applications, nil
 }
