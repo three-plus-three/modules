@@ -742,6 +742,12 @@ func strval(v interface{}) string {
 	case fmt.Stringer:
 		return v.String()
 	default:
+		val := reflect.ValueOf(v)
+		if val.Kind() == reflect.Ptr {
+			if val.IsNil() {
+				return ""
+			}
+		}
 		return fmt.Sprintf("%v", v)
 	}
 }

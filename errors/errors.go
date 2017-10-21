@@ -74,15 +74,16 @@ func (self *MutiErrors) Errors() []error {
 }
 
 // Concat 拼接多个错误
-func Concat(msg string, errs []error) error {
-	if len(errs) == 1 {
+func Concat(errs []error, format string, args ...interface{}) error {
+	if len(errs) == 1 && format == "" {
 		return errs[0]
 	}
+
 	var buffer bytes.Buffer
 	isFirst := true
-	if msg != "" {
+	if format != "" {
 		isFirst = false
-		buffer.WriteString(msg)
+		fmt.Fprintf(&buffer, format, args...)
 	}
 	for _, e := range errs {
 		if isFirst {
