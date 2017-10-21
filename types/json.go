@@ -5,26 +5,27 @@ import (
 )
 
 type ClassSpec struct {
-	Super        string      `json:"super,omitempty" yaml:"super,omitempty"`
-	Name         string      `json:"name" yaml:"name"`
-	IsAbstractly bool        `json:"abstract,omitempty" yaml:"abstract,omitempty"`
-	Keys         [][]string  `json:"keys,omitempty" yaml:"keys,omitempty"`
-	Fields       []FieldSpec `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Super        string                 `json:"super,omitempty" yaml:"super,omitempty"`
+	Name         string                 `json:"name" yaml:"name"`
+	IsAbstractly bool                   `json:"abstract,omitempty" yaml:"abstract,omitempty"`
+	Keys         [][]string             `json:"keys,omitempty" yaml:"keys,omitempty"`
+	Fields       []FieldSpec            `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Annotations  map[string]interface{} `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 }
 
 type FieldSpec struct {
-	Name         string           `json:"name" ymal:"name"`
-	Description  string           `json:"description,omitempty" yaml:"description,omitempty"`
-	Type         string           `json:"type" yaml:"type"`
-	Collection   bool             `json:"is_array,omitempty" yaml:"is_array,omitempty"`
-	IsEmbedded   bool             `json:"embedded,omitempty" yaml:"embedded,omitempty"`
-	IsRequired   bool             `json:"required,omitempty" yaml:"required,omitempty"`
-	IsReadOnly   bool             `json:"readonly,omitempty" yaml:"readonly,omitempty"`
-	IsUniquely   bool             `json:"unique,omitempty" yaml:"unique,omitempty"`
-	DefaultValue string           `json:"default,omitempty" yaml:"default,omitempty"`
-	Unit         string           `json:"unit,omitempty" yaml:"unit,omitempty"`
-	Restrictions *RestrictionSpec `json:"restrictions,omitempty" yaml:"restrictions,omitempty"`
-	Annotations  []interface{}    `json:"annotations,omitempty" yaml:"annotations,omitempty"`
+	Name         string                 `json:"name" ymal:"name"`
+	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Type         string                 `json:"type" yaml:"type"`
+	Collection   bool                   `json:"is_array,omitempty" yaml:"is_array,omitempty"`
+	IsEmbedded   bool                   `json:"embedded,omitempty" yaml:"embedded,omitempty"`
+	IsRequired   bool                   `json:"required,omitempty" yaml:"required,omitempty"`
+	IsReadOnly   bool                   `json:"readonly,omitempty" yaml:"readonly,omitempty"`
+	IsUniquely   bool                   `json:"unique,omitempty" yaml:"unique,omitempty"`
+	DefaultValue string                 `json:"default,omitempty" yaml:"default,omitempty"`
+	Unit         string                 `json:"unit,omitempty" yaml:"unit,omitempty"`
+	Restrictions *RestrictionSpec       `json:"restrictions,omitempty" yaml:"restrictions,omitempty"`
+	Annotations  map[string]interface{} `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 }
 
 type RestrictionSpec struct {
