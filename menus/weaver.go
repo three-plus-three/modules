@@ -161,13 +161,15 @@ func upsertMenuListRecursive(db *DB, parentID int64, app string, menuList []tool
 			id, err = db.Menus().
 				Nullable("parent_id").
 				Insert(old)
+			if err != nil {
+				return err
+			}
 			old.AutoID = id.(int64)
 		} else {
 			err = db.Menus().ID(old.AutoID).Update(old)
-		}
-
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
 		}
 
 		*idList = append(*idList, old.AutoID)
