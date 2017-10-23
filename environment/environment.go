@@ -316,11 +316,10 @@ func NewEnvironment(opt Options) (*Environment, error) {
 
 func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 	cfg := ReadConfigs(fs, opt.ConfigFiles, opt.Name, opt.PrintIfFilesNotFound)
-	if !opt.IsTest {
-		if e := InitConfig(opt.FlagSet, cfg, opt.PrintIfFilesNotFound); nil != e {
-			return nil, e
-		}
+	if e := InitConfig(opt.FlagSet, cfg, opt.PrintIfFilesNotFound); nil != e {
+		return nil, e
 	}
+
 	env := &Environment{
 		//rootDir: opt.rootDir,
 		Fs:     fs,

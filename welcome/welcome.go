@@ -38,16 +38,20 @@ func ReadWelcomeConfigs(env *environment.Environment) ([]Config, error) {
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, args); err != nil {
-		return nil, errors.New("generate url in '" + filename + "' fail: " + err.Error())
+		return nil, errors.New("generate url template in '" + filename + "' fail: " + err.Error())
+	}
+	if buf.Len() == 0 {
+		return nil, errors.New("template result in '" + filename + "' is empty.")
 	}
 
 	var config struct {
 		Applications []Config `json:"applications,omitempty"`
 	}
 
+	bs = buf.Bytes()
 	err = json.NewDecoder(&buf).Decode(&config)
 	if err != nil {
-		return nil, errors.New("read '" + filename + "' fail: " + err.Error())
+		return nil, errors.New("read '" + filename + "' fail: " + err.Error() + "\r\n" + string(bs))
 	}
 	return config.Applications, nil
 }
