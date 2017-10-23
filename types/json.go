@@ -38,6 +38,13 @@ type RestrictionSpec struct {
 	MaxLength    string   `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
 }
 
+func (p *FieldSpec) IsMultipleChoice() bool {
+	if p.Annotations["multiple"].(bool) {
+		return true
+	}
+	return false
+}
+
 func (p *FieldSpec) HasChoices() bool {
 	if p.Restrictions == nil {
 		return false
@@ -45,14 +52,14 @@ func (p *FieldSpec) HasChoices() bool {
 	return len(p.Restrictions.Enumerations) > 0
 }
 
-func (p *FieldSpec) ToChoices() map[string]interface{} {
-	choices := map[string]interface{}{}
+func (p *FieldSpec) ToChoices() [][2]string {
 	if p.Restrictions == nil || len(p.Restrictions.Enumerations) == 0 {
-		return choices
+		return [][2]string{}
 	}
 
+	choices := make([][2]string, 0, len(p.Restrictions.Enumerations))
 	for _, value := range p.Restrictions.Enumerations {
-		choices[value] = value
+		choices = append(choices, [2]string{value, value})
 	}
 	return choices
 }
