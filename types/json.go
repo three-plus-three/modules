@@ -1,7 +1,11 @@
 package types
 
 import (
+	"errors"
 	"strings"
+	"sync"
+
+	"github.com/three-plus-three/modules/as"
 )
 
 type ClassSpec struct {
@@ -47,12 +51,31 @@ func (p *FieldSpec) IsMultipleChoice() bool {
 
 func (p *FieldSpec) HasChoices() bool {
 	if p.Restrictions == nil {
-		return false
+		if p.Annotations == nil {
+			return false
+		}
+		source := as.StringWithDefault(p.Annotations["enumerationSource"], "")
+		return source != ""
 	}
 	return len(p.Restrictions.Enumerations) > 0
 }
 
-func (p *FieldSpec) ToChoices() [][2]string {
+func (p *FieldSpec) ToChoices() interface{} {
+	if p.Annotations != nil {
+		source := as.StringWithDefault(p.Annotations["enumerationSource"], "")
+		if source != "" {
+			ss := strings.SplitN(source, ",", 2)
+			if len(ss) != 2 {
+				panic(errors.New("enumerationSource is invalid value - " + source))
+			}
+			values, err := enumerationProviders.Read(ss[0], ss[1])
+			if err != nil {
+				panic(errors.New("ToChoices: " + err.Error()))
+			}
+			return values
+		}
+	}
+
 	if p.Restrictions == nil || len(p.Restrictions.Enumerations) == 0 {
 		return [][2]string{}
 	}
@@ -136,4 +159,43 @@ func (p *FieldSpec) ToXML() *XMLPropertyDefinition {
 	}
 
 	return xpd
+}
+
+var enumerationProviders = enumerationProvidersImpl{
+	providers: map[string]EnumerationProvider{},
+}
+
+// RegisterEnumerationProvider 注册一个新的枚举值提供接口
+func RegisterEnumerationProvider(typ string, provider EnumerationProvider) {
+	enumerationProviders.Register(typ, provider)
+}
+
+// EnumerationProvider 枚举值提供接口
+type EnumerationProvider interface {
+	Read(args string) (interface{}, error)
+}
+
+type enumerationProvidersImpl struct {
+	mu        sync.RWMutex
+	providers map[string]EnumerationProvider
+}
+
+func (ep *enumerationProvidersImpl) Register(typ string, provider EnumerationProvider) {
+	ep.mu.Lock()
+	defer ep.mu.Unlock()
+	if _, ok := ep.providers[typ]; ok {
+		panic(errors.New("enumerationSource '" + typ + "' is already exists"))
+	}
+	ep.providers[typ] = provider
+}
+
+func (ep *enumerationProvidersImpl) Read(typ, args string) (interface{}, error) {
+	ep.mu.RLock()
+	defer ep.mu.RUnlock()
+
+	provider := ep.providers[typ]
+	if provider == nil {
+		return nil, errors.New("enumerationSource '" + typ + "' is unsupported")
+	}
+	return provider.Read(args)
 }
