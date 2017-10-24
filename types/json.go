@@ -47,10 +47,11 @@ type RestrictionSpec struct {
 }
 
 func (p *FieldSpec) IsMultipleChoice() bool {
-	if p.Annotations["multiple"].(bool) {
-		return true
+	if p.Annotations == nil {
+		return false
 	}
-	return false
+
+	return as.BoolWithDefault(p.Annotations["multiple"], false)
 }
 
 func (p *FieldSpec) HasChoices() bool {
