@@ -46,7 +46,7 @@ type RestrictionSpec struct {
 	MaxLength    string   `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
 }
 
-func (p *FieldSpec) IsMultipleChoice() bool {
+func (p *FieldSpec) IsMultipleChoices() bool {
 	if p.Annotations == nil {
 		return false
 	}
