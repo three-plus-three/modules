@@ -199,3 +199,20 @@ func (ep *enumerationProvidersImpl) Read(typ, args string) (interface{}, error) 
 	}
 	return provider.Read(args)
 }
+
+// 一个简单的 枚举值 扩展如下
+// 1. 第一步先注册扩展接口
+// func init() {
+// 	provider := &dbProvider{}
+// 	types.Register("sql", provider)
+// }
+//
+// type dbProvider struct {}
+// func (dp *dbProvider) Read(args string) (interface{}, error)
+// 		var choice []forms.InputChoice
+// 		err := Lifecycle.DB.Query(sql).All(&choice)
+// 		return choice, err
+// }
+//
+// 2. 保存数据， 如下
+// p.Annotations["enumerationSource"] = "sql," + "select label, value from xxxx"
