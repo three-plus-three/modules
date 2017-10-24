@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	commons_cfg "github.com/three-plus-three/modules/cfg"
 )
@@ -276,6 +277,9 @@ func CreateDBUrl(prefix string, props, defaultValues map[string]string) (string,
 		return "postgres", fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
 			dbConfig.Address, dbConfig.Port, dbConfig.Schema, dbConfig.Username, dbConfig.Password), nil
 	default:
+		if strings.HasPrefix(dbConfig.DbType, "odbc_with_") {
+			return dbConfig.DbType, fmt.Sprintf("dsn=%s;uid=%s;pwd=%s", dbConfig.Schema, dbConfig.Username, dbConfig.Password), nil
+		}
 		return "", "", errors.New("unknown db type - " + dbConfig.DbType)
 	}
 }
