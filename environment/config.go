@@ -3,13 +3,11 @@ package environment
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	commons_cfg "github.com/three-plus-three/modules/cfg"
 )
@@ -272,16 +270,7 @@ func ReadDbConfig(prefix string, props, defaultValues map[string]string) DbConfi
 
 func CreateDBUrl(prefix string, props, defaultValues map[string]string) (string, string, error) {
 	dbConfig := ReadDbConfig(prefix, props, defaultValues)
-	switch dbConfig.DbType {
-	case "postgresql":
-		return "postgres", fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
-			dbConfig.Address, dbConfig.Port, dbConfig.Schema, dbConfig.Username, dbConfig.Password), nil
-	default:
-		if strings.HasPrefix(dbConfig.DbType, "odbc_with_") {
-			return dbConfig.DbType, fmt.Sprintf("dsn=%s;uid=%s;pwd=%s", dbConfig.Schema, dbConfig.Username, dbConfig.Password), nil
-		}
-		return "", "", errors.New("unknown db type - " + dbConfig.DbType)
-	}
+	return dbConfig.dbUrl()
 }
 
 func LoadConfigFromJsonFile(nm string, flagSet *flag.FlagSet, isOverride bool) error {
