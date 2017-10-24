@@ -8,6 +8,7 @@ import (
 
 type OnlineUser struct {
 	UserID    int64     `json:"user_id" xorm:"user_id pk"`
+	AuthID    string    `json:"auth_id,omitempty" xorm:"auth_id unique"`
 	Address   string    `json:"address" xorm:"address"`
 	CreatedAt time.Time `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
