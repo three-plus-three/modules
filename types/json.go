@@ -1,9 +1,13 @@
 package types
 
 import (
+	"bytes"
 	"errors"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"sync"
+	"text/template"
 
 	"github.com/three-plus-three/modules/as"
 )
@@ -210,9 +214,46 @@ func (ep *enumerationProvidersImpl) Read(typ, args string) (interface{}, error) 
 // type dbProvider struct {}
 // func (dp *dbProvider) Read(args string) (interface{}, error)
 // 		var choice []forms.InputChoice
-// 		err := Lifecycle.DB.Query(sql).All(&choice)
+// 		err := Lifecycle.DB.Query(args).All(&choice)
 // 		return choice, err
 // }
 //
 // 2. 保存数据， 如下
 // p.Annotations["enumerationSource"] = "sql," + "select label, value from xxxx"
+
+// HTTPProvider 一个缺省的 http 格式的 枚举值 扩展接口
+type HTTPProvider struct {
+	args map[string]interface{}
+}
+
+func (hp *HTTPProvider) Read(urlStr string) (interface{}, error) {
+	if strings.Contains(urlStr, "{{") {
+		t, err := template.New("main").Parse(urlStr)
+		if err != nil {
+			return nil, err
+		}
+		var buf bytes.Buffer
+		err = t.Execute(&buf, hp.args)
+		if err != nil {
+			return nil, err
+		}
+		urlStr = buf.String()
+	}
+	res, err := http.Get(urlStr)
+	if err != nil {
+		return nil, err
+	}
+	bs, err := ioutil.ReadAll(res.Body)
+	if res.StatusCode != http.StatusOK {
+		if len(bs) != 0 {
+			return nil, errors.New(res.Status + " - " + string(bs))
+		}
+		return nil, errors.New(res.Status)
+	}
+	// 因为 forms 中的 select 控件支持 []byte， 所以就不序列化了
+	// var choices []forms.InputChoice
+	// err = json.Unmarshal(bs, &choices)
+	// return  choices, err
+
+	return bs, err
+}
