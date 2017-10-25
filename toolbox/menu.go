@@ -26,6 +26,7 @@ type Menu struct {
 	License    string `json:"license,omitempty" xorm:"license"`
 	URL        string `json:"url,omitempty" xorm:"url"`
 	Icon       string `json:"icon,omitempty" xorm:"icon"`
+	Classes    string `json:"classes,omitempty" xorm:"classes"`
 
 	Children []Menu `json:"children,omitempty" xorm:"-"`
 }

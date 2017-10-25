@@ -23,7 +23,7 @@ type ClassSpec struct {
 
 type FieldSpec struct {
 	Name         string                 `json:"name" ymal:"name"`
-	Label        string                 `json:"label" ymal:"label"`
+	Label        string                 `json:"label,omitempty" ymal:"label,omitempty"`
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Type         string                 `json:"type" yaml:"type"`
 	IsArray      bool                   `json:"is_array,omitempty" yaml:"is_array,omitempty"`
