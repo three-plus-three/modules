@@ -25,7 +25,7 @@ type FieldSpec struct {
 	Name         string                 `json:"name" ymal:"name"`
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Type         string                 `json:"type" yaml:"type"`
-	Collection   bool                   `json:"is_array,omitempty" yaml:"is_array,omitempty"`
+	IsArray      bool                   `json:"is_array,omitempty" yaml:"is_array,omitempty"`
 	IsEmbedded   bool                   `json:"embedded,omitempty" yaml:"embedded,omitempty"`
 	IsRequired   bool                   `json:"required,omitempty" yaml:"required,omitempty"`
 	IsReadOnly   bool                   `json:"readonly,omitempty" yaml:"readonly,omitempty"`
@@ -44,14 +44,6 @@ type RestrictionSpec struct {
 	Length       string   `json:"length,omitempty" yaml:"length,omitempty"`
 	MinLength    string   `json:"minLength,omitempty" yaml:"minLength,omitempty"`
 	MaxLength    string   `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-}
-
-func (p *FieldSpec) IsMultipleChoices() bool {
-	if p.Annotations == nil {
-		return false
-	}
-
-	return as.BoolWithDefault(p.Annotations["multiple"], false)
 }
 
 func (p *FieldSpec) HasChoices() bool {
@@ -134,7 +126,7 @@ func (p *FieldSpec) ToXML() *XMLPropertyDefinition {
 	}
 
 	var Collection string
-	if p.Collection {
+	if p.IsArray {
 		Collection = "array"
 	}
 
