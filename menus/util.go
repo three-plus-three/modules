@@ -140,6 +140,9 @@ func isSameMenu(newMenu, oldMenu toolbox.Menu) bool {
 	if newMenu.Title != oldMenu.Title {
 		return false
 	}
+	if newMenu.Classes != oldMenu.Classes {
+		return false
+	}
 	if newMenu.Permission != oldMenu.Permission {
 		return false
 	}
@@ -186,6 +189,9 @@ func mergeMenuNonrecursive(to, from *toolbox.Menu) {
 	}
 	if to.Title == "" {
 		to.Title = from.Title
+	}
+	if to.Classes == "" {
+		to.Classes = from.Classes
 	}
 	if to.Permission == "" {
 		to.Permission = from.Permission

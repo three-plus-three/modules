@@ -840,6 +840,20 @@ func TestLayoutInRealWorld(t *testing.T) {
         "icon": "fa-home"
       },
       {
+        "uid": "am.home",
+        "title": "资产管理",
+        "url": "/hengwei/am",
+        "icon": "fa-archive",
+        "classes": "special_link"
+      },
+      {
+        "uid": "itsm.home",
+        "title": "服务管理",
+        "url": "/hengwei/itsm",
+        "icon": "fa-asterisk",
+        "classes": "special_link"
+      },
+      {
         "category": "",
         "location": "",
         "target": "",
@@ -1691,6 +1705,20 @@ func TestLayoutInRealWorld(t *testing.T) {
     "icon": "fa-home"
   },
   {
+    "uid": "am.home",
+    "title": "资产管理",
+    "url": "/hengwei/am",
+    "icon": "fa-archive",
+    "classes": "special_link"
+  },
+  {
+    "uid": "itsm.home",
+    "title": "服务管理",
+    "url": "/hengwei/itsm",
+    "icon": "fa-asterisk",
+    "classes": "special_link"
+  },
+  {
     "uid": "report_management",
     "title": "报表管理",
     "url": "#",
@@ -1802,4 +1830,6 @@ func TestLayoutInRealWorld(t *testing.T) {
 		t.Error("结果不同")
 		dumpMenus(t, resultList, menuList)
 	}
+
+	t.Log(menuList[1].Classes)
 }

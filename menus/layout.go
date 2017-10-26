@@ -39,6 +39,7 @@ type LayoutItem struct {
 	Inline     bool   `json:"inline" xorm:"inline"`
 	UID        string `json:"uid" xorm:"uid unique notnull"`
 	Title      string `json:"title" xorm:"title notnull"`
+	Classes    string `json:"classes,omitempty" xorm:"classes"`
 	Permission string `json:"permission,omitempty" xorm:"permission"`
 	License    string `json:"license,omitempty" xorm:"license"`
 	URL        string `json:"url" xorm:"url"`
@@ -51,6 +52,7 @@ func (menu *LayoutItem) toMenu() toolbox.Menu {
 	return toolbox.Menu{
 		UID:        menu.UID,
 		Title:      menu.Title,
+		Classes:    menu.Classes,
 		Permission: menu.Permission,
 		License:    menu.License,
 		URL:        menu.URL,
@@ -118,6 +120,9 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 
 			if c.layout.Title == "" {
 				c.layout.Title = remains[idx].Title
+			}
+			if c.layout.Classes == "" {
+				c.layout.Classes = remains[idx].Classes
 			}
 			if c.layout.Permission == "" {
 				c.layout.Permission = remains[idx].Permission
