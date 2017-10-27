@@ -53,7 +53,7 @@ func ReadApplicationsFromDB(db *sql.DB) ([]toolbox.Menu, error) {
 	var id int64
 	var address sql.NullString
 	var name string
-	var url string
+	var url sql.NullString
 	var icon sql.NullString
 	var title string
 	var classes sql.NullString
@@ -71,14 +71,18 @@ func ReadApplicationsFromDB(db *sql.DB) ([]toolbox.Menu, error) {
 			return nil, err
 		}
 
+		if !url.Valid {
+			continue
+		}
+
 		menuList = append(menuList, toolbox.Menu{
 			UID:   "product-" + name,
 			Title: title,
 			// Permission: "product." + name,
 			// License    string `json:"license,omitempty" xorm:"license"`
-			URL:     url,
+			URL:     url.String,
 			Icon:    icon.String,
-			Classes: classes.String,
+			Classes: classes.String + " special_link",
 		})
 	}
 	return menuList, rows.Err()
