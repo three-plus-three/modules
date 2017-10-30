@@ -61,7 +61,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			env.Db.Data.Schema = env.Db.Data.Schema + "_test"
 		}
 
-		lifecycle, err := NewLifecycle(env)
+		lifecycle, err := NewLifecycle(env, serviceID)
 		if nil != err {
 			log.Println(err)
 			os.Exit(-1)
@@ -132,10 +132,23 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		}
 		lifecycle.CheckUser = initSSO(env)
 
+		version := revel.Config.StringDefault("version", "1.0")
+		title := revel.Config.StringDefault("simpletitle", projectTitle)
+
 		var menuCallback menus.Callback
-		applicationEnabled := revel.Config.StringDefault("hengwei.menu.applications", "enabled")
+		applicationEnabled := revel.Config.StringDefault("hengwei.menu.products", "enabled")
 		if applicationEnabled == "enabled" {
-			menuCallback = menus.ApplicationsWrap(lifecycleData.Env,
+			err = menus.UpdateProduct(lifecycle.Env,
+				lifecycle.ApplicationID, version, title,
+				lifecycleData.ModelEngine.DB().DB)
+			if err != nil {
+				log.Println("UpdataProduct", err)
+				os.Exit(-1)
+				return
+			}
+
+			menuCallback = menus.ProductsWrap(lifecycleData.Env,
+				lifecycleData.ApplicationID,
 				lifecycleData.ModelEngine.DB().DB,
 				menus.Callback(func() ([]toolbox.Menu, error) {
 					return createMenuList(lifecycleData)

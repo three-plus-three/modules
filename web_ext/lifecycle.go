@@ -120,6 +120,7 @@ type Lifecycle struct {
 	URLPrefix   string
 	URLRoot     string
 
+	ApplicationID      environment.ENV_PROXY_TYPE
 	ApplicationContext string
 	ApplicationRoot    string
 
@@ -139,7 +140,7 @@ func (lifecycle *Lifecycle) Menus() []toolbox.Menu {
 }
 
 // NewLifecycle 创建一个生命周期
-func NewLifecycle(env *environment.Environment) (*Lifecycle, error) {
+func NewLifecycle(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE) (*Lifecycle, error) {
 	dbDrv, dbURL := env.Db.Models.Url()
 	modelEngine, err := xorm.NewEngine(dbDrv, dbURL)
 	if err != nil {
@@ -153,8 +154,9 @@ func NewLifecycle(env *environment.Environment) (*Lifecycle, error) {
 	}
 
 	return &Lifecycle{
-		Env:         env,
-		ModelEngine: modelEngine,
-		DataEngine:  dataEngine,
+		Env:           env,
+		ModelEngine:   modelEngine,
+		DataEngine:    dataEngine,
+		ApplicationID: serviceID,
 	}, nil
 }
