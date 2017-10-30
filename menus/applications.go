@@ -3,6 +3,7 @@ package menus
 import (
 	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/toolbox"
@@ -86,4 +87,32 @@ func ReadApplicationsFromDB(db *sql.DB) ([]toolbox.Menu, error) {
 		})
 	}
 	return menuList, rows.Err()
+}
+
+// ApplicationsWrap 增加从数据库中读菜单的功能
+func ApplicationsWrap(env *environment.Environment, db *sql.DB, cb Callback) Callback {
+	var cachedValue CachedValue
+	cachedValue.MaxAge = 5 * 60
+	return func() ([]toolbox.Menu, error) {
+		value := cachedValue.Get()
+		if value == nil {
+			var err error
+			value, err = ReadApplications(env, db)
+			if err != nil {
+				return nil, err
+			}
+			cachedValue.Set(value, time.Now())
+		}
+
+		if len(value) == 0 {
+			return cb()
+		}
+
+		value2, err := cb()
+		if err != nil {
+			return nil, err
+		}
+
+		return append(value, value2...), nil
+	}
 }

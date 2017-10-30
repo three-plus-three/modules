@@ -132,13 +132,24 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		}
 		lifecycle.CheckUser = initSSO(env)
 
-		mode := revel.Config.StringDefault("hengwei.menu.mode", "")
+		var menuCallback menus.Callback
+		applicationEnabled := revel.Config.StringDefault("hengwei.menu.applications", "enabled")
+		if applicationEnabled == "enabled" {
+			menuCallback = menus.ApplicationsWrap(lifecycleData.Env,
+				lifecycleData.ModelEngine.DB().DB,
+				menus.Callback(func() ([]toolbox.Menu, error) {
+					return createMenuList(lifecycleData)
+				}))
+		} else {
+			menuCallback = menus.Callback(func() ([]toolbox.Menu, error) {
+				return createMenuList(lifecycleData)
+			})
+		}
+
 		menuClient := menus.Connect(lifecycleData.Env,
 			serviceID,
-			menus.Callback(func() ([]toolbox.Menu, error) {
-				return createMenuList(lifecycleData)
-			}),
-			mode,
+			menuCallback,
+			revel.Config.StringDefault("hengwei.menu.mode", ""),
 			"menus.changed",
 			urlutil.Join(lifecycleData.Env.DaemonUrlPath, "/menu/"),
 			log.New(os.Stderr, "[menus]", log.LstdFlags))

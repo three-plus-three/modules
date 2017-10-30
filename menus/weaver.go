@@ -16,6 +16,7 @@ import (
 
 //go:generate genny -pkg=menus -in=../weaver/client.go -out=client-gen.go gen "ValueType=[]toolbox.Menu"
 //go:generate genny -pkg=menus -in=../weaver/server.go -out=server-gen.go gen "WeaveType=[]toolbox.Menu"
+//go:generate genny -pkg=menus -in=../concurrency/generic/cached.go -out=cached-gen.go gen "ValueType=[]toolbox.Menu"
 
 // ErrAlreadyClosed  server is closed
 var ErrAlreadyClosed = errors.New("server is closed")
