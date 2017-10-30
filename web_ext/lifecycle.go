@@ -128,11 +128,18 @@ type Lifecycle struct {
 	CurrentUser func(c *revel.Controller) User
 	CheckUser   revel_sso.CheckFunc
 	menuClient  menus.Client
+	menuHook    func() ([]toolbox.Menu, error)
 }
 
 // Menus 返回所有菜单
 func (lifecycle *Lifecycle) Menus() []toolbox.Menu {
-	menuList, err := lifecycle.menuClient.Read()
+	var menuList []toolbox.Menu
+	var err error
+	if lifecycle.menuHook != nil {
+		menuList, err = lifecycle.menuHook()
+	} else {
+		menuList, err = lifecycle.menuClient.Read()
+	}
 	if err != nil {
 		panic(err)
 	}

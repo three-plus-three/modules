@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/toolbox"
@@ -95,7 +94,7 @@ func ReadProductsFromDB(db *sql.DB, ignoreList []string) ([]toolbox.Menu, error)
 			}
 		}
 
-		if !found {
+		if found {
 			continue
 		}
 
@@ -109,6 +108,7 @@ func ReadProductsFromDB(db *sql.DB, ignoreList []string) ([]toolbox.Menu, error)
 			Classes: classes.String + " special_link",
 		})
 	}
+
 	return menuList, rows.Err()
 }
 
@@ -143,15 +143,13 @@ func ProductsWrap(env *environment.Environment, applicationID environment.ENV_PR
 
 func UpdateProduct(env *environment.Environment,
 	applicationID environment.ENV_PROXY_TYPE,
-	version, title string, db *sql.DB) error {
+	version, title, icon, classes string, db *sql.DB) error {
 
 	so := env.GetServiceConfig(applicationID)
 	url := urlutil.Join(env.DaemonUrlPath, so.Name)
-	icon := revel.Config.StringDefault("hengwei.menu.icon", "")
-	classes := revel.Config.StringDefault("hengwei.menu.classes", "")
 
 	var count int64
-	err := db.QueryRow("select count(*) from tpt_products where address = $1", so.Name).Scan(&count)
+	err := db.QueryRow("select count(*) from tpt_products where name = $1", so.Name).Scan(&count)
 	if err != nil {
 		return errors.Wrap(err, "UpdateProduct")
 	}
@@ -164,5 +162,8 @@ func UpdateProduct(env *environment.Environment,
 		_, err = db.Exec("UPDATE tpt_products SET version=$1, url=$2, icon=$3, title=$4, classes=$5, updated_at=$6 WHERE name=$7",
 			version, url, icon, title, classes, now, so.Name)
 	}
-	return errors.Wrap(err, "UpdateProduct")
+	if err != nil {
+		return errors.Wrap(err, "UpdateProduct")
+	}
+	return nil
 }
