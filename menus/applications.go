@@ -13,6 +13,8 @@ import (
 	"github.com/three-plus-three/modules/util"
 )
 
+var IgnoreListOfProducts = []string{"mc"}
+
 func SortBy(list []toolbox.Menu, names []string) []toolbox.Menu {
 	if len(list) == 0 {
 		return list
@@ -80,12 +82,19 @@ func ReadProductsFromDB(db *sql.DB, ignoreList []string) ([]toolbox.Menu, error)
 		}
 
 		found := false
-		for _, nm := range ignoreList {
-			if nm == name {
-				found = true
+		for _, list := range [][]string{ignoreList, IgnoreListOfProducts} {
+			for _, nm := range list {
+				if nm == name {
+					found = true
+					break
+				}
+			}
+
+			if found {
 				break
 			}
 		}
+
 		if !found {
 			continue
 		}
