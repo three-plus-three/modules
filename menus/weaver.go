@@ -291,7 +291,7 @@ func isSubset(allItems, subset []toolbox.Menu) bool {
 
 func IsSubset(allItems, subset []toolbox.Menu) bool {
 	for _, item := range subset {
-		raw := searchMenuInTree(allItems, item.UID)
+		raw := SearchMenuInTree(allItems, item.UID)
 		if raw == nil || !isSameMenu(item, *raw) {
 			return false
 		}
