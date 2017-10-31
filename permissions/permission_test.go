@@ -2,6 +2,7 @@
 package permissions
 
 import (
+	"fmt"
 	"testing"
 
 	fixtures "github.com/AreaHQ/go-fixtures"
@@ -10,10 +11,96 @@ import (
 	"github.com/three-plus-three/modules/web_ext"
 )
 
+func TestUser(t *testing.T) {
+	env := env_tests.Clone(nil)
+
+	lifecycle, err := web_ext.NewLifecycle(env, 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	readUser := InitUser(lifecycle)
+
+	if err := DropTables(lifecycle.ModelEngine); err != nil {
+		t.Error(err)
+	}
+
+	if err := InitTables(lifecycle.ModelEngine); err != nil {
+		t.Error(err)
+	}
+
+	lifecycle.ModelEngine.ShowSQL()
+	db := DB{Engine: lifecycle.ModelEngine}
+	_, err = db.Users().Insert(&User{Name: "abc", Nickname: "abc"})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	u := readUser("abc")
+
+	err = u.WriteProfile("a", "b")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	err = u.WriteProfile("x", "y")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	v, err := u.ReadProfile("x")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if fmt.Sprint(v) != "y" {
+		t.Error("x=y", v)
+	}
+	u.(*user).u.Profiles = nil
+	v, err = u.ReadProfile("x")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if fmt.Sprint(v) != "y" {
+		t.Error("x=y", v)
+	}
+
+	err = u.WriteProfile("x", "")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	v, err = u.ReadProfile("x")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if v != nil {
+		t.Error("x=nil", v)
+	}
+	u.(*user).u.Profiles = nil
+	v, err = u.ReadProfile("x")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if v != nil {
+		t.Error("x=nil", v)
+	}
+}
+
 func TestHasPermission(t *testing.T) {
 	env := env_tests.Clone(nil)
 
-	lifecycle, err := web_ext.NewLifecycle(env)
+	lifecycle, err := web_ext.NewLifecycle(env, 0)
 	if err != nil {
 		t.Error(err)
 		return
@@ -196,7 +283,7 @@ func TestHasPermission(t *testing.T) {
 
 func TestSaveDefaultPermissionGroups(t *testing.T) {
 	env := env_tests.Clone(nil)
-	lifecycle, err := web_ext.NewLifecycle(env)
+	lifecycle, err := web_ext.NewLifecycle(env, 0)
 	if err != nil {
 		t.Error(err)
 		return

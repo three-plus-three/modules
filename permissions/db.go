@@ -53,6 +53,11 @@ func (db *DB) Close() error {
 	return nil
 }
 
+func (db *DB) Exec(sqlStr string, args ...interface{}) (sql.Result, error) {
+	return orm.NewWithNoInstance()(db.Engine).
+		WithSession(db.session).Exec(sqlStr, args...)
+}
+
 func (db *DB) Query(sqlStr string, args ...interface{}) orm.Queryer {
 	return orm.NewWithNoInstance()(db.Engine).
 		WithSession(db.session).

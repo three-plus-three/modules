@@ -1,12 +1,13 @@
 package permissions
 
 import (
-	"errors"
+	"encoding/json"
 	"log"
 	"time"
 
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/concurrency"
+	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/web_ext"
 )
 
@@ -157,11 +158,66 @@ func (u *user) Nickname() string {
 }
 
 func (u *user) WriteProfile(key, value string) error {
+	if err := u.readProfiles(); err != nil {
+		return err
+	}
+
+	if value == "" {
+		if len(u.u.Profiles) == 0 {
+			return nil
+		}
+
+		updateStr := `UPDATE hengwei_users SET profiles = profiles -$1::text WHERE id = $2`
+		_, err := u.db.Exec(updateStr, key, u.ID())
+		if err != nil {
+			return errors.Wrap(err, "WriteProfile")
+		}
+		delete(u.u.Profiles, key)
+		return nil
+	}
+
+	updateStr := `UPDATE hengwei_users SET profiles = profiles || jsonb_build_object($1::text, $2::text) WHERE id = $3`
+	if len(u.u.Profiles) == 0 {
+		updateStr = `UPDATE hengwei_users SET profiles = jsonb_build_object($1::text, $2::text) WHERE id = $3`
+	}
+
+	_, err := u.db.Exec(updateStr, key, value, u.ID())
+	if err != nil {
+		return errors.Wrap(err, "WriteProfile")
+	}
+	u.u.Profiles[key] = value
+	return nil
+}
+
+func (u *user) readProfiles() error {
+	if u.u.Profiles != nil {
+		return nil
+	}
+
+	var txt []byte //sql.NullString
+	err := u.db.Engine.DB().DB.QueryRow("SELECT profiles FROM hengwei_users WHERE id = $1", u.ID()).Scan(&txt)
+	if err != nil {
+		return errors.Wrap(err, "readProfiles")
+	}
+	if len(txt) != 0 {
+		err = json.Unmarshal(txt, &u.u.Profiles)
+		if err != nil {
+			return errors.Wrap(err, "readProfiles")
+		}
+	}
+
+	if u.u.Profiles == nil {
+		u.u.Profiles = map[string]interface{}{}
+	}
 	return nil
 }
 
 func (u *user) ReadProfile(key string) (interface{}, error) {
-	return nil, nil
+	if err := u.readProfiles(); err != nil {
+		return nil, err
+	}
+
+	return u.u.Profiles[key], nil
 }
 
 func (u *user) Roles() []string {
