@@ -75,7 +75,7 @@ func (rs *RetrySender) SendWithContext(msg hub.Message, ctx <-chan time.Time) er
 }
 
 type Consumer struct {
-	success, discard uint64
+	success, discard uint32
 	id               int
 	Topic            *Topic
 	send             chan hub.Message
@@ -94,19 +94,19 @@ func (consumer *Consumer) Unread(msg hub.Message) bool {
 }
 
 func (consumer *Consumer) Success() uint64 {
-	return atomic.LoadUint64(&consumer.success)
+	return uint64(atomic.LoadUint32(&consumer.success))
 }
 
 func (consumer *Consumer) Discard() uint64 {
-	return atomic.LoadUint64(&consumer.discard)
+	return uint64(atomic.LoadUint32(&consumer.discard))
 }
 
 func (consumer *Consumer) addSuccess() {
-	atomic.AddUint64(&consumer.success, 1)
+	atomic.AddUint32(&consumer.success, 1)
 }
 
 func (consumer *Consumer) addDiscard() {
-	atomic.AddUint64(&consumer.discard, 1)
+	atomic.AddUint32(&consumer.discard, 1)
 }
 
 func (consumer *Consumer) Close() error {
