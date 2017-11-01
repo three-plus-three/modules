@@ -147,6 +147,9 @@ func UpdateProduct(env *environment.Environment,
 
 	so := env.GetServiceConfig(applicationID)
 	url := urlutil.Join(env.DaemonUrlPath, so.Name)
+	if applicationID == environment.ENV_WSERVER_PROXY_ID {
+		url = env.DaemonUrlPath
+	}
 
 	var count int64
 	err := db.QueryRow("select count(*) from tpt_products where name = $1", so.Name).Scan(&count)
