@@ -12,6 +12,7 @@ import (
 	"github.com/three-plus-three/modules/util"
 )
 
+var DefaultProductNames = "wserver,am,itsm,um"
 var IgnoreListOfProducts = []string{"mc"}
 
 func SortBy(list []toolbox.Menu, names []string) []toolbox.Menu {
@@ -47,7 +48,7 @@ func ReadProducts(env *environment.Environment, db *sql.DB, ignoreList []string)
 		return nil, err
 	}
 
-	names := env.Config.StringWithDefault("applications.names", "")
+	names := env.Config.StringWithDefault("applications.names", DefaultProductNames)
 	if names == "" {
 		return list, nil
 	}
