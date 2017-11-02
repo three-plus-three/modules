@@ -78,7 +78,9 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 				u.roles = []Role{guestRole}
 				return u
 			default:
-				panic(errors.New("query user with name is " + userName + "fail: " + err.Error()))
+				err = errors.New("query user with name is " + userName + "fail: " + err.Error())
+				log.Println(err)
+				panic(err)
 			}
 		}
 
