@@ -132,9 +132,31 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		}
 		lifecycle.CheckUser = initSSO(env)
 
-		version := revel.Config.StringDefault("version", "1.0")
-		title := revel.Config.StringDefault("simpletitle", projectTitle)
+		applicationEnabled := revel.Config.StringDefault("hengwei.menu.products", "enabled")
+		if applicationEnabled == "enabled" {
+			version := revel.Config.StringDefault("version", "1.0")
+			title := revel.Config.StringDefault("simpletitle", projectTitle)
 
+			err = menus.UpdateProduct(lifecycle.Env,
+				lifecycle.ApplicationID, version, title,
+				revel.Config.StringDefault("hengwei.menu.icon", ""),
+				revel.Config.StringDefault("hengwei.menu.classes", ""),
+				lifecycleData.ModelEngine.DB().DB)
+			if err != nil {
+				log.Println("UpdataProduct", err)
+				os.Exit(-1)
+				return
+			}
+		}
+
+		if err := cb(lifecycle); err != nil {
+			log.Println(err)
+			os.Exit(-1)
+			return
+		}
+	}, 0)
+
+	revel.OnAppStart(func() {
 		menuClient := menus.Connect(lifecycleData.Env,
 			serviceID,
 			menus.Callback(func() ([]toolbox.Menu, error) {
@@ -150,31 +172,14 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 
 		applicationEnabled := revel.Config.StringDefault("hengwei.menu.products", "enabled")
 		if applicationEnabled == "enabled" {
-			err = menus.UpdateProduct(lifecycle.Env,
-				lifecycle.ApplicationID, version, title,
-				revel.Config.StringDefault("hengwei.menu.icon", ""),
-				revel.Config.StringDefault("hengwei.menu.classes", ""),
-				lifecycleData.ModelEngine.DB().DB)
-			if err != nil {
-				log.Println("UpdataProduct", err)
-				os.Exit(-1)
-				return
-			}
-
-			lifecycle.menuHook = menus.ProductsWrap(lifecycleData.Env,
+			lifecycleData.menuHook = menus.ProductsWrap(lifecycleData.Env,
 				lifecycleData.ApplicationID,
 				lifecycleData.ModelEngine.DB().DB,
 				menus.Callback(func() ([]toolbox.Menu, error) {
 					return lifecycleData.menuClient.Read()
 				}))
 		}
-
-		if err := cb(lifecycle); err != nil {
-			log.Println(err)
-			os.Exit(-1)
-			return
-		}
-	}, 0)
+	}, 2)
 }
 
 // TODO turn this into revel.HeaderFilter

@@ -39,7 +39,7 @@ func SortBy(list []toolbox.Menu, names []string) []toolbox.Menu {
 		}
 		offset++
 	}
-	return list
+	return list[:offset]
 }
 
 func ReadProducts(env *environment.Environment, db *sql.DB, ignoreList []string) ([]toolbox.Menu, error) {
