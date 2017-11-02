@@ -9,6 +9,8 @@ import (
 	"github.com/runner-mei/orm"
 )
 
+const EnabledUsers = "( disabled IS NULL or disabled = false)"
+
 type DB struct {
 	Engine  *xorm.Engine
 	session *xorm.Session
@@ -51,6 +53,11 @@ func (db *DB) Close() error {
 	db.session.Close()
 	db.session = nil
 	return nil
+}
+
+func (db *DB) Exec(sqlStr string, args ...interface{}) (sql.Result, error) {
+	return orm.NewWithNoInstance()(db.Engine).
+		WithSession(db.session).Exec(sqlStr, args...)
 }
 
 func (db *DB) Query(sqlStr string, args ...interface{}) orm.Queryer {

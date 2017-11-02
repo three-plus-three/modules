@@ -61,7 +61,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			env.Db.Data.Schema = env.Db.Data.Schema + "_test"
 		}
 
-		lifecycle, err := NewLifecycle(env)
+		lifecycle, err := NewLifecycle(env, serviceID)
 		if nil != err {
 			log.Println(err)
 			os.Exit(-1)
@@ -132,19 +132,22 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		}
 		lifecycle.CheckUser = initSSO(env)
 
-		mode := revel.Config.StringDefault("hengwei.menu.mode", "")
-		menuClient := menus.Connect(lifecycleData.Env,
-			serviceID,
-			menus.Callback(func() ([]toolbox.Menu, error) {
-				return createMenuList(lifecycleData)
-			}),
-			mode,
-			"menus.changed",
-			urlutil.Join(lifecycleData.Env.DaemonUrlPath, "/menu/"),
-			log.New(os.Stderr, "[menus]", log.LstdFlags))
+		applicationEnabled := revel.Config.StringDefault("hengwei.menu.products", "enabled")
+		if applicationEnabled == "enabled" {
+			version := revel.Config.StringDefault("version", "1.0")
+			title := revel.Config.StringDefault("simpletitle", projectTitle)
 
-		lifecycleData.OnClosing(menuClient)
-		lifecycleData.menuClient = menuClient
+			err = menus.UpdateProduct(lifecycle.Env,
+				lifecycle.ApplicationID, version, title,
+				revel.Config.StringDefault("hengwei.menu.icon", ""),
+				revel.Config.StringDefault("hengwei.menu.classes", ""),
+				lifecycleData.ModelEngine.DB().DB)
+			if err != nil {
+				log.Println("UpdataProduct", err)
+				os.Exit(-1)
+				return
+			}
+		}
 
 		if err := cb(lifecycle); err != nil {
 			log.Println(err)
@@ -152,6 +155,31 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			return
 		}
 	}, 0)
+
+	revel.OnAppStart(func() {
+		menuClient := menus.Connect(lifecycleData.Env,
+			serviceID,
+			menus.Callback(func() ([]toolbox.Menu, error) {
+				return createMenuList(lifecycleData)
+			}),
+			revel.Config.StringDefault("hengwei.menu.mode", ""),
+			"menus.changed",
+			urlutil.Join(lifecycleData.Env.DaemonUrlPath, "/menu/"),
+			log.New(os.Stderr, "[menus]", log.LstdFlags))
+
+		lifecycleData.OnClosing(menuClient)
+		lifecycleData.menuClient = menuClient
+
+		applicationEnabled := revel.Config.StringDefault("hengwei.menu.products", "enabled")
+		if applicationEnabled == "enabled" {
+			lifecycleData.menuHook = menus.ProductsWrap(lifecycleData.Env,
+				lifecycleData.ApplicationID,
+				lifecycleData.ModelEngine.DB().DB,
+				menus.Callback(func() ([]toolbox.Menu, error) {
+					return lifecycleData.menuClient.Read()
+				}))
+		}
+	}, 2)
 }
 
 // TODO turn this into revel.HeaderFilter

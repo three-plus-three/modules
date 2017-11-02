@@ -120,6 +120,7 @@ type Lifecycle struct {
 	URLPrefix   string
 	URLRoot     string
 
+	ApplicationID      environment.ENV_PROXY_TYPE
 	ApplicationContext string
 	ApplicationRoot    string
 
@@ -127,11 +128,18 @@ type Lifecycle struct {
 	CurrentUser func(c *revel.Controller) User
 	CheckUser   revel_sso.CheckFunc
 	menuClient  menus.Client
+	menuHook    func() ([]toolbox.Menu, error)
 }
 
 // Menus 返回所有菜单
 func (lifecycle *Lifecycle) Menus() []toolbox.Menu {
-	menuList, err := lifecycle.menuClient.Read()
+	var menuList []toolbox.Menu
+	var err error
+	if lifecycle.menuHook != nil {
+		menuList, err = lifecycle.menuHook()
+	} else {
+		menuList, err = lifecycle.menuClient.Read()
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -139,7 +147,7 @@ func (lifecycle *Lifecycle) Menus() []toolbox.Menu {
 }
 
 // NewLifecycle 创建一个生命周期
-func NewLifecycle(env *environment.Environment) (*Lifecycle, error) {
+func NewLifecycle(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE) (*Lifecycle, error) {
 	dbDrv, dbURL := env.Db.Models.Url()
 	modelEngine, err := xorm.NewEngine(dbDrv, dbURL)
 	if err != nil {
@@ -153,8 +161,9 @@ func NewLifecycle(env *environment.Environment) (*Lifecycle, error) {
 	}
 
 	return &Lifecycle{
-		Env:         env,
-		ModelEngine: modelEngine,
-		DataEngine:  dataEngine,
+		Env:           env,
+		ModelEngine:   modelEngine,
+		DataEngine:    dataEngine,
+		ApplicationID: serviceID,
 	}, nil
 }

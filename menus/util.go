@@ -23,7 +23,7 @@ func replaceInTree(allList []toolbox.Menu, c *container, isInline bool) (bool, [
 }
 
 func watchInTree(allList []toolbox.Menu, c *container, target string) []toolbox.Menu {
-	found := searchMenuInTree(allList, target)
+	found := SearchMenuInTree(allList, target)
 	if found == nil {
 		return removeInTree(allList, c.layout.Location)
 	}
@@ -103,13 +103,13 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 	return false, allList
 }
 
-// searchMenuInTree 在菜单树中查找指定的菜单
-func searchMenuInTree(allList []toolbox.Menu, name string) *toolbox.Menu {
+// SearchMenuInTree 在菜单树中查找指定的菜单
+func SearchMenuInTree(allList []toolbox.Menu, name string) *toolbox.Menu {
 	for idx := range allList {
 		if allList[idx].UID == name {
 			return &allList[idx]
 		}
-		found := searchMenuInTree(allList[idx].Children, name)
+		found := SearchMenuInTree(allList[idx].Children, name)
 		if found != nil {
 			return found
 		}

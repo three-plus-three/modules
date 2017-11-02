@@ -16,6 +16,7 @@ import (
 
 //go:generate genny -pkg=menus -in=../weaver/client.go -out=client-gen.go gen "ValueType=[]toolbox.Menu"
 //go:generate genny -pkg=menus -in=../weaver/server.go -out=server-gen.go gen "WeaveType=[]toolbox.Menu"
+//go:generate genny -pkg=menus -in=../concurrency/generic/cached.go -out=cached-gen.go gen "ValueType=[]toolbox.Menu"
 
 // ErrAlreadyClosed  server is closed
 var ErrAlreadyClosed = errors.New("server is closed")
@@ -290,7 +291,7 @@ func isSubset(allItems, subset []toolbox.Menu) bool {
 
 func IsSubset(allItems, subset []toolbox.Menu) bool {
 	for _, item := range subset {
-		raw := searchMenuInTree(allItems, item.UID)
+		raw := SearchMenuInTree(allItems, item.UID)
 		if raw == nil || !isSameMenu(item, *raw) {
 			return false
 		}

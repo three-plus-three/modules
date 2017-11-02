@@ -452,13 +452,15 @@ func (self *TableDefinitions) Register(cls *ClassDefinition) {
 func (self *TableDefinitions) Unregister(cls *ClassDefinition) {
 	delete(self.definitions, cls.Name)
 	delete(self.underscore2Definitions, cls.UnderscoreName)
-	// tables := self.table2definitions[cls.CollectionName]
-	// if nil != tables {
-	// 	delete(tables, cls.UnderscoreName)
-	// 	if 0 == len(tables) {
-	// 		delete(self.table2definitions, cls.CollectionName)
-	// 	}
-	// }
+	if !IsSingleTableInheritance(cls) {
+		delete(self.table2definitions, cls.CollectionName)
+	} else {
+		if _, ok := self.table2definitions[cls.CollectionName]; ok {
+			if stiRoot(cls) == cls {
+				delete(self.table2definitions, cls.CollectionName)
+			}
+		}
+	}
 }
 
 func (self *TableDefinitions) All() map[string]*ClassDefinition {
