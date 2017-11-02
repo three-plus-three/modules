@@ -9,6 +9,8 @@ import (
 	"github.com/runner-mei/orm"
 )
 
+const EnabledUsers = "( disabled IS NULL or disabled = false)"
+
 type DB struct {
 	Engine  *xorm.Engine
 	session *xorm.Session

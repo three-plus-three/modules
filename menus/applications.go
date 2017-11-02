@@ -2,6 +2,7 @@ package menus
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/three-plus-three/modules/urlutil"
 	"github.com/three-plus-three/modules/util"
 )
+
+const MenuIDPrefix = "product-"
 
 var DefaultProductNames = "wserver,am,itsm,um"
 var IgnoreListOfProducts = []string{"mc"}
@@ -24,7 +27,7 @@ func SortBy(list []toolbox.Menu, names []string) []toolbox.Menu {
 	for _, name := range names {
 		foundIdx := -1
 		for idx := range list {
-			if list[idx].UID == name {
+			if list[idx].UID == name || list[idx].UID == MenuIDPrefix+name {
 				foundIdx = idx
 			}
 		}
@@ -39,7 +42,9 @@ func SortBy(list []toolbox.Menu, names []string) []toolbox.Menu {
 		}
 		offset++
 	}
-	return list[:offset]
+
+	fmt.Println(list)
+	return list
 }
 
 func ReadProducts(env *environment.Environment, db *sql.DB, ignoreList []string) ([]toolbox.Menu, error) {
@@ -100,7 +105,7 @@ func ReadProductsFromDB(db *sql.DB, ignoreList []string) ([]toolbox.Menu, error)
 		}
 
 		menuList = append(menuList, toolbox.Menu{
-			UID:   "product-" + name,
+			UID:   MenuIDPrefix + name,
 			Title: title,
 			// Permission: "product." + name,
 			// License    string `json:"license,omitempty" xorm:"license"`
