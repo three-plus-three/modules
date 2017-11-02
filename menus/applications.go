@@ -2,7 +2,6 @@ package menus
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 	"time"
 
@@ -43,7 +42,6 @@ func SortBy(list []toolbox.Menu, names []string) []toolbox.Menu {
 		offset++
 	}
 
-	fmt.Println(list)
 	return list
 }
 
