@@ -135,11 +135,11 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		applicationEnabled := revel.Config.StringDefault("hengwei.menu.products", "enabled")
 		if applicationEnabled == "enabled" {
 			version := revel.Config.StringDefault("version", "1.0")
-			title := revel.Config.StringDefault("simpletitle", projectTitle)
+			title := revel.Config.StringDefault("app.simpletitle", projectTitle)
+			icon := revel.Config.StringDefault("app.icon", projectTitle)
 
 			err = menus.UpdateProduct(lifecycle.Env,
-				lifecycle.ApplicationID, version, title,
-				revel.Config.StringDefault("hengwei.menu.icon", ""),
+				lifecycle.ApplicationID, version, title, icon,
 				revel.Config.StringDefault("hengwei.menu.classes", ""),
 				lifecycleData.ModelEngine.DB().DB)
 			if err != nil {
