@@ -1,9 +1,15 @@
 package permissions
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/revel/revel"
+	"github.com/three-plus-three/modules/netutil"
 )
 
 type OnlineUser struct {
@@ -44,7 +50,63 @@ func (user *User) Validate(validation *revel.Validation) bool {
 		validation.MinSize(user.Password, 8).Key("user.Password")
 		validation.MaxSize(user.Password, 250).Key("user.Password")
 	}
+
+	o := user.Attributes["white_address_list"]
+	if o != nil {
+		var ss = toStrings(o)
+		if len(ss) != 0 {
+			_, err := netutil.ToCheckers(ss)
+			if err != nil {
+				validation.Error(err.Error()).Key("user.Attributes[white_address_list]")
+			}
+		}
+	}
 	return validation.HasErrors()
+}
+
+func toStrings(o interface{}) []string {
+	if ss, ok := o.([]string); ok {
+		return ss
+	}
+
+	if ss, ok := o.([]interface{}); ok {
+		var ipList []string
+		for _, i := range ss {
+			ipList = append(ipList, fmt.Sprint(i))
+		}
+		return ipList
+	}
+
+	s, ok := o.(string)
+	if !ok {
+		bs, ok := o.([]byte)
+		if !ok {
+			panic(fmt.Errorf("o is unsupport type - %T %s", o, o))
+		}
+		s = string(bs)
+	}
+
+	var ipList []string
+	if err := json.Unmarshal([]byte(s), &ipList); err == nil {
+		return ipList
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	for scanner.Scan() {
+		bs := scanner.Bytes()
+		if len(bs) == 0 {
+			continue
+		}
+		bs = bytes.TrimSpace(bs)
+		if len(bs) == 0 {
+			continue
+		}
+		ipList = append(ipList, string(bs))
+	}
+	if err := scanner.Err(); err != nil {
+		panic(netutil.ErrInvalidIPRange)
+	}
+	return ipList
 }
 
 func KeyForUsers(key string) string {
