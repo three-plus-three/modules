@@ -3,6 +3,7 @@ package web_ext
 import (
 	"crypto/sha1"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -97,7 +98,8 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		lifecycle.Variables["user_logout_url"] = urlutil.Join(env.DaemonUrlPath, "sso/logout")
 		lifecycle.Variables["managed_objects_url"] = urlutil.Join(env.DaemonUrlPath, "web/layouts/stat")
 		lifecycle.Variables["backgroud_tasks_url"] = urlutil.Join(env.DaemonUrlPath, "mc")
-		lifecycle.Variables["alert_stat_new_url"] = urlutil.Join(env.DaemonUrlPath, "web/notifications")
+		//lifecycle.Variables["alert_stat_new_url"] = urlutil.Join(env.DaemonUrlPath, "web/notifications")
+		lifecycle.Variables["alert_stat_new_url"] = urlutil.Join(env.DaemonUrlPath, "web/alert_events/stat_new")
 
 		if revel.DevMode {
 			lifecycle.ModelEngine.ShowSQL()
@@ -128,6 +130,25 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			if username == "" {
 				return nil
 			}
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println("===============")
+			fmt.Println(username)
+
 			return lifecycle.GetUser(username)
 		}
 		lifecycle.CheckUser = initSSO(env)
