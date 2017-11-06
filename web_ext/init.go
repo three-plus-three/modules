@@ -3,7 +3,6 @@ package web_ext
 import (
 	"crypto/sha1"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -130,24 +129,6 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			if username == "" {
 				return nil
 			}
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println("===============")
-			fmt.Println(username)
 
 			return lifecycle.GetUser(username)
 		}
