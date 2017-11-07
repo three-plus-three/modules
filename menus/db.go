@@ -61,5 +61,9 @@ func (db *DB) Query(sqlStr string, args ...interface{}) orm.Queryer {
 func (db *DB) Menus() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &Menu{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForMenus)(db.Engine).WithSession(db.session)
+}
+
+func KeyForMenus(s string) string {
+	return s
 }
