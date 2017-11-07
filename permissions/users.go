@@ -24,6 +24,22 @@ func (onlineUser *OnlineUser) TableName() string {
 	return "hengwei_online_users"
 }
 
+func KeyForOnlineUsers(key string) string {
+	switch key {
+	case "user_id":
+		return "onlineUser.UserID"
+	case "auth_id":
+		return "onlineUser.AuthID"
+	case "Address":
+		return "onlineUser.address"
+	case "created_at":
+		return "onlineUser.CreatedAt"
+	case "updated_at":
+		return "onlineUser.UpdatedAt"
+	}
+	return key
+}
+
 type User struct {
 	ID          int64                  `json:"id" xorm:"id pk autoincr"`
 	Name        string                 `json:"name" xorm:"name unique notnull"`
@@ -141,6 +157,18 @@ func (userAndUserGroup *UserAndUserGroup) TableName() string {
 	return "hengwei_users_and_user_groups"
 }
 
+func KeyForUsersAndUserGroups(key string) string {
+	switch key {
+	case "id":
+		return "userAndUserGroup.ID"
+	case "user_id":
+		return "userAndUserGroup.UserID"
+	case "group_id":
+		return "userAndUserGroup.GroupID"
+	}
+	return key
+}
+
 type UserGroup struct {
 	ID          int64     `json:"id" xorm:"id pk autoincr"`
 	Name        string    `json:"name" xorm:"name notnull"`
@@ -159,7 +187,7 @@ func (userGroup *UserGroup) Validate(validation *revel.Validation) bool {
 	return validation.HasErrors()
 }
 
-func KeyForUserGroup(key string) string {
+func KeyForUserGroups(key string) string {
 	switch key {
 	case "id":
 		return "userGroup.ID"

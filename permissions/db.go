@@ -69,47 +69,47 @@ func (db *DB) Query(sqlStr string, args ...interface{}) orm.Queryer {
 func (db *DB) PermissionGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionGroup{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForPermissionGroups)(db.Engine).WithSession(db.session)
 }
 func (db *DB) Users() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &User{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForUsers)(db.Engine).WithSession(db.session)
 }
 func (db *DB) OnlineUsers() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &OnlineUser{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForOnlineUsers)(db.Engine).WithSession(db.session)
 }
 func (db *DB) UsersAndRoles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserAndRole{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForUsersAndRoles)(db.Engine).WithSession(db.session)
 }
 func (db *DB) PermissionsAndGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionAndGroup{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForPermissionsAndGroups)(db.Engine).WithSession(db.session)
 }
 func (db *DB) Roles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &Role{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForRoles)(db.Engine).WithSession(db.session)
 }
 func (db *DB) PermissionGroupsAndRoles() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &PermissionGroupAndRole{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForPermissionGroupsAndRoles)(db.Engine).WithSession(db.session)
 }
 func (db *DB) UserGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserGroup{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForUserGroups)(db.Engine).WithSession(db.session)
 }
 func (db *DB) UsersAndUserGroups() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &UserAndUserGroup{}
-	})(db.Engine).WithSession(db.session)
+	}, KeyForUsersAndUserGroups)(db.Engine).WithSession(db.session)
 }
 
 func InitTables(engine *xorm.Engine) error {

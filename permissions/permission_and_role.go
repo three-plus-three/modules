@@ -27,7 +27,7 @@ func (pg *PermissionGroup) Validate(validation *revel.Validation) bool {
 	return validation.HasErrors()
 }
 
-func KeyForPermissionsGroups(key string) string {
+func KeyForPermissionGroups(key string) string {
 	switch key {
 	case "id":
 		return "permissionGroup.ID"
@@ -61,6 +61,20 @@ func (pag *PermissionAndGroup) TableName() string {
 	return "hengwei_permissions_and_groups"
 }
 
+func KeyForPermissionsAndGroups(key string) string {
+	switch key {
+	case "id":
+		return "permissionAndGroup.ID"
+	case "group_id":
+		return "permissionAndGroup.GroupID"
+	case "permission_object":
+		return "permissionAndGroup.PermissionObject"
+	case "type":
+		return "permissionAndGroup.Type"
+	}
+	return key
+}
+
 const CREATE = web_ext.CREATE
 const DELETE = web_ext.DELETE
 const UPDATE = web_ext.UPDATE
@@ -78,4 +92,26 @@ type PermissionGroupAndRole struct {
 
 func (gap *PermissionGroupAndRole) TableName() string {
 	return "hengwei_permission_groups_and_roles"
+}
+
+func KeyForPermissionGroupsAndRoles(key string) string {
+	switch key {
+	case "id":
+		return "permissionGroupAndRole.ID"
+	case "group_id":
+		return "permissionGroupAndRole.GroupID"
+	case "role_id":
+		return "permissionGroupAndRole.RoleID"
+	case "description":
+		return "permissionGroupAndRole.Description"
+	case "create_operation":
+		return "permissionGroupAndRole.CreateOperation"
+	case "update_operation":
+		return "permissionGroupAndRole.UpdateOperation"
+	case "delete_operation":
+		return "permissionGroupAndRole.DeleteOperation"
+	case "query_operation":
+		return "permissionGroupAndRole.QueryOperation"
+	}
+	return key
 }
