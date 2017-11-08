@@ -30,7 +30,7 @@ func TestUser(t *testing.T) {
 	}
 
 	lifecycle.ModelEngine.ShowSQL()
-	db := DB{Engine: lifecycle.ModelEngine}
+	db := DB{DB: orm.DB{Engine: lifecycle.ModelEngine}}
 	_, err = db.Users().Insert(&User{Name: "abc", Nickname: "abc"})
 	if err != nil {
 		t.Error(err)
@@ -289,7 +289,7 @@ func TestSaveDefaultPermissionGroups(t *testing.T) {
 		return
 	}
 
-	var db = DB{Engine: lifecycle.ModelEngine}
+	var db = DB{DB: orm.DB{Engine: lifecycle.ModelEngine}}
 	DropTables(lifecycle.ModelEngine)
 	InitTables(lifecycle.ModelEngine)
 

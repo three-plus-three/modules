@@ -12,7 +12,7 @@ import (
 )
 
 func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
-	db := &DB{Engine: lifecycle.ModelEngine}
+	db := &DB{DB: orm.DB{Engine: lifecycle.ModelEngine}}
 	permissionGroupCache := &GroupCache{}
 	var lastErr concurrency.ErrorValue
 
