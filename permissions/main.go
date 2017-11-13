@@ -85,14 +85,15 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			}
 		}
 
-		cond := orm.Cond{"exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
+		condRoles := "exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
 			db.Users().Name() + " as users on users_roles.user_id = users.id " +
-			" where users_roles.role_id = " + db.Roles().Name() + ".id and users.name = ?)": userName}
-		err = db.Roles().Where(cond).
+			" where users_roles.role_id = " + db.Roles().Name() + ".id and users.name = ?)"
+		err = db.Roles().Where(condRoles, userName).
 			All(&u.roles)
 		if err != nil {
-			log.Println("[permission] ", cond)
-			panic(errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error()))
+			err = errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error())
+			log.Println("[permission] ", err)
+			panic(err)
 		}
 
 		if u.administrator != 0 {
@@ -111,13 +112,14 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			return u
 		}
 
-		pgRoleCond := orm.Cond{"exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
+		pgRoleCond := "exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
 			db.Users().Name() + " as users on users_roles.user_id = users.id " +
-			"where users_roles.role_id = " + db.PermissionGroupsAndRoles().Name() + ".role_id and users.name = ?)": userName}
-		err = db.PermissionGroupsAndRoles().Where(pgRoleCond).All(&u.permissionsAndRoles)
+			"where users_roles.role_id = " + db.PermissionGroupsAndRoles().Name() + ".role_id and users.name = ?)"
+		err = db.PermissionGroupsAndRoles().Where(pgRoleCond, userName).All(&u.permissionsAndRoles)
 		if err != nil {
-			log.Println("[permission] ", pgRoleCond)
-			panic(errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error()))
+			err := errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error())
+			log.Println("[permission] ", err)
+			panic(err)
 		}
 
 		// sqlStr := "select * from " + db.PermissionGroupAndRoles().Name() + "as pg " +
