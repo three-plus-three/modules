@@ -3,44 +3,46 @@ package menus
 import (
 	"cn/com/hengwei/commons/env_tests"
 	"encoding/json"
+	"log"
+	"os"
 	"testing"
 
-	"github.com/go-xorm/xorm"
 	"github.com/three-plus-three/modules/hub/engine"
 	"github.com/three-plus-three/modules/toolbox"
 )
 
 func TestMenuSimple(t *testing.T) {
 	env := env_tests.Clone(nil)
-	dataDrv, dataURL := env.Db.Models.Url()
-	modelEngine, err := xorm.NewEngine(dataDrv, dataURL)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	modelEngine.ShowSQL()
+	// dataDrv, dataURL := env.Db.Models.Url()
+	// modelEngine, err := xorm.NewEngine(dataDrv, dataURL)
+	// if err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
+	// modelEngine.ShowSQL()
 
 	core, _ := engine.NewCore(&engine.Options{})
 
 	for tidx, test := range tests {
-		if err := modelEngine.DropTables(&Menu{}); err != nil {
-			t.Error(tidx, test.name, err)
-			return
-		}
+		// if err := modelEngine.DropTables(&Menu{}); err != nil {
+		// 	t.Error(tidx, test.name, err)
+		// 	return
+		// }
 
-		if err := modelEngine.CreateTables(&Menu{}); err != nil {
-			t.Error(tidx, test.name, err)
-			return
-		}
+		// if err := modelEngine.CreateTables(&Menu{}); err != nil {
+		// 	t.Error(tidx, test.name, err)
+		// 	return
+		// }
 
-		weaver, err := NewWeaver(core, &DB{Engine: modelEngine}, test.layout, nil)
+		logger := log.New(os.Stderr, "[menu] ", log.LstdFlags)
+		weaver, err := NewWeaver(logger, env, core, test.layout, nil)
 		if err != nil {
 			t.Error(tidx, test.name, err)
 			return
 		}
 		for idx, step := range test.steps {
 			if step.isRestart {
-				weaver, err = NewWeaver(core, &DB{Engine: modelEngine}, test.layout, nil)
+				weaver, err = NewWeaver(logger, env, core, test.layout, nil)
 				if err != nil {
 					t.Error(tidx, test.name, err)
 					return

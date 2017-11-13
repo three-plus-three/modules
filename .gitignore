@@ -23,4 +23,5 @@ out/
 .idea
 
 
+menus/data
 environment/env_tests/test_*.properties
