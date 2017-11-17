@@ -55,6 +55,7 @@ const (
 	ENV_MINIO_PROXY_ID
 	ENV_USER_MANAGE_PROXY_ID
 	ENV_ITSM_PROXY_ID
+	ENV_LOGANALYZER_PROXY_ID
 	ENV_MAX_PROXY_ID
 
 	ENV_MIN_PROXY_ID = ENV_REDIS_PROXY_ID
@@ -74,11 +75,11 @@ type ServiceOption struct {
 var (
 	ServiceOptions = []ServiceOption{
 		{Id: ENV_REDIS_PROXY_ID, Name: "redis", Host: "127.0.0.1", Port: "36379"},
-		{Id: ENV_MODELS_PROXY_ID, Name: "ds", Host: "127.0.0.1", Port: "37071"},
+		//{Id: ENV_MODELS_PROXY_ID, Name: "ds", Host: "127.0.0.1", Port: "37071"},
 		{Id: ENV_SAMPLING_PROXY_ID, Name: "sampling", Host: "127.0.0.1", Port: "37072"},
 		{Id: ENV_SAMPLING_STUB_PROXY_ID, Name: "sampling_stub", Host: "127.0.0.1", Port: "37081"},
 		{Id: ENV_POLL_PROXY_ID, Name: "poll", Host: "127.0.0.1", Port: "37073"},
-		{Id: ENV_TSDB_PROXY_ID, Name: "tsdb", Host: "127.0.0.1", Port: "37074"},
+		//{Id: ENV_TSDB_PROXY_ID, Name: "tsdb", Host: "127.0.0.1", Port: "37074"},
 		{Id: ENV_SCHD_PROXY_ID, Name: "schd", Host: "127.0.0.1", Port: "37075"},
 		{Id: ENV_LCN_PROXY_ID, Name: "lcn", Host: "127.0.0.1", Port: "37076"},
 		{Id: ENV_IP_MGR_PROXY_ID, Name: "ip_mgr", Host: "127.0.0.1", Port: "37077"},
@@ -106,6 +107,7 @@ var (
 		{Id: ENV_MINIO_PROXY_ID, Name: "minio", Host: "127.0.0.1", Port: "37094"},
 		{Id: ENV_UM_PROXY_ID, Name: "um", Host: "127.0.0.1", Port: "37095"},
 		{Id: ENV_ITSM_PROXY_ID, Name: "itsm", Host: "127.0.0.1", Port: "37096"},
+		{Id: ENV_LOGANALYZER_PROXY_ID, Name: "loganalyzer", Host: "127.0.0.1", Port: "37097"},
 	}
 )
 
