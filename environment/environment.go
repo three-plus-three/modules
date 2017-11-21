@@ -23,11 +23,11 @@ type ENV_PROXY_TYPE int
 
 const (
 	ENV_REDIS_PROXY_ID ENV_PROXY_TYPE = iota
-	ENV_MODELS_PROXY_ID
+	//ENV_MODELS_PROXY_ID
 	ENV_SAMPLING_PROXY_ID
-	ENV_SAMPLING_STUB_PROXY_ID
+	//ENV_SAMPLING_STUB_PROXY_ID
 	ENV_POLL_PROXY_ID
-	ENV_TSDB_PROXY_ID
+	//ENV_TSDB_PROXY_ID
 	ENV_SCHD_PROXY_ID
 	ENV_LCN_PROXY_ID
 	ENV_IP_MGR_PROXY_ID
@@ -38,7 +38,7 @@ const (
 	ENV_ES_PROXY_ID
 	ENV_REST_PROXY_ID
 	ENV_WSERVER_PROXY_ID
-	ENV_LUA_BRIDGE_PROXY_ID
+	//ENV_LUA_BRIDGE_PROXY_ID
 	ENV_WEB_PROXY_ID
 	ENV_LOGGING_PROXY_ID
 	ENV_NFLOW_PROXY_ID
@@ -75,11 +75,11 @@ type ServiceOption struct {
 var (
 	ServiceOptions = []ServiceOption{
 		{Id: ENV_REDIS_PROXY_ID, Name: "redis", Host: "127.0.0.1", Port: "36379"},
-		{Id: ENV_MODELS_PROXY_ID, Name: "ds", Host: "127.0.0.1", Port: "37071"},
+		//{Id: ENV_MODELS_PROXY_ID, Name: "ds", Host: "127.0.0.1", Port: "37071"},
 		{Id: ENV_SAMPLING_PROXY_ID, Name: "sampling", Host: "127.0.0.1", Port: "37072"},
-		{Id: ENV_SAMPLING_STUB_PROXY_ID, Name: "sampling_stub", Host: "127.0.0.1", Port: "37081"},
+		//{Id: ENV_SAMPLING_STUB_PROXY_ID, Name: "sampling_stub", Host: "127.0.0.1", Port: "37081"},
 		{Id: ENV_POLL_PROXY_ID, Name: "poll", Host: "127.0.0.1", Port: "37073"},
-		{Id: ENV_TSDB_PROXY_ID, Name: "tsdb", Host: "127.0.0.1", Port: "37074"},
+		//{Id: ENV_TSDB_PROXY_ID, Name: "tsdb", Host: "127.0.0.1", Port: "37074"},
 		{Id: ENV_SCHD_PROXY_ID, Name: "schd", Host: "127.0.0.1", Port: "37075"},
 		{Id: ENV_LCN_PROXY_ID, Name: "lcn", Host: "127.0.0.1", Port: "37076"},
 		{Id: ENV_IP_MGR_PROXY_ID, Name: "ip_mgr", Host: "127.0.0.1", Port: "37077"},
@@ -90,7 +90,7 @@ var (
 		{Id: ENV_REST_PROXY_ID, Name: "rest", Host: "127.0.0.1", Port: "39301"},
 		{Id: ENV_WSERVER_PROXY_ID, Name: "wserver", Host: "127.0.0.1", Port: "37070"},
 		{Id: ENV_WSERVER_SSL_PROXY_ID, Name: "daemon_ssl", Host: "127.0.0.1", Port: "37090"},
-		{Id: ENV_LUA_BRIDGE_PROXY_ID, Name: "lua_bridge", Host: "127.0.0.1", Port: "37082"},
+		//{Id: ENV_LUA_BRIDGE_PROXY_ID, Name: "lua_bridge", Host: "127.0.0.1", Port: "37082"},
 		{Id: ENV_WEB_PROXY_ID, Name: "web", Host: "127.0.0.1", Port: "39000"},
 		{Id: ENV_LOGGING_PROXY_ID, Name: "es", Host: "127.0.0.1", Port: "37083"},
 		{Id: ENV_NFLOW_PROXY_ID, Name: "nflow", Host: "127.0.0.1", Port: "37084"},
