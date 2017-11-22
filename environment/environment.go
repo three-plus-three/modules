@@ -38,7 +38,7 @@ const (
 	ENV_ES_PROXY_ID
 	ENV_REST_PROXY_ID
 	ENV_WSERVER_PROXY_ID
-	//ENV_LUA_BRIDGE_PROXY_ID
+	ENV_LUA_BRIDGE_PROXY_ID
 	ENV_WEB_PROXY_ID
 	ENV_LOGGING_PROXY_ID
 	ENV_NFLOW_PROXY_ID
@@ -90,7 +90,7 @@ var (
 		{Id: ENV_REST_PROXY_ID, Name: "rest", Host: "127.0.0.1", Port: "39301"},
 		{Id: ENV_WSERVER_PROXY_ID, Name: "wserver", Host: "127.0.0.1", Port: "37070"},
 		{Id: ENV_WSERVER_SSL_PROXY_ID, Name: "daemon_ssl", Host: "127.0.0.1", Port: "37090"},
-		//{Id: ENV_LUA_BRIDGE_PROXY_ID, Name: "lua_bridge", Host: "127.0.0.1", Port: "37082"},
+		{Id: ENV_LUA_BRIDGE_PROXY_ID, Name: "lua_bridge", Host: "127.0.0.1", Port: "37082"},
 		{Id: ENV_WEB_PROXY_ID, Name: "web", Host: "127.0.0.1", Port: "39000"},
 		{Id: ENV_LOGGING_PROXY_ID, Name: "es", Host: "127.0.0.1", Port: "37083"},
 		{Id: ENV_NFLOW_PROXY_ID, Name: "nflow", Host: "127.0.0.1", Port: "37084"},
