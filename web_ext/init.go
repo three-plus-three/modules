@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/revel/revel"
 	_ "github.com/three-plus-three/modules/bind"
@@ -118,8 +119,13 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		if secretStr := env.Config.StringWithDefault("app.secret", ""); secretStr != "" {
 			secretKey = []byte(secretStr)
 		}
+		cookiesPath := env.RawDaemonUrlPath
+		if !strings.HasPrefix(cookiesPath, "/") {
+			cookiesPath = "/" + cookiesPath
+		}
+
 		GlobalSessionFilter = sessions.SessionFilter(sso.DefaultSessionKey,
-			env.RawDaemonUrlPath, sha1.New, secretKey)
+			cookiesPath, sha1.New, secretKey)
 
 		initTemplateFuncs(lifecycle)
 
