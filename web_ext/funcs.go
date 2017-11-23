@@ -79,9 +79,9 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return urlutil.JoinWith(lifecycle.URLRoot, s)
 	}
 
-	revel.TemplateFuncs["urlParam"] = func(key, value string, urlStr interface{}) string {
+	revel.TemplateFuncs["urlParam"] = func(key string, value, urlObject interface{}) string {
 		var u *url.URL
-		switch v := urlStr.(type) {
+		switch v := urlObject.(type) {
 		case string:
 			var err error
 			u, err = url.Parse(v)
@@ -99,11 +99,11 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 				panic(errors.New("url '" + string(v) + "' is invalid url: " + err.Error()))
 			}
 		default:
-			panic(fmt.Errorf("url '[%T] %s' is invalid url", urlStr, urlStr))
+			panic(fmt.Errorf("url '[%T] %s' is invalid url", urlObject, urlObject))
 		}
 
 		query := u.Query()
-		query.Add(key, value)
+		query.Add(key, fmt.Sprint(value))
 		u.RawQuery = query.Encode()
 		return u.String()
 	}
