@@ -35,7 +35,6 @@ const (
 	ENV_TERMINAL_PROXY_ID
 	ENV_JBRIDGE_PROXY_ID
 	ENV_JBRIDGE15_PROXY_ID
-	ENV_ES_PROXY_ID
 	ENV_REST_PROXY_ID
 	ENV_WSERVER_PROXY_ID
 	ENV_LUA_BRIDGE_PROXY_ID
@@ -58,6 +57,7 @@ const (
 	ENV_LOGANALYZER_PROXY_ID
 	ENV_MAX_PROXY_ID
 
+	ENV_ES_PROXY_ID  = ENV_LOGANALYZER_PROXY_ID
 	ENV_MIN_PROXY_ID = ENV_REDIS_PROXY_ID
 	// ENV_DS_PROXY_ID  = ENV_MODELS_PROXY_ID
 	ENV_AM_PROXY_ID = ENV_ASSET_MANAGE_PROXY_ID
@@ -86,7 +86,6 @@ var (
 		{Id: ENV_DELAYED_JOB_PROXY_ID, Name: "delayed_jobs", Host: "127.0.0.1", Port: "37078"},
 		{Id: ENV_TERMINAL_PROXY_ID, Name: "terminal", Host: "127.0.0.1", Port: "37079"},
 		{Id: ENV_JBRIDGE_PROXY_ID, Name: "jbridge", Host: "127.0.0.1", Port: "37080"},
-		{Id: ENV_ES_PROXY_ID, Name: "es_old", Host: "127.0.0.1", Port: "39300"},
 		{Id: ENV_REST_PROXY_ID, Name: "rest", Host: "127.0.0.1", Port: "39301"},
 		{Id: ENV_WSERVER_PROXY_ID, Name: "wserver", Host: "127.0.0.1", Port: "37070"},
 		{Id: ENV_WSERVER_SSL_PROXY_ID, Name: "daemon_ssl", Host: "127.0.0.1", Port: "37090"},
@@ -107,6 +106,7 @@ var (
 		{Id: ENV_MINIO_PROXY_ID, Name: "minio", Host: "127.0.0.1", Port: "37094"},
 		{Id: ENV_UM_PROXY_ID, Name: "um", Host: "127.0.0.1", Port: "37095"},
 		{Id: ENV_ITSM_PROXY_ID, Name: "itsm", Host: "127.0.0.1", Port: "37096"},
+		// {Id: ENV_ES_PROXY_ID, Name: "es_old", Host: "127.0.0.1", Port: "39300"},
 		{Id: ENV_LOGANALYZER_PROXY_ID, Name: "loganalyzer", Host: "127.0.0.1", Port: "37097"},
 	}
 )
