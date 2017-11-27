@@ -3,7 +3,6 @@ package menus
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -230,7 +229,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 
 	for _, c := range removeList {
 		if c.layout.Category == categoryLocation && c.layout.Location == locationReplace {
-			fmt.Println(c.layout.Target)
 			results = removeInTree(results, c.layout.Target)
 		} else {
 			c.layout.forEach(func(menu *LayoutItem) {
