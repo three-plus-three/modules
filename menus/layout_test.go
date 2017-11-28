@@ -194,6 +194,15 @@ func TestLayoutInsertAfterInline(t *testing.T) {
     "title":    "运维管理",
     "url":      "#",
     "icon":     "fa-trello"
+  },
+  {
+    "category": "location",
+    "target": "system.sql_script_manage",
+    "location": "after",
+    "title": "帮助",
+    "inline": true,
+    "uid": "nm.system.help",
+    "url": "hengwei/internal/doc/"
   }]`
 
 	layout, err := readLayout([]byte(layoutText))
@@ -287,9 +296,15 @@ func TestLayoutInsertAfterInline(t *testing.T) {
 					Title: "数据库脚本管理",
 					URL:   "/hengwei/web/tools/sql_script_manage",
 				},
+				{
+					UID:   "nm.system.help",
+					Title: "帮助",
+					URL:   "hengwei/internal/doc/",
+				},
 			},
 		},
 	}
+
 	if !isSameMenuArray(resultList, menuList) {
 		t.Error("结果不同")
 		dumpMenus(t, resultList, menuList)
