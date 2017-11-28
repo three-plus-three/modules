@@ -3,15 +3,14 @@ package menus
 import (
 	"bytes"
 	"encoding/json"
-	"io"
+	"html/template"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/toolbox"
-	"github.com/three-plus-three/modules/util"
+	"github.com/three-plus-three/modules/urlutil"
 )
 
 // 菜单的分类
@@ -293,14 +292,13 @@ func (layout *simpleLayout) Generate(menuList map[string][]toolbox.Menu) ([]tool
 	return results, nil
 }
 
-func ReadLayoutFromDirectory(dirname string) (Layout, error) {
+func ReadLayoutFromDirectory(dirname string, args map[string]interface{}) (Layout, error) {
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
 		return nil, errors.Wrap(err, "read layout from directory fail")
 	}
 
 	var mainLayout []LayoutItem
-
 	for _, fi := range files {
 		filename := fi.Name()
 		if fi.IsDir() ||
@@ -309,7 +307,7 @@ func ReadLayoutFromDirectory(dirname string) (Layout, error) {
 			continue
 		}
 
-		layout, err := ReadLayout(filepath.Join(dirname, filename))
+		layout, err := ReadLayout(filepath.Join(dirname, filename), args)
 		if err != nil {
 			return nil, err
 		}
@@ -322,17 +320,30 @@ func ReadLayoutFromDirectory(dirname string) (Layout, error) {
 }
 
 // ReadLayout 载入 layout 文件
-func ReadLayout(filename string) (Layout, error) {
-	in, err := os.Open(filename)
+func ReadLayout(filename string, args map[string]interface{}) (Layout, error) {
+	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrap(err, "read layout fail")
 	}
-	defer util.CloseWith(in)
-	return readLayout(in)
+
+	t, err := template.New("default").Funcs(template.FuncMap{
+		"join": urlutil.Join,
+	}).Parse(string(bs))
+	if err != nil {
+		return nil, errors.Wrap(err, "parse url template in '"+filename+"' fail")
+	}
+
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, args); err != nil {
+		return nil, errors.Wrap(err, "generate layout in '"+filename+"' fail")
+	}
+
+	return readLayout(buf.Bytes())
 }
-func readLayout(in io.Reader) (Layout, error) {
+
+func readLayout(in []byte) (Layout, error) {
 	var mainLayout []LayoutItem
-	err := json.NewDecoder(in).Decode(&mainLayout)
+	err := json.Unmarshal(in, &mainLayout)
 	if err != nil {
 		return nil, errors.Wrap(err, "read layout fail")
 	}

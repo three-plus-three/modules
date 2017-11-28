@@ -27,7 +27,7 @@ func TestLayoutSimple(t *testing.T) {
     "icon": "fa-cog"
   }]`
 
-	layout, err := readLayout(strings.NewReader(layoutText))
+	layout, err := readLayout([]byte(layoutText))
 	if err != nil {
 		t.Error(err)
 		return
@@ -111,7 +111,7 @@ func TestLayoutInsertAfter(t *testing.T) {
     "icon":     "fa-trello"
   }]`
 
-	layout, err := readLayout(strings.NewReader(layoutText))
+	layout, err := readLayout([]byte(layoutText))
 	if err != nil {
 		t.Error(err)
 		return
@@ -196,7 +196,7 @@ func TestLayoutInsertAfterInline(t *testing.T) {
     "icon":     "fa-trello"
   }]`
 
-	layout, err := readLayout(strings.NewReader(layoutText))
+	layout, err := readLayout([]byte(layoutText))
 	if err != nil {
 		t.Error(err)
 		return
@@ -317,7 +317,7 @@ func TestLayoutInsertBefore(t *testing.T) {
     "icon":     "fa-trello"
   }]`
 
-	layout, err := readLayout(strings.NewReader(layoutText))
+	layout, err := readLayout([]byte(layoutText))
 	if err != nil {
 		t.Error(err)
 		return
@@ -402,7 +402,7 @@ func TestLayoutInsertBeforeInline(t *testing.T) {
     "icon":     "fa-trello"
   }]`
 
-	layout, err := readLayout(strings.NewReader(layoutText))
+	layout, err := readLayout([]byte(layoutText))
 	if err != nil {
 		t.Error(err)
 		return
@@ -527,7 +527,7 @@ func TestLayoutReplace(t *testing.T) {
     "icon":     "fa-trello"
   }]`
 
-	layout, err := readLayout(strings.NewReader(layoutText))
+	layout, err := readLayout([]byte(layoutText))
 	if err != nil {
 		t.Error(err)
 		return
@@ -637,7 +637,7 @@ func TestLayoutRemove(t *testing.T) {
     "icon":     "fa-trello"
   }]`
 
-	layout, err := readLayout(strings.NewReader(layoutText))
+	layout, err := readLayout([]byte(layoutText))
 	if err != nil {
 		t.Error(err)
 		return
