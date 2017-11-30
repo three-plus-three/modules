@@ -90,6 +90,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 
 		lifecycle.Variables["urlPrefix"] = lifecycle.URLPrefix
 		lifecycle.Variables["url_prefix"] = lifecycle.URLPrefix
+		lifecycle.Variables["urlRoot"] = lifecycle.URLRoot
 		lifecycle.Variables["url_root"] = lifecycle.URLRoot
 
 		lifecycle.Variables["application_context"] = lifecycle.ApplicationContext

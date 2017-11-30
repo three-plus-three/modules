@@ -51,8 +51,8 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return args
 	}
 
-	revel.TemplateFuncs["list"] = func() []interface{} {
-		return []interface{}{}
+	revel.TemplateFuncs["list"] = func(args ...interface{}) []interface{} {
+		return args
 	}
 
 	revel.TemplateFuncs["startsWith"] = func(s, sep string) bool {
@@ -77,6 +77,24 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 
 	revel.TemplateFuncs["urlRoot"] = func(s ...string) string {
 		return urlutil.JoinWith(lifecycle.URLRoot, s)
+	}
+
+	revel.TemplateFuncs["urljoin"] = urlutil.Join
+
+	revel.TemplateFuncs["js"] = func(s string) template.JS {
+		return template.JS(s)
+	}
+
+	revel.TemplateFuncs["jsstr"] = func(s string) template.JSStr {
+		return template.JSStr(s)
+	}
+
+	revel.TemplateFuncs["html"] = func(s string) template.HTML {
+		return template.HTML(s)
+	}
+
+	revel.TemplateFuncs["htmlAttr"] = func(s string) template.HTMLAttr {
+		return template.HTMLAttr(s)
 	}
 
 	revel.TemplateFuncs["urlParam"] = func(key string, value, urlObject interface{}) string {
