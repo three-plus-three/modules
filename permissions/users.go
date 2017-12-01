@@ -10,6 +10,7 @@ import (
 
 	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/netutil"
+	"github.com/three-plus-three/modules/web_ext"
 )
 
 type OnlineUser struct {
@@ -57,6 +58,11 @@ type User struct {
 
 func (user *User) TableName() string {
 	return "hengwei_users"
+}
+
+func (user *User) IsBuiltin() bool {
+	return user.Name == web_ext.UserAdmin ||
+		user.Name == web_ext.UserGuest
 }
 
 func (user *User) Validate(validation *revel.Validation) bool {
