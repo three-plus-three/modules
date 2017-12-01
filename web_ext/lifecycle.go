@@ -21,6 +21,9 @@ const UserAdmin = "admin"
 // UserGuest guest 用户名
 const UserGuest = "guest"
 
+// UserAdmin super 角色名
+const RoleSuper = "super"
+
 // RoleAdministrator administrator 角色名
 const RoleAdministrator = "administrator"
 

@@ -22,47 +22,59 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 	permissionGroupCache.Init(5*time.Minute, refresh)
 	refresh()
 
+	var superRole Role
+	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&superRole); e != nil {
+		superRole.Name = web_ext.RoleSuper
+		log.Println("[warn] role", web_ext.RoleSuper, "isnot found -", e)
+	}
+
 	var adminRole Role
 	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&adminRole); e != nil {
 		adminRole.Name = web_ext.RoleAdministrator
-		log.Println("[warn] role administrator isnot found -", e)
+		log.Println("[warn] role", web_ext.RoleAdministrator, "isnot found -", e)
 	}
 
 	var visitorRole Role
 	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&visitorRole); e != nil {
 		visitorRole.Name = web_ext.RoleVisitor
-		log.Println("[warn] role visitor isnot found -", e)
+		log.Println("[warn] role", web_ext.RoleVisitor, "isnot found -", e)
 	}
 
 	var guestRole Role
 	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&guestRole); e != nil {
 		guestRole.Name = web_ext.RoleGuest
-		log.Println("[warn] role guest isnot found -", e)
+		log.Println("[warn] role", web_ext.RoleGuest, "isnot found -", e)
 	}
 
 	return func(userName string) web_ext.User {
 		if e := lastErr.Get(); e != nil {
 			panic(e)
 		}
+		if superRole.ID == 0 {
+			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&superRole); e != nil {
+				log.Println("[warn] role", web_ext.RoleSuper, "isnot found -", e)
+			}
+		}
 		if adminRole.ID == 0 {
 			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&adminRole); e != nil {
-				log.Println("[warn] role administrator isnot found -", e)
+				log.Println("[warn] role", web_ext.RoleAdministrator, "isnot found -", e)
 			}
 		}
 		if visitorRole.ID == 0 {
 			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&visitorRole); e != nil {
-				log.Println("[warn] role visitor isnot found -", e)
+				log.Println("[warn] role", web_ext.RoleVisitor, "isnot found -", e)
 			}
 		}
 		if guestRole.ID == 0 {
 			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&guestRole); e != nil {
-				log.Println("[warn] role guest isnot found -", e)
+				log.Println("[warn] role", web_ext.RoleGuest, "isnot found -", e)
 			}
 		}
 
 		var u = &user{db: db,
 			lifecycle:            lifecycle,
 			permissionGroupCache: permissionGroupCache,
+			super:                superRole.ID,
 			administrator:        adminRole.ID,
 			visitor:              visitorRole.ID}
 		err := db.Users().Where(orm.Cond{"name": userName}).Omit("profiles").One(&u.u)
@@ -146,7 +158,7 @@ type user struct {
 	permissionsAndRoles  []PermissionGroupAndRole
 	permissionGroupCache *GroupCache
 
-	administrator, visitor int64
+	super, administrator, visitor int64
 }
 
 func (u *user) ID() int64 {
@@ -272,6 +284,13 @@ func (u *user) HasPermission(permissionID, op string) bool {
 	if u.administrator != 0 {
 		for _, role := range u.roles {
 			if role.ID == u.administrator {
+				return true
+			}
+		}
+	}
+	if u.super != 0 {
+		for _, role := range u.roles {
+			if role.ID == u.super {
 				return true
 			}
 		}
