@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/revel/revel"
@@ -73,7 +74,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		//wserviceObject := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
 		if !revel.DevMode {
 			if fp := flag.Lookup("port"); nil != fp && fp.Value.String() == fp.DefValue {
-				revel.Server.Addr = serviceObject.ListenAddr("")
+				revel.ServerEngineInit.Port, _ = strconv.Atoi(serviceObject.Port)
 			}
 			serviceObject.SetPort(serviceObject.Port)
 		} else {

@@ -41,7 +41,7 @@ func toInt(value interface{}) (d int, err error) {
 
 // Paginator within the state of a http request.
 type Paginator struct {
-	Request     *http.Request
+	u           url.URL
 	PerPageNums int
 	MaxPages    int
 
@@ -81,20 +81,6 @@ func (p *Paginator) SetTotalNums(nums interface{}) {
 
 // Page Returns the current page.
 func (p *Paginator) Page() int {
-	if p.pageIndex > 0 {
-		return p.pageIndex
-	}
-	if p.Request.Form == nil {
-		p.Request.ParseForm()
-	}
-	p.pageIndex, _ = strconv.Atoi(p.Request.Form.Get("pageIndex"))
-	if p.pageIndex >= p.PageNums() {
-		if 0 == p.PageNums() {
-			p.pageIndex = 0
-		} else {
-			p.pageIndex = p.PageNums() - 1
-		}
-	}
 	return p.pageIndex
 }
 
@@ -138,7 +124,7 @@ func (p *Paginator) Pages() []int {
 
 // PageLink Returns URL for a given page index.
 func (p *Paginator) PageLink(page int) string {
-	link, _ := url.ParseRequestURI(p.Request.URL.String())
+	link, _ := url.ParseRequestURI(p.u.String())
 	values := link.Query()
 	if page == 0 {
 		values.Del("pageIndex")
@@ -207,13 +193,35 @@ func (p *Paginator) HasPages() bool {
 }
 
 // NewPaginator Instantiates a paginator struct for the current http request.
-func NewPaginator(req *http.Request, per int, nums interface{}) *Paginator {
-	p := Paginator{}
-	p.Request = req
-	if per <= 0 {
-		per = DEFAULT_SIZE_PER_PAGE
+func NewPaginator(req *http.Request, perPageNums int, nums interface{}) *Paginator {
+	if req.Form == nil {
+		req.ParseForm()
 	}
-	p.PerPageNums = per
+	if req.Form != nil {
+		pageIndex, _ := strconv.Atoi(req.Form.Get("pageIndex"))
+		return NewPaginatorWith(req.URL, pageIndex, perPageNums, nums)
+	}
+	return NewPaginatorWith(req.URL, 0, perPageNums, nums)
+}
+
+// NewPaginatorWith Instantiates a paginator struct for the current http request.
+func NewPaginatorWith(u *url.URL, pageIndex, perPageNums int, nums interface{}) *Paginator {
+	p := Paginator{}
+	if perPageNums <= 0 {
+		perPageNums = DEFAULT_SIZE_PER_PAGE
+	}
+	p.PerPageNums = perPageNums
 	p.SetTotalNums(nums)
+
+	p.u = *u
+
+	p.pageIndex = pageIndex
+	if p.pageIndex >= p.PageNums() {
+		if 0 == p.PageNums() {
+			p.pageIndex = 0
+		} else {
+			p.pageIndex = p.PageNums() - 1
+		}
+	}
 	return &p
 }

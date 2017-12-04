@@ -2,7 +2,6 @@ package web_ext
 
 import (
 	"log"
-	"net/http"
 	"net/url"
 	"os"
 	"strings"
@@ -24,8 +23,8 @@ func initSSO(env *environment.Environment) revel_sso.CheckFunc {
 		return nil
 	}
 
-	return revel_sso.SSO(ssoClient, 30*time.Minute, func(req *http.Request) url.URL {
-		copyURL := *req.URL
+	return revel_sso.SSO(ssoClient, 30*time.Minute, func(u *url.URL, ctrl *revel.Controller) url.URL {
+		copyURL := *u
 		copyURL.Scheme = ""
 		copyURL.Host = ""
 		if !strings.HasPrefix(copyURL.Path, revel.AppRoot) {
