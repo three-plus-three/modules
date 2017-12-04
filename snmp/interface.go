@@ -205,7 +205,7 @@ func setInterfaceStatus(dev *ds.NetworkDevice, ifIndex, status int) error {
 			"failed to get system information - %s(%d)", pdu.ErrorStatus(), pdu.ErrorIndex())
 	}
 
-	fmt.Println(pdu.VariableBindings())
+	//fmt.Println(pdu.VariableBindings())
 	return nil
 }
 

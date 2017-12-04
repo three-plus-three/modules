@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/revel/revel"
+	"github.com/three-plus-three/modules/web_ext"
 )
 
 type Role struct {
@@ -12,6 +13,13 @@ type Role struct {
 	Description string    `json:"description,omitempty" xorm:"description"`
 	CreatedAt   time.Time `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
+}
+
+func (role *Role) IsBuiltin() bool {
+	return role.Name == web_ext.RoleSuper ||
+		role.Name == web_ext.RoleAdministrator ||
+		role.Name == web_ext.RoleVisitor ||
+		role.Name == web_ext.RoleGuest
 }
 
 func (role *Role) TableName() string {

@@ -84,13 +84,14 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		projectContext := serviceObject.Name
 		lifecycle.URLPrefix = env.DaemonUrlPath
 		lifecycle.URLRoot = env.DaemonUrlPath
-		lifecycle.ApplicationContext = env.DaemonUrlPath + projectContext
-		lifecycle.ApplicationRoot = env.DaemonUrlPath + projectContext
+		lifecycle.ApplicationContext = urlutil.Join(env.DaemonUrlPath, projectContext)
+		lifecycle.ApplicationRoot = urlutil.Join(env.DaemonUrlPath, projectContext)
 
 		lifecycle.Variables = ReadVariables(env, projectTitle)
 
 		lifecycle.Variables["urlPrefix"] = lifecycle.URLPrefix
 		lifecycle.Variables["url_prefix"] = lifecycle.URLPrefix
+		lifecycle.Variables["urlRoot"] = lifecycle.URLRoot
 		lifecycle.Variables["url_root"] = lifecycle.URLRoot
 
 		lifecycle.Variables["application_context"] = lifecycle.ApplicationContext

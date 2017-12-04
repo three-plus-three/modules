@@ -1,6 +1,8 @@
 package menus
 
 import (
+	"fmt"
+
 	"github.com/three-plus-three/modules/toolbox"
 )
 
@@ -33,15 +35,28 @@ func watchInTree(allList []toolbox.Menu, c *container, target string) []toolbox.
 func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) (bool, []toolbox.Menu) {
 	for idx := range allList {
 		if allList[idx].UID == c.layout.Target {
+			fmt.Println(c.layout.Target, allList[idx].UID)
 			if isInline {
 				var results []toolbox.Menu
 				switch act {
 				case actInsertAfterInTree:
+					if len(c.items) == 0 {
+						if c.layout.URL != "" && c.layout.Title != "" {
+							c.items = append(c.items, c.layout.toMenu())
+						}
+					}
+
 					results = make([]toolbox.Menu, len(allList)+len(c.items))
 					copy(results, allList[:idx+1])
 					copy(results[idx+1:], c.items)
 					copy(results[idx+1+len(c.items):], allList[idx+1:])
 				case actInsertBeforeInTree:
+					if len(c.items) == 0 {
+						if c.layout.URL != "" && c.layout.Title != "" {
+							c.items = append(c.items, c.layout.toMenu())
+						}
+					}
+
 					results = make([]toolbox.Menu, len(allList)+len(c.items))
 					copy(results, allList[:idx])
 					copy(results[idx:], c.items)
@@ -66,12 +81,24 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 			var results []toolbox.Menu
 			switch act {
 			case actInsertAfterInTree:
+				if len(c.items) == 0 {
+					if c.layout.URL != "" && c.layout.Title != "" {
+						c.items = append(c.items, c.layout.toMenu())
+					}
+				}
+
 				results = make([]toolbox.Menu, len(allList)+1)
 				copy(results, allList[:idx+1])
 				results[idx+1] = c.layout.toMenu()
 				results[idx+1].Children = c.items
 				copy(results[idx+2:], allList[idx+1:])
 			case actInsertBeforeInTree:
+				if len(c.items) == 0 {
+					if c.layout.URL != "" && c.layout.Title != "" {
+						c.items = append(c.items, c.layout.toMenu())
+					}
+				}
+
 				results = make([]toolbox.Menu, len(allList)+1)
 				copy(results, allList[:idx])
 				results[idx] = c.layout.toMenu()
