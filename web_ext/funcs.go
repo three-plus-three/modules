@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/revel/revel"
 	"github.com/three-plus-three/forms"
 	"github.com/three-plus-three/modules/functions"
+	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/modules/urlutil"
 )
 
@@ -194,3 +197,51 @@ func CurrentUserHasPermission(lifecycle *Lifecycle, ctx map[string]interface{}, 
 	}
 	return false
 }
+
+var (
+	controllerPtrType = reflect.TypeOf(&revel.Controller{})
+)
+
+func NewPaginatorWith(c *revel.Controller, pageSize int, total interface{}) *toolbox.Paginator {
+	form, _ := c.Request.GetForm()
+	if form != nil {
+		pageIndex, _ := strconv.Atoi(form.Get("pageIndex"))
+		return toolbox.NewPaginatorWith(c.Request.URL, pageIndex, pageSize, total)
+	}
+	return toolbox.NewPaginatorWith(c.Request.URL, 0, pageSize, total)
+}
+
+// Find the value of the target, starting from val and including embedded types.
+// Also, convert between any difference in indirection.
+// If the target couldn't be found, the returned Value will have IsValid() == false
+// func findTarget(val reflect.Value, target reflect.Type) reflect.Value {
+// 	// Look through the embedded types (until we reach the *revel.Controller at the top).
+// 	valueQueue := []reflect.Value{val}
+// 	for len(valueQueue) > 0 {
+// 		val, valueQueue = valueQueue[0], valueQueue[1:]
+//
+// 		// Check if val is of a similar type to the target type.
+// 		if val.Type() == target {
+// 			return val
+// 		}
+// 		if val.Kind() == reflect.Ptr && val.Elem().Type() == target {
+// 			return val.Elem()
+// 		}
+// 		if target.Kind() == reflect.Ptr && target.Elem() == val.Type() {
+// 			return val.Addr()
+// 		}
+//
+// 		// Else, add each anonymous field to the queue.
+// 		if val.Kind() == reflect.Ptr {
+// 			val = val.Elem()
+// 		}
+//
+// 		for i := 0; i < val.NumField(); i++ {
+// 			if val.Type().Field(i).Anonymous {
+// 				valueQueue = append(valueQueue, val.Field(i))
+// 			}
+// 		}
+// 	}
+//
+// 	return reflect.Value{}
+// }
