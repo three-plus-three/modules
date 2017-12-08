@@ -23,6 +23,9 @@ func (db *DB) Begin() (*DB, error) {
 		return nil, errors.New("run in the transaction")
 	}
 	session := db.Engine.NewSession()
+	if err := session.Begin(); err != nil {
+		return nil, err
+	}
 	return db.WithSession(session), nil
 }
 
