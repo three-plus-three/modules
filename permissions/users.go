@@ -31,8 +31,8 @@ func KeyForOnlineUsers(key string) string {
 		return "onlineUser.UserID"
 	case "auth_id":
 		return "onlineUser.AuthID"
-	case "Address":
-		return "onlineUser.address"
+	case "address":
+		return "onlineUser.Address"
 	case "created_at":
 		return "onlineUser.CreatedAt"
 	case "updated_at":
@@ -137,6 +137,8 @@ func KeyForUsers(key string) string {
 		return "user.ID"
 	case "name":
 		return "user.Name"
+	case "nickname":
+		return "user.Nickname"
 	case "password":
 		return "user.Password"
 	case "description":
