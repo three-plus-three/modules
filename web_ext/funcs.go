@@ -199,8 +199,8 @@ func CurrentUserHasPermission(lifecycle *Lifecycle, ctx map[string]interface{}, 
 }
 
 var localeMessages = map[string]string{
-	"update.record_not_found": "update.record_not_found",
-	"value_already_exists":    "",
+	"update.record_not_found":     "update.record_not_found",
+	"unique_value_already_exists": "",
 }
 
 func ErrorToFlash(c *revel.Controller, err error, notFoundKey ...string) {
@@ -214,9 +214,9 @@ func ErrorToFlash(c *revel.Controller, err error, notFoundKey ...string) {
 		if oerr, ok := err.(*orm.Error); ok && len(oerr.Validations) > 0 {
 			for _, validation := range oerr.Validations {
 				localeMessage := validation.Message
-				if key, found := localeMessages[localeMessage]; found {
+				if key, found := localeMessages[validation.Code]; found {
 					if key == "" {
-						localeMessage = revel.Message(c.Request.Locale, localeMessage)
+						localeMessage = revel.Message(c.Request.Locale, validation.Code)
 					} else {
 						localeMessage = revel.Message(c.Request.Locale, key)
 					}
