@@ -18,6 +18,10 @@ import (
 	"github.com/three-plus-three/modules/types"
 )
 
+func keyForNull(s string) string {
+	return s
+}
+
 type RecordVersion struct {
 	ID        int64     `json:"id,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
@@ -76,7 +80,7 @@ func (dev *NetworkDevice) accessParams(t string) (*models.AccessParams, error) {
 	var sp []*models.AccessParams
 	collection := orm.New(func() interface{} {
 		return &models.AccessParams{}
-	})(dev.mo.cache.Engine)
+	}, keyForNull)(dev.mo.cache.Engine)
 
 	err := collection.Where(orm.Cond{"managed_object_id": dev.mo.ID, "type": t}).All(&sp)
 	if err != nil {
@@ -102,7 +106,7 @@ func (dev *NetworkDevice) SnmpParams() (*models.SnmpParams, error) {
 	var sp []*models.SnmpParams
 	collection := orm.New(func() interface{} {
 		return &models.SnmpParams{}
-	})(dev.mo.cache.Engine)
+	}, keyForNull)(dev.mo.cache.Engine)
 
 	err := collection.Where(orm.Cond{"managed_object_id": dev.mo.ID}).All(&sp)
 	if err != nil {
@@ -219,19 +223,19 @@ func (cache *MoCache) Init(engine *xorm.Engine, definitions *types.TableDefiniti
 func (db *MoCache) Objects() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &models.Object{}
-	})(db.Engine)
+	}, keyForNull)(db.Engine)
 }
 
 func (db *MoCache) NetworkDevices() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &models.NetworkDevice{}
-	})(db.Engine)
+	}, keyForNull)(db.Engine)
 }
 
 func (db *MoCache) NetworkLinks() *orm.Collection {
 	return orm.New(func() interface{} {
 		return &models.NetworkLink{}
-	})(db.Engine)
+	}, keyForNull)(db.Engine)
 }
 
 // Refresh 刷新绶存，确保内存与数据库中的数据一致。

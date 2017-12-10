@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
-	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/revel/revel"
+	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/forms"
 	"github.com/three-plus-three/modules/functions"
 	"github.com/three-plus-three/modules/toolbox"
@@ -198,9 +198,39 @@ func CurrentUserHasPermission(lifecycle *Lifecycle, ctx map[string]interface{}, 
 	return false
 }
 
-var (
-	controllerPtrType = reflect.TypeOf(&revel.Controller{})
-)
+var localeMessages = map[string]string{
+	"update.record_not_found":     "update.record_not_found",
+	"unique_value_already_exists": "",
+}
+
+func ErrorToFlash(c *revel.Controller, err error, notFoundKey ...string) {
+	if err == orm.ErrNotFound {
+		if len(notFoundKey) >= 1 && notFoundKey[0] != "" {
+			c.Flash.Error(revel.Message(c.Request.Locale, notFoundKey[0]))
+		} else {
+			c.Flash.Error(revel.Message(c.Request.Locale, "update.record_not_found"))
+		}
+	} else {
+		if oerr, ok := err.(*orm.Error); ok && len(oerr.Validations) > 0 {
+			for _, validation := range oerr.Validations {
+				localeMessage := validation.Message
+				if key, found := localeMessages[validation.Code]; found {
+					if key == "" {
+						localeMessage = revel.Message(c.Request.Locale, validation.Code)
+					} else {
+						localeMessage = revel.Message(c.Request.Locale, key)
+					}
+				}
+
+				c.Validation.Error(localeMessage).
+					Key(validation.Key)
+			}
+			c.Validation.Keep()
+		} else {
+			c.Flash.Error(err.Error())
+		}
+	}
+}
 
 func NewPaginatorWith(c *revel.Controller, pageSize int, total interface{}) *toolbox.Paginator {
 	form, _ := c.Request.GetForm()
@@ -210,6 +240,10 @@ func NewPaginatorWith(c *revel.Controller, pageSize int, total interface{}) *too
 	}
 	return toolbox.NewPaginatorWith(c.Request.URL, 0, pageSize, total)
 }
+
+//var (
+//	controllerPtrType = reflect.TypeOf(&revel.Controller{})
+//)
 
 // Find the value of the target, starting from val and including embedded types.
 // Also, convert between any difference in indirection.

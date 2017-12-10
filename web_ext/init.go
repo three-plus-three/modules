@@ -73,10 +73,17 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		serviceObject := env.GetServiceConfig(serviceID)
 		//wserviceObject := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
 		if !revel.DevMode {
-			if fp := flag.Lookup("port"); nil != fp && fp.Value.String() == fp.DefValue {
-				revel.ServerEngineInit.Port, _ = strconv.Atoi(serviceObject.Port)
+			if fp := flag.Lookup("port"); nil != fp {
+				if fp.Value.String() == fp.DefValue {
+					revel.HTTPPort, _ = strconv.Atoi(serviceObject.Port)
+					revel.ServerEngineInit.Port = revel.HTTPPort
+					revel.ServerEngineInit.Address = serviceObject.ListenAddr("")
+				}
+			} else {
+				revel.HTTPPort, _ = strconv.Atoi(serviceObject.Port)
+				revel.ServerEngineInit.Port = revel.HTTPPort
+				revel.ServerEngineInit.Address = serviceObject.ListenAddr("")
 			}
-			serviceObject.SetPort(serviceObject.Port)
 		} else {
 			serviceObject.SetPort("9000")
 		}

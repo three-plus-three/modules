@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	cache "github.com/patrickmn/go-cache"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/errors"
@@ -21,6 +22,8 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 	}
 	permissionGroupCache.Init(5*time.Minute, refresh)
 	refresh()
+
+	userCache := cache.New(5*time.Minute, 10*time.Minute)
 
 	var superRole Role
 	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&superRole); e != nil {
@@ -50,6 +53,13 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 		if e := lastErr.Get(); e != nil {
 			panic(e)
 		}
+
+		if o, found := userCache.Get(userName); found && o != nil {
+			if u, ok := o.(web_ext.User); ok && u != nil {
+				return u
+			}
+		}
+
 		if superRole.ID == 0 {
 			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&superRole); e != nil {
 				log.Println("[warn] role", web_ext.RoleSuper, "isnot found -", e)
@@ -84,11 +94,15 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 				u.u.Name = userName
 				u.roleNames = []string{web_ext.RoleAdministrator}
 				u.roles = []Role{adminRole}
+
+				userCache.SetDefault(userName, u)
 				return u
 			case web_ext.UserGuest:
 				u.u.Name = userName
 				u.roleNames = []string{web_ext.RoleGuest}
 				u.roles = []Role{guestRole}
+
+				userCache.SetDefault(userName, u)
 				return u
 			default:
 				err = errors.New("query user with name is " + userName + "fail: " + err.Error())
@@ -112,6 +126,8 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			for _, role := range u.roles {
 				if role.ID == u.administrator {
 					u.Roles() // 缓存 roleNames
+
+					userCache.SetDefault(userName, u)
 					return u
 				}
 			}
@@ -121,6 +137,8 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 			u.u.Name = userName
 			u.roles = append(u.roles, adminRole)
 			u.Roles() // 缓存 roleNames
+
+			userCache.SetDefault(userName, u)
 			return u
 		}
 
@@ -145,6 +163,8 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 		// }
 
 		u.Roles() // 缓存 roleNames
+
+		userCache.SetDefault(userName, u)
 		return u
 	}
 }
