@@ -17,6 +17,7 @@ import (
 	"github.com/kardianos/osext"
 	"github.com/three-plus-three/modules/as"
 	commons_cfg "github.com/three-plus-three/modules/cfg"
+	"go.uber.org/zap"
 )
 
 type ENV_PROXY_TYPE int
@@ -203,6 +204,11 @@ type Environment struct {
 	RawDaemonUrlPath string
 	DaemonUrlPath    string
 	serviceOptions   []ServiceConfig
+
+	LogConfig          zap.Config
+	Logger             *zap.Logger
+	SugaredLogger      *zap.SugaredLogger
+	undoRedirectStdLog func()
 
 	Engine EngineConfig
 }
