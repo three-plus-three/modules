@@ -12,10 +12,26 @@ func (env *Environment) initLogger(name string) error {
 	if err != nil {
 		return errors.Wrap(err, "init zap logger fail")
 	}
-	env.Logger = env.Logger.Named(name)
+	if name != "" {
+		env.Logger = env.Logger.Named(name)
+	}
 
 	zap.ReplaceGlobals(env.Logger)
 	env.SugaredLogger = env.Logger.Sugar()
+	env.undoRedirectStdLog = zap.RedirectStdLog(env.Logger)
+	return nil
+}
+
+func (env *Environment) reinitLogger(name string) error {
+	if env.Logger == nil {
+		return env.initLogger(name)
+	}
+
+	env.Logger = env.Logger.Named(name)
+	zap.ReplaceGlobals(env.Logger)
+	env.SugaredLogger = env.Logger.Sugar()
+
+	env.undoRedirectStdLog()
 	env.undoRedirectStdLog = zap.RedirectStdLog(env.Logger)
 	return nil
 }

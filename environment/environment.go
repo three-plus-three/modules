@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"errors"
 	"flag"
 	"log"
 	"os"
@@ -62,6 +63,25 @@ type Environment struct {
 	undoRedirectStdLog func()
 
 	Engine EngineConfig
+}
+
+func (env *Environment) SetCurrent(current ENV_PROXY_TYPE) *Environment {
+	env.CurrentApplication = current
+	if !IsValidProxyID(current) {
+		return env
+	}
+	so := env.GetServiceConfig(env.CurrentApplication)
+	if err := env.reinitLogger(so.Name); err != nil {
+		panic(err)
+	}
+	return env
+}
+
+func (env *Environment) Current() *ServiceConfig {
+	if !IsValidProxyID(env.CurrentApplication) {
+		panic(errors.New("currnet application is no value"))
+	}
+	return env.GetServiceConfig(env.CurrentApplication)
 }
 
 func (self *Environment) Clone() *Environment {
@@ -219,9 +239,15 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		env.serviceOptions[idx].listeners.Init()
 	}
 
-	so := env.GetServiceConfig(env.CurrentApplication)
-	if err := env.initLogger(so.Name); err != nil {
-		return nil, err
+	if env.CurrentApplication == 0 {
+		so := env.GetServiceConfig(env.CurrentApplication)
+		if err := env.initLogger(so.Name); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := env.initLogger(""); err != nil {
+			return nil, err
+		}
 	}
 	if err := env.initTSDB(opt.PrintIfFilesNotFound); err != nil {
 		return nil, err

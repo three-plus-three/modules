@@ -46,6 +46,10 @@ const (
 	ENV_UM_PROXY_ID = ENV_USER_MANAGE_PROXY_ID
 )
 
+func IsValidProxyID(id ENV_PROXY_TYPE) bool {
+	return id >= ENV_MIN_PROXY_ID && id < ENV_MAX_PROXY_ID
+}
+
 // 服务的缺省配置
 var (
 	ServiceOptions = []ServiceOption{
