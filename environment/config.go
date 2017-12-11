@@ -6,11 +6,142 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
+	"strconv"
+	"time"
 
+	"github.com/three-plus-three/modules/as"
 	commons_cfg "github.com/three-plus-three/modules/cfg"
 )
+
+// Config 配置
+type Config struct {
+	settings map[string]interface{}
+}
+
+// PasswordWithDefault 读配置
+func (self *Config) PasswordWithDefault(key, defValue string) string {
+	if s, ok := self.settings[key]; ok {
+		return as.StringWithDefault(s, defValue)
+	}
+	return defValue
+}
+
+// StringWithDefault 读配置
+func (self *Config) StringWithDefault(key, defValue string) string {
+	if s, ok := self.settings[key]; ok {
+		return as.StringWithDefault(s, defValue)
+	}
+	return defValue
+}
+
+// IntWithDefault 读配置
+func (self *Config) IntWithDefault(key string, defValue int) int {
+	if s, ok := self.settings[key]; ok {
+		return as.IntWithDefault(s, defValue)
+	}
+	return defValue
+}
+
+// BoolWithDefault 读配置
+func (self *Config) BoolWithDefault(key string, defValue bool) bool {
+	if s, ok := self.settings[key]; ok {
+		return as.BoolWithDefault(s, defValue)
+	}
+	return defValue
+}
+
+// DurationWithDefault 读配置
+func (self *Config) DurationWithDefault(key string, defValue time.Duration) time.Duration {
+	if s, ok := self.settings[key]; ok {
+		return as.DurationWithDefault(s, defValue)
+	}
+	return defValue
+}
+
+// Set 写配置
+func (self *Config) Set(key string, value interface{}) {
+	self.settings[key] = value
+}
+
+// Get 读配置
+func (self *Config) Get(key string, subKeys ...string) interface{} {
+	o := self.settings[key]
+	if len(subKeys) == 0 {
+		return o
+	}
+
+	if o == nil {
+		return nil
+	}
+
+	for _, subKey := range subKeys {
+		m, ok := o.(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		o = m[subKey]
+		if o == nil {
+			return nil
+		}
+	}
+	return o
+}
+
+// GetAsString 读配置
+func (self *Config) GetAsString(keys []string, defaultValue string) string {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.StringWithDefault(o, defaultValue)
+}
+
+// GetAsInt 读配置
+func (self *Config) GetAsInt(keys []string, defaultValue int) int {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.IntWithDefault(o, defaultValue)
+}
+
+// GetAsBool 读配置
+func (self *Config) GetAsBool(keys []string, defaultValue bool) bool {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.BoolWithDefault(o, defaultValue)
+}
+
+// GetAsDuration 读配置
+func (self *Config) GetAsDuration(keys []string, defaultValue time.Duration) time.Duration {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.DurationWithDefault(o, defaultValue)
+}
+
+// GetAsTime 读配置
+func (self *Config) GetAsTime(keys []string, defaultValue time.Time) time.Time {
+	o := self.Get(keys[0], keys[1:]...)
+	return as.TimeWithDefault(o, defaultValue)
+}
+
+// DurationWithDefault 读配置
+func (self *Config) ForEach(cb func(key string, value interface{})) {
+	for k, v := range self.settings {
+		cb(k, v)
+	}
+}
+
+func hostWith(cfg map[string]string, key, value string) string {
+	v := stringWith(cfg, key, value)
+	if ip := net.ParseIP(v); nil == ip {
+		panic("'" + key + "' isn't a ip address - '" + v + "'.")
+	}
+	return v
+}
+
+func portWith(cfg map[string]string, key, value string) string {
+	v := stringWith(cfg, key, value)
+	if _, e := strconv.ParseInt(v, 10, 32); nil != e {
+		panic("'" + key + "' isn't a port number - '" + v + "'.")
+	}
+	return v
+}
 
 func LoadConfigs(fs FileSystem, nm string, dumpFilesIfNotFound bool) map[string]string {
 	files := fs.SearchConfig(nm)
