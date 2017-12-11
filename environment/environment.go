@@ -271,7 +271,7 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		}
 	}
 
-	return env, nil
+	return env, callHooks(env)
 }
 
 func loadServiceConfig(cfg map[string]string, so ServiceOption, sc *ServiceConfig) *ServiceConfig {
