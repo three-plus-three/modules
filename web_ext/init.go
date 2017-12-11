@@ -45,7 +45,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 	revel.OnAppStart(func() {
 		projectName := ""
 		for _, so := range environment.ServiceOptions {
-			if so.Id == serviceID {
+			if so.ID == serviceID {
 				projectName = so.Name
 			}
 		}
