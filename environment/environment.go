@@ -1,9 +1,7 @@
 package environment
 
 import (
-	"errors"
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -13,107 +11,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/kardianos/osext"
 	"github.com/three-plus-three/modules/as"
 	commons_cfg "github.com/three-plus-three/modules/cfg"
 	"go.uber.org/zap"
 )
 
-type ENV_PROXY_TYPE int
-
-const (
-	ENV_REDIS_PROXY_ID ENV_PROXY_TYPE = iota
-	//ENV_MODELS_PROXY_ID
-	ENV_SAMPLING_PROXY_ID
-	//ENV_SAMPLING_STUB_PROXY_ID
-	ENV_POLL_PROXY_ID
-	//ENV_TSDB_PROXY_ID
-	ENV_SCHD_PROXY_ID
-	ENV_LCN_PROXY_ID
-	ENV_IP_MGR_PROXY_ID
-	ENV_DELAYED_JOB_PROXY_ID
-	ENV_TERMINAL_PROXY_ID
-	ENV_JBRIDGE_PROXY_ID
-	ENV_JBRIDGE15_PROXY_ID
-	ENV_REST_PROXY_ID
-	ENV_WSERVER_PROXY_ID
-	ENV_LUA_BRIDGE_PROXY_ID
-	ENV_WEB_PROXY_ID
-	ENV_LOGGING_PROXY_ID
-	ENV_NFLOW_PROXY_ID
-	ENV_MC_PROXY_ID
-	ENV_MC_DEV_PROXY_ID
-	ENV_INFLUXDB_PROXY_ID
-	ENV_INFLUXDB_ADM_PROXY_ID
-	ENV_FORK_PROXY_ID
-	ENV_IMS_PROXY_ID
-	ENV_WSERVER_SSL_PROXY_ID
-	ENV_CMDB_PROXY_ID
-	ENV_ASSET_MANAGE_PROXY_ID
-	ENV_NSM_PROXY_ID
-	ENV_MINIO_PROXY_ID
-	ENV_USER_MANAGE_PROXY_ID
-	ENV_ITSM_PROXY_ID
-	ENV_LOGANALYZER_PROXY_ID
-	ENV_MAX_PROXY_ID
-
-	ENV_ES_PROXY_ID  = ENV_LOGANALYZER_PROXY_ID
-	ENV_MIN_PROXY_ID = ENV_REDIS_PROXY_ID
-	// ENV_DS_PROXY_ID  = ENV_MODELS_PROXY_ID
-	ENV_AM_PROXY_ID = ENV_ASSET_MANAGE_PROXY_ID
-	ENV_UM_PROXY_ID = ENV_USER_MANAGE_PROXY_ID
-)
-
-type ServiceOption struct {
-	Id   ENV_PROXY_TYPE
-	Name string
-	Host string
-	Port string
-	Path string
-}
-
-var (
-	ServiceOptions = []ServiceOption{
-		{Id: ENV_REDIS_PROXY_ID, Name: "redis", Host: "127.0.0.1", Port: "36379"},
-		//{Id: ENV_MODELS_PROXY_ID, Name: "ds", Host: "127.0.0.1", Port: "37071"},
-		{Id: ENV_SAMPLING_PROXY_ID, Name: "sampling", Host: "127.0.0.1", Port: "37072"},
-		//{Id: ENV_SAMPLING_STUB_PROXY_ID, Name: "sampling_stub", Host: "127.0.0.1", Port: "37081"},
-		{Id: ENV_POLL_PROXY_ID, Name: "poll", Host: "127.0.0.1", Port: "37073"},
-		//{Id: ENV_TSDB_PROXY_ID, Name: "tsdb", Host: "127.0.0.1", Port: "37074"},
-		{Id: ENV_SCHD_PROXY_ID, Name: "schd", Host: "127.0.0.1", Port: "37075"},
-		{Id: ENV_LCN_PROXY_ID, Name: "lcn", Host: "127.0.0.1", Port: "37076"},
-		{Id: ENV_IP_MGR_PROXY_ID, Name: "ip_mgr", Host: "127.0.0.1", Port: "37077"},
-		{Id: ENV_DELAYED_JOB_PROXY_ID, Name: "delayed_jobs", Host: "127.0.0.1", Port: "37078"},
-		{Id: ENV_TERMINAL_PROXY_ID, Name: "terminal", Host: "127.0.0.1", Port: "37079"},
-		{Id: ENV_JBRIDGE_PROXY_ID, Name: "jbridge", Host: "127.0.0.1", Port: "37080"},
-		{Id: ENV_REST_PROXY_ID, Name: "rest", Host: "127.0.0.1", Port: "39301"},
-		{Id: ENV_WSERVER_PROXY_ID, Name: "wserver", Host: "127.0.0.1", Port: "37070"},
-		{Id: ENV_WSERVER_SSL_PROXY_ID, Name: "daemon_ssl", Host: "127.0.0.1", Port: "37090"},
-		{Id: ENV_LUA_BRIDGE_PROXY_ID, Name: "lua_bridge", Host: "127.0.0.1", Port: "37082"},
-		{Id: ENV_WEB_PROXY_ID, Name: "web", Host: "127.0.0.1", Port: "39000"},
-		{Id: ENV_LOGGING_PROXY_ID, Name: "es", Host: "127.0.0.1", Port: "37083"},
-		{Id: ENV_NFLOW_PROXY_ID, Name: "nflow", Host: "127.0.0.1", Port: "37084"},
-		{Id: ENV_MC_PROXY_ID, Name: "mc", Host: "127.0.0.1", Port: "37085"},
-		{Id: ENV_MC_DEV_PROXY_ID, Name: "mc_dev", Host: "127.0.0.1", Port: "9000"},
-		{Id: ENV_INFLUXDB_PROXY_ID, Name: "influxdb", Host: "127.0.0.1", Port: "37086"},
-		{Id: ENV_INFLUXDB_ADM_PROXY_ID, Name: "influxdb_adm", Host: "127.0.0.1", Port: "39183"},
-		{Id: ENV_FORK_PROXY_ID, Name: "fork", Host: "127.0.0.1", Port: "37087"},
-		{Id: ENV_JBRIDGE15_PROXY_ID, Name: "jbridge15", Host: "127.0.0.1", Port: "37088"},
-		{Id: ENV_IMS_PROXY_ID, Name: "ims", Host: "127.0.0.1", Port: "37089"},
-		{Id: ENV_CMDB_PROXY_ID, Name: "cmdb", Host: "127.0.0.1", Port: "37091"},
-		{Id: ENV_ASSET_MANAGE_PROXY_ID, Name: "am", Host: "127.0.0.1", Port: "37092"},
-		{Id: ENV_NSM_PROXY_ID, Name: "nsm", Host: "127.0.0.1", Port: "37093"},
-		{Id: ENV_MINIO_PROXY_ID, Name: "minio", Host: "127.0.0.1", Port: "37094"},
-		{Id: ENV_UM_PROXY_ID, Name: "um", Host: "127.0.0.1", Port: "37095"},
-		{Id: ENV_ITSM_PROXY_ID, Name: "itsm", Host: "127.0.0.1", Port: "37096"},
-		// {Id: ENV_ES_PROXY_ID, Name: "es_old", Host: "127.0.0.1", Port: "39300"},
-		{Id: ENV_LOGANALYZER_PROXY_ID, Name: "loganalyzer", Host: "127.0.0.1", Port: "37097"},
-	}
-)
-
 // Options 初始选项
 type Options struct {
+	CurrentApplication   ENV_PROXY_TYPE
 	ConfigFiles          []string
 	ConfDir              string
 	FlagSet              *flag.FlagSet
@@ -137,58 +43,6 @@ func (self EngineConfig) IsMaster() bool {
 	return strings.ToLower(strings.TrimSpace(self.Name)) == "default"
 }
 
-// DbConfig 数据库配置
-type DbConfig struct {
-	DbType   string
-	Address  string
-	Port     string
-	Schema   string
-	Username string
-	Password string
-}
-
-func (db *DbConfig) Host() string {
-	if "" != db.Port && "0" != db.Port {
-		return db.Address + ":" + db.Port
-	}
-	switch db.DbType {
-	case "postgresql":
-		return db.Address + ":35432"
-	default:
-		panic(errors.New("unknown db type - " + db.DbType))
-	}
-}
-
-func (db *DbConfig) dbUrl() (string, string, error) {
-	switch db.DbType {
-	case "postgresql":
-		if db.Port == "" {
-			db.Port = "5432"
-		}
-		return "postgres", fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
-			db.Address, db.Port, db.Schema, db.Username, db.Password), nil
-	case "mysql":
-		if db.Port == "" {
-			db.Port = "3306"
-		}
-		return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?autocommit=true&parseTime=true",
-			db.Username, db.Password, db.Address, db.Port, db.Schema), nil
-	case "odbc_with_mssql":
-		return "odbc_with_mssql", fmt.Sprintf("dsn=%s;uid=%s;pwd=%s",
-			db.Schema, db.Username, db.Password), nil
-	default:
-		return "", "", errors.New("unknown db type - " + db.DbType)
-	}
-}
-
-func (db *DbConfig) Url() (string, string) {
-	dbDrv, dbUrl, err := db.dbUrl()
-	if err != nil {
-		panic(errors.New("unknown db type - " + db.DbType))
-	}
-	return dbDrv, dbUrl
-}
-
 // Environment
 type Environment struct {
 	Fs FileSystem
@@ -201,9 +55,10 @@ type Environment struct {
 		Data   DbConfig
 	}
 
-	RawDaemonUrlPath string
-	DaemonUrlPath    string
-	serviceOptions   []ServiceConfig
+	CurrentApplication ENV_PROXY_TYPE
+	RawDaemonUrlPath   string
+	DaemonUrlPath      string
+	serviceOptions     []ServiceConfig
 
 	LogConfig          zap.Config
 	Logger             *zap.Logger
@@ -337,6 +192,7 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 	}
 
 	env := &Environment{
+		CurrentApplication: opt.CurrentApplication,
 		//rootDir: opt.rootDir,
 		Fs:     fs,
 		Name:   opt.Name,
@@ -345,17 +201,19 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 	for k, v := range cfg {
 		env.Config.Set(k, v)
 	}
+
+	env.RawDaemonUrlPath = stringWith(cfg, "daemon.urlpath", "hengwei")
+	env.DaemonUrlPath = env.RawDaemonUrlPath
+	if !strings.HasPrefix(env.DaemonUrlPath, "/") {
+		env.DaemonUrlPath = "/" + env.DaemonUrlPath
+	}
+	if !strings.HasSuffix(env.DaemonUrlPath, "/") {
+		env.DaemonUrlPath = env.DaemonUrlPath + "/"
+	}
+
 	env.Db.Models = ReadDbConfig("models.", cfg, db_defaults)
 	env.Db.Data = ReadDbConfig("data.", cfg, db_defaults)
-
-	//if opt.IsTest {
-	// env.Db.Models.Port = "5432"
-	// env.Db.Models.Schema = "tpt_models_test"
-
-	// env.Db.Data.Port = "5432"
-	// env.Db.Data.Schema = "tpt_data_test"
-	//}
-
+	env.Engine = loadEngineRegistry(&env.Config)
 	env.serviceOptions = make([]ServiceConfig, len(ServiceOptions))
 	for idx, so := range ServiceOptions {
 		loadServiceConfig(cfg, so, &env.serviceOptions[idx])
@@ -365,46 +223,18 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		env.serviceOptions[idx].listeners.Init()
 	}
 
-	var tsdbConfigFile string
-	var tsdbConfig map[string]interface{}
-	var err error
-
-	if runtime.GOOS == "windows" {
-		tsdbConfigFile = env.Fs.FromConfig("tsdb_config.win.conf")
-	} else {
-		tsdbConfigFile = env.Fs.FromConfig("tsdb_config.conf")
+	so := env.GetServiceConfig(env.CurrentApplication)
+	if err := env.initLogger(so.Name); err != nil {
+		return nil, err
 	}
-
-	_, err = toml.DecodeFile(tsdbConfigFile, &tsdbConfig)
-	if err != nil {
-		if opt.PrintIfFilesNotFound {
-			log.Println("[warn] load tsdb config fail from", tsdbConfigFile)
-		}
-	} else if nil != tsdbConfig {
-		tsdbHTTP, _ := as.Object(tsdbConfig["http"])
-		if nil != tsdbHTTP {
-			if _, port, err := net.SplitHostPort(fmt.Sprint(tsdbHTTP["bind-address"])); err == nil {
-				env.GetServiceConfig(ENV_INFLUXDB_PROXY_ID).SetPort(port)
-				if opt.PrintIfFilesNotFound {
-					log.Println("[warn] load tsdb http port ("+port+") from", tsdbConfigFile)
-				}
-			}
-		}
-
-		tsdbAdmin, _ := as.Object(tsdbConfig["admin"])
-		if nil != tsdbAdmin {
-			if _, port, err := net.SplitHostPort(fmt.Sprint(tsdbAdmin["bind-address"])); err == nil {
-				env.GetServiceConfig(ENV_INFLUXDB_ADM_PROXY_ID).SetPort(port)
-				if opt.PrintIfFilesNotFound {
-					log.Println("[warn] load tsdb admin port ("+port+") from", tsdbConfigFile)
-				}
-			}
-		}
+	if err := env.initTSDB(opt.PrintIfFilesNotFound); err != nil {
+		return nil, err
 	}
 
 	if minioConfig := loadMinioConfig(env.Fs); minioConfig != nil {
 		env.Config.Set("minio_config", minioConfig)
 	}
+
 	for _, nm := range []string{env.Fs.FromWebConfig("application.conf"),
 		env.Fs.FromDataConfig("web/application.conf"),
 		env.Fs.FromInstallRoot("web/conf/application.conf")} {
@@ -419,24 +249,14 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		}
 	}
 
-	env.RawDaemonUrlPath = stringWith(cfg, "daemon.urlpath", "hengwei")
-	env.DaemonUrlPath = env.RawDaemonUrlPath
-	if !strings.HasPrefix(env.DaemonUrlPath, "/") {
-		env.DaemonUrlPath = "/" + env.DaemonUrlPath
-	}
-	if !strings.HasSuffix(env.DaemonUrlPath, "/") {
-		env.DaemonUrlPath = env.DaemonUrlPath + "/"
-	}
-
-	env.Engine = loadEngineRegistry(&env.Config)
 	return env, nil
 }
 
 func loadServiceConfig(cfg map[string]string, so ServiceOption, sc *ServiceConfig) *ServiceConfig {
-	sc.Id = so.Id
+	sc.Id = so.ID
 	sc.Name = so.Name
 
-	if so.Id == ENV_WSERVER_PROXY_ID {
+	if so.ID == ENV_WSERVER_PROXY_ID {
 		sc.Host = hostWith(cfg, so.Name+".host", stringWith(cfg, "daemon.host", so.Host))
 		sc.Port = portWith(cfg, so.Name+".port", stringWith(cfg, "daemon.port", so.Port))
 	} else {
@@ -444,7 +264,7 @@ func loadServiceConfig(cfg map[string]string, so ServiceOption, sc *ServiceConfi
 		sc.Port = portWith(cfg, so.Name+".port", so.Port)
 	}
 
-	if ENV_MC_DEV_PROXY_ID == so.Id {
+	if ENV_MC_DEV_PROXY_ID == so.ID {
 		if mcDevPort := os.Getenv("mc_dev_port"); "" != mcDevPort {
 			sc.Port = mcDevPort
 		}
