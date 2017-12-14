@@ -3,11 +3,13 @@ package environment
 import (
 	"github.com/three-plus-three/modules/errors"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func (env *Environment) initLogger(name string) error {
 	var err error
 	env.LogConfig = zap.NewProductionConfig()
+	env.LogConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	env.Logger, err = env.LogConfig.Build()
 	if err != nil {
 		return errors.Wrap(err, "init zap logger fail")
