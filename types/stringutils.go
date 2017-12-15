@@ -38,6 +38,8 @@ func CamelCase(name string) string {
 		return "MplsCE"
 	case "oracle_rac":
 		return "OracleRAC"
+	case "ibm_blade":
+		return "IBMBlade"
 	}
 	return inflect.Camelize(name)
 }
@@ -74,6 +76,8 @@ func Underscore(name string) string {
 		return "mpls_ce"
 	case "OracleRAC":
 		return "oracle_rac"
+	case "IBMBlade":
+		return "ibm_blade"
 	}
 	uname := inflect.Underscore(name)
 	return strings.Replace(uname, "_i_d", "_id", -1)
@@ -148,6 +152,8 @@ func Tableize(className string) string {
 		return "mpls_ce"
 	case "OracleRAC":
 		return "oracle_rac"
+	case "IBMBlade":
+		return "ibm_blade"
 	}
 	return Pluralize(Underscore(className))
 }
