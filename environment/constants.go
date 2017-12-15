@@ -5,11 +5,8 @@ type ENV_PROXY_TYPE int
 // 服务的常量
 const (
 	ENV_REDIS_PROXY_ID ENV_PROXY_TYPE = iota
-	//ENV_MODELS_PROXY_ID
 	ENV_SAMPLING_PROXY_ID
-	//ENV_SAMPLING_STUB_PROXY_ID
 	ENV_POLL_PROXY_ID
-	//ENV_TSDB_PROXY_ID
 	ENV_SCHD_PROXY_ID
 	ENV_LCN_PROXY_ID
 	ENV_IP_MGR_PROXY_ID
@@ -37,13 +34,16 @@ const (
 	ENV_USER_MANAGE_PROXY_ID
 	ENV_ITSM_PROXY_ID
 	ENV_LOGANALYZER_PROXY_ID
+	ENV_MODELS_PROXY_ID        // Deprecated
+	ENV_SAMPLING_STUB_PROXY_ID // Deprecated
+	ENV_TSDB_PROXY_ID          // Deprecated
 	ENV_MAX_PROXY_ID
 
-	ENV_ES_PROXY_ID  = ENV_LOGANALYZER_PROXY_ID
 	ENV_MIN_PROXY_ID = ENV_REDIS_PROXY_ID
-	// ENV_DS_PROXY_ID  = ENV_MODELS_PROXY_ID
-	ENV_AM_PROXY_ID = ENV_ASSET_MANAGE_PROXY_ID
-	ENV_UM_PROXY_ID = ENV_USER_MANAGE_PROXY_ID
+	ENV_ES_PROXY_ID  = ENV_LOGANALYZER_PROXY_ID // Deprecated
+	ENV_DS_PROXY_ID  = ENV_MODELS_PROXY_ID      // Deprecated
+	ENV_AM_PROXY_ID  = ENV_ASSET_MANAGE_PROXY_ID
+	ENV_UM_PROXY_ID  = ENV_USER_MANAGE_PROXY_ID
 )
 
 func IsValidProxyID(id ENV_PROXY_TYPE) bool {
@@ -54,11 +54,15 @@ func IsValidProxyID(id ENV_PROXY_TYPE) bool {
 var (
 	ServiceOptions = []ServiceOption{
 		{ID: ENV_REDIS_PROXY_ID, Name: "redis", Host: "127.0.0.1", Port: "36379"},
-		//{ID: ENV_MODELS_PROXY_ID, Name: "ds", Host: "127.0.0.1", Port: "37071"},
+
+		/////////// Deprecated
+		{ID: ENV_MODELS_PROXY_ID, Name: "ds", Host: "127.0.0.1", Port: "37071"},
+		{ID: ENV_TSDB_PROXY_ID, Name: "tsdb", Host: "127.0.0.1", Port: "37074"},
+		{ID: ENV_SAMPLING_STUB_PROXY_ID, Name: "sampling_stub", Host: "127.0.0.1", Port: "37081"},
+		///////////
+
 		{ID: ENV_SAMPLING_PROXY_ID, Name: "sampling", Host: "127.0.0.1", Port: "37072"},
-		//{ID: ENV_SAMPLING_STUB_PROXY_ID, Name: "sampling_stub", Host: "127.0.0.1", Port: "37081"},
 		{ID: ENV_POLL_PROXY_ID, Name: "poll", Host: "127.0.0.1", Port: "37073"},
-		//{ID: ENV_TSDB_PROXY_ID, Name: "tsdb", Host: "127.0.0.1", Port: "37074"},
 		{ID: ENV_SCHD_PROXY_ID, Name: "schd", Host: "127.0.0.1", Port: "37075"},
 		{ID: ENV_LCN_PROXY_ID, Name: "lcn", Host: "127.0.0.1", Port: "37076"},
 		{ID: ENV_IP_MGR_PROXY_ID, Name: "ip_mgr", Host: "127.0.0.1", Port: "37077"},
