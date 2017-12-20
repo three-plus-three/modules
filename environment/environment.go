@@ -239,7 +239,7 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		env.serviceOptions[idx].listeners.Init()
 	}
 
-	if env.CurrentApplication == 0 {
+	if env.CurrentApplication != ENV_MIN_PROXY_ID {
 		so := env.GetServiceConfig(env.CurrentApplication)
 		if err := env.initLogger(so.Name); err != nil {
 			return nil, err
