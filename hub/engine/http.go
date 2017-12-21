@@ -33,9 +33,8 @@ func getRealIP(req *http.Request) string {
 			address += (":" + port)
 		}
 		return address
-	} else {
-		return "unknow"
 	}
+	return "unknown"
 }
 
 type StandardEngine struct {
