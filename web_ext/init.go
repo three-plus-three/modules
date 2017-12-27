@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/revel/revel"
 	_ "github.com/three-plus-three/modules/bind"
@@ -20,6 +21,10 @@ import (
 )
 
 var lifecycleData *Lifecycle
+
+func init() {
+	revel.TimeZone = time.Local
+}
 
 func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 	cb func(*Lifecycle) error, createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
