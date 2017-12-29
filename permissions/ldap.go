@@ -11,7 +11,7 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-func isConnectError(err error) bool {
+func IsConnectError(err error) bool {
 	if ldapErr, ok := err.(*ldap.Error); ok {
 		if opErr, ok := ldapErr.Err.(*net.OpError); ok && opErr.Op == "dial" {
 			return true
