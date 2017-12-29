@@ -3,12 +3,37 @@ package permissions
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
 	"github.com/three-plus-three/modules/environment"
 	ldap "gopkg.in/ldap.v2"
 )
+
+func isConnectError(err error) bool {
+	if ldapErr, ok := err.(*ldap.Error); ok {
+		if opErr, ok := ldapErr.Err.(*net.OpError); ok && opErr.Op == "dial" {
+			return true
+		}
+	}
+	return false
+}
+
+func IsPasswordError(err error) bool {
+	if ldapErr, ok := err.(*ldap.Error); ok {
+		return ldapErr.ResultCode == ldap.LDAPResultInvalidCredentials
+	}
+	return false
+}
+
+func IsInsufficientAccessRightsError(err error) bool {
+	if ldapErr, ok := err.(*ldap.Error); ok {
+		return ldapErr.ResultCode == ldap.LDAPResultInsufficientAccessRights ||
+			ldapErr.ResultCode == ldap.LDAPResultInappropriateAuthentication
+	}
+	return false
+}
 
 type ldapConfig struct {
 	Address    string
