@@ -34,6 +34,7 @@ const (
 	ENV_USER_MANAGE_PROXY_ID
 	ENV_ITSM_PROXY_ID
 	ENV_LOGANALYZER_PROXY_ID
+	ENV_AM_RECORD_MGR_ID
 	ENV_MODELS_PROXY_ID        // Deprecated
 	ENV_SAMPLING_STUB_PROXY_ID // Deprecated
 	ENV_TSDB_PROXY_ID          // Deprecated
@@ -91,6 +92,7 @@ var (
 		{ID: ENV_ITSM_PROXY_ID, Name: "itsm", Host: "127.0.0.1", Port: "37096"},
 		// {ID: ENV_ES_PROXY_ID, Name: "es_old", Host: "127.0.0.1", Port: "39300"},
 		{ID: ENV_LOGANALYZER_PROXY_ID, Name: "loganalyzer", Host: "127.0.0.1", Port: "37097"},
+		{ID: ENV_AM_RECORD_MGR_ID, Name: "record_mgr", Host: "127.0.0.1", Port: "37098"},
 	}
 )
 
