@@ -120,7 +120,7 @@ func ReadProductsFromDB(db *sql.DB, ignoreList []string) ([]toolbox.Menu, error)
 func ProductsWrap(env *environment.Environment, applicationID environment.ENV_PROXY_TYPE, db *sql.DB, cb Callback) Callback {
 	var cachedValue CachedValue
 	cachedValue.MaxAge = 5 * 60
-	ignoreList := []string{env.GetServiceConfig(applicationID).Name}
+	ignoreList := []string{} // env.GetServiceConfig(applicationID).Name
 	return func() ([]toolbox.Menu, error) {
 		value := cachedValue.Get()
 		if value == nil {
