@@ -50,6 +50,9 @@ func ReadProducts(env *environment.Environment, db *sql.DB, ignoreList []string)
 	if err != nil {
 		return nil, err
 	}
+	if len(list) == 1 && env.Current() != nil && list[0].UID == MenuIDPrefix+env.Current().Name {
+		return nil, nil
+	}
 
 	names := env.Config.StringWithDefault("applications.names", DefaultProductNames)
 	if names == "" {
