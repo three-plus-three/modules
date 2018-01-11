@@ -17,7 +17,8 @@ type RuntimeError interface {
 
 //  ErrNotFound 对象找不到
 type ErrNotFound struct {
-	id interface{}
+	typ string
+	id  interface{}
 }
 
 func (err *ErrNotFound) HTTPCode() int {
@@ -32,12 +33,16 @@ func (err *ErrNotFound) Error() string {
 	if nil == err.id {
 		return "not found"
 	}
-	return "record with id is '" + fmt.Sprint(err.id) + "' isn't found"
+	return "record with type is '" + err.typ + "' and id is '" + fmt.Sprint(err.id) + "' isn't found"
 }
 
 //  NotFound 创建一个 ErrNotFound
-func NotFound(id interface{}) RuntimeError {
-	return &ErrNotFound{id: id}
+func NotFound(id interface{}, typ ...string) RuntimeError {
+	if len(typ) == 0 {
+		return &ErrNotFound{id: id}
+	}
+
+	return &ErrNotFound{id: id, typ: typ[0]}
 }
 
 //  New 创建一个 error
