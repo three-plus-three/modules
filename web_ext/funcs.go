@@ -220,6 +220,8 @@ func ErrorToFlash(c *revel.Controller, err error, notFoundKey ...string) {
 					} else {
 						localeMessage = revel.Message(c.Request.Locale, key)
 					}
+				} else {
+					localeMessage = revel.Message(c.Request.Locale, validation.Code)
 				}
 
 				c.Validation.Error(localeMessage).
