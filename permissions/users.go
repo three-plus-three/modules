@@ -62,7 +62,12 @@ func (user *User) TableName() string {
 
 func (user *User) IsBuiltin() bool {
 	return user.Name == web_ext.UserAdmin ||
-		user.Name == web_ext.UserGuest
+		user.Name == web_ext.UserGuest ||
+		user.Name == UserTPTNetwork
+}
+
+func (user *User) IsHidden() bool {
+	return user.Name == UserTPTNetwork
 }
 
 func (user *User) Validate(validation *revel.Validation) bool {

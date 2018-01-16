@@ -21,6 +21,9 @@ const UserAdmin = "admin"
 // UserGuest guest 用户名
 const UserGuest = "guest"
 
+// UserTPTNetwork tpt_nm 用户名
+const UserTPTNetwork = "tpt_nm"
+
 // UserAdmin super 角色名
 const RoleSuper = "super"
 
