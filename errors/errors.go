@@ -36,6 +36,16 @@ func (err *ErrNotFound) Error() string {
 	return "record with type is '" + err.typ + "' and id is '" + fmt.Sprint(err.id) + "' isn't found"
 }
 
+//  IsNotFound 是不是一个未找到错误
+func IsNotFound(e error) bool {
+	_, ok := e.(*ErrNotFound)
+	if ok {
+		return ok
+	}
+	re, ok := e.(RuntimeError)
+	return ok && re.HTTPCode() == http.StatusNotFound
+}
+
 //  NotFound 创建一个 ErrNotFound
 func NotFound(id interface{}, typ ...string) RuntimeError {
 	if len(typ) == 0 {
