@@ -70,7 +70,7 @@ func ReadProductsFromDB(db *sql.DB, ignoreList []string) ([]toolbox.Menu, error)
 	var title string
 	var classes sql.NullString
 
-	rows, err := db.Query("select id, address, name, url, icon, title, classes from tpt_products")
+	rows, err := db.Query("SELECT id, address, name, url, icon, title, classes FROM tpt_products WHERE state IS NULL OR state = 0")
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +174,17 @@ func UpdateProduct(env *environment.Environment,
 	}
 	if err != nil {
 		return errors.Wrap(err, "UpdateProduct")
+	}
+	return nil
+}
+
+func DeleteProduct(env *environment.Environment,
+	applicationID environment.ENV_PROXY_TYPE, db *sql.DB) error {
+
+	so := env.GetServiceConfig(applicationID)
+	_, err := db.Exec("DELETE FROM tpt_products WHERE name = $1", so.Name)
+	if err != nil {
+		return errors.Wrap(err, "DeleteProduct")
 	}
 	return nil
 }
