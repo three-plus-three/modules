@@ -113,7 +113,7 @@ func Concat(errs []error, format string, args ...interface{}) error {
 
 // ApplicationError 应用错误
 type ApplicationError struct {
-	ErrCode    int    `json:"code"`
+	ErrCode    int    `json:"code,omitempty"`
 	ErrMessage string `json:"message"`
 }
 
@@ -138,6 +138,17 @@ func NewApplicationError(code int, msg string) RuntimeError {
 func ToRuntimeError(e error) RuntimeError {
 	if re, ok := e.(RuntimeError); ok {
 		return re
+	}
+	return &ApplicationError{ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
+}
+
+// ToApplicationError 转换成 ApplicationError
+func ToApplicationError(e error) *ApplicationError {
+	if ae, ok := e.(*ApplicationError); ok {
+		return ae
+	}
+	if re, ok := e.(RuntimeError); ok {
+		return &ApplicationError{ErrCode: re.Code(), ErrMessage: re.Error()}
 	}
 	return &ApplicationError{ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
 }
