@@ -84,6 +84,10 @@ func (weaver *memWeaver) Generate(ctx string) (*PermissionData, error) {
 	return &weaver.all, nil
 }
 
+func isSame(allItems, subset *PermissionData) bool {
+	return isSubset(allItems, subset)
+}
+
 func IsSubset(allItems, subset *PermissionData) bool {
 	return isSubset(allItems, subset)
 }

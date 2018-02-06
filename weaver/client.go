@@ -151,7 +151,7 @@ func (srv *apartClient) write() (bool, error) {
 	o := srv.cached.Load()
 	if o != nil {
 		if result, ok := o.(*apartResult); ok {
-			if isSubset(result.value, value) {
+			if isSame(result.value, value) {
 				return true, nil
 			}
 		}

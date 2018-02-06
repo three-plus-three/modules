@@ -145,6 +145,10 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 		return nil
 	}
 
+	if isSameMenuArray(menuList, oldList) {
+		return nil
+	}
+
 	var err error
 	weaver.mu.Lock()
 	defer weaver.mu.Unlock()
@@ -228,19 +232,19 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 	return weaver.menuList, nil
 }
 
-func isSubset(allItems, subset []toolbox.Menu) bool {
-	return IsSubset(allItems, subset)
+func isSame(allItems, subset []toolbox.Menu) bool {
+	return isSameMenuArray(allItems, subset)
 }
 
-func IsSubset(allItems, subset []toolbox.Menu) bool {
-	for _, item := range subset {
-		raw := SearchMenuInTree(allItems, item.UID)
-		if raw == nil || !isSameMenu(item, *raw) {
-			return false
-		}
-	}
-	return true
-}
+// func IsSubset(allItems, subset []toolbox.Menu) bool {
+// 	for _, item := range subset {
+// 		raw := SearchMenuInTree(allItems, item.UID)
+// 		if raw == nil || !isSameMenu(item, *raw) {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }
 
 // func toMenuTree(menuList map[string]*Menu) []toolbox.Menu {
 // 	byID := map[int64]*Menu{}
