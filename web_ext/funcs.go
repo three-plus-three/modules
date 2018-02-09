@@ -178,6 +178,14 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		}
 		return u.HasPermission(permissionName, op)
 	}
+
+	revel.TemplateFuncs["msg"] = func(viewArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
+		str, ok := viewArgs[revel.CurrentLocaleViewArg].(string)
+		if !ok {
+			str = revel.Config.StringDefault("i18n.default_language", "zh")
+		}
+		return template.HTML(revel.MessageFunc(str, message, args...))
+	}
 }
 
 func CurrentUserHasPermission(lifecycle *Lifecycle, ctx map[string]interface{}, permissionName string, opList []string) bool {
