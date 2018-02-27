@@ -166,8 +166,14 @@ func UpdateProduct(env *environment.Environment,
 
 	now := time.Now()
 	if count == 0 {
-		_, err = db.Exec("INSERT INTO tpt_products (name, version, url, icon, title, classes, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-			so.Name, version, url, icon, title, classes, now, now)
+
+		if applicationID == environment.ENV_WSERVER_PROXY_ID {
+			_, err = db.Exec("INSERT INTO tpt_products (name, version, url, icon, title, classes, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+				so.Name, version, url, icon, title, classes, now, now)
+		} else {
+			_, err = db.Exec("INSERT INTO tpt_products (state, name, version, url, icon, title, classes, created_at, updated_at) VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8)",
+				so.Name, version, url, icon, title, classes, now, now)
+		}
 	} else {
 		_, err = db.Exec("UPDATE tpt_products SET version=$1, url=$2, icon=$3, title=$4, classes=$5, updated_at=$6 WHERE name=$7",
 			version, url, icon, title, classes, now, so.Name)
