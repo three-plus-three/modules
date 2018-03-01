@@ -16,9 +16,42 @@ func SaveDefaultPermissionGroups(db *DB, allDefaultGroups []Group) error {
 		return errors.Wrap(err, "GetAllPermissionGroups")
 	}
 
-	err = syncGroups(db, allDefaultGroups, allPermissionGroups, 0)
-	if err != nil {
-		return errors.Wrap(err, "载入缺省权限组")
+	if len(allPermissionGroups) > 0 {
+		deletedCount := 0
+		for _, group := range allDefaultGroups {
+			foundIndex := -1
+			for idx := range allPermissionGroups {
+				if group.Name == allPermissionGroups[idx].Name &&
+					allPermissionGroups[idx].ParentID == 0 {
+					if foundIndex >= 0 {
+						err = deletePermissionGroups(db, allPermissionGroups[idx].ID)
+						if err != nil {
+							return err
+						}
+						deletedCount++
+					} else {
+						foundIndex = idx
+					}
+				}
+			}
+		}
+
+		if deletedCount > 0 {
+			allPermissionGroups = nil
+			err = db.PermissionGroups().
+				Where(orm.Cond{"is_default": "true"}).
+				All(&allPermissionGroups)
+			if err != nil {
+				return errors.Wrap(err, "GetAllPermissionGroups")
+			}
+		}
+	}
+
+	for _, group := range allDefaultGroups {
+		err = syncGroups(db, []Group{group}, allPermissionGroups, 0)
+		if err != nil {
+			return errors.Wrap(err, "载入缺省权限组")
+		}
 	}
 	return nil
 }
