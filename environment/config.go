@@ -37,6 +37,14 @@ func (self *Config) StringWithDefault(key, defValue string) string {
 	return defValue
 }
 
+// UintWithDefault 读配置
+func (self *Config) UintWithDefault(key string, defValue uint) uint {
+	if s, ok := self.settings[key]; ok {
+		return as.UintWithDefault(s, defValue)
+	}
+	return defValue
+}
+
 // IntWithDefault 读配置
 func (self *Config) IntWithDefault(key string, defValue int) int {
 	if s, ok := self.settings[key]; ok {
