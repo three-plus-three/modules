@@ -152,3 +152,8 @@ func ToApplicationError(e error) *ApplicationError {
 	}
 	return &ApplicationError{ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
 }
+
+// BadArgument 创建一个 ErrBadArgument
+func BadArgument(msg string) *ApplicationError {
+	return &ApplicationError{ErrCode: http.StatusBadRequest, ErrMessage: msg}
+}
