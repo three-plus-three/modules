@@ -5,6 +5,7 @@ import (
 	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/environment"
+	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/menus"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/sso/client/revel_sso"
@@ -147,7 +148,8 @@ func (lifecycle *Lifecycle) Menus() []toolbox.Menu {
 		menuList, err = lifecycle.menuClient.Read()
 	}
 	if err != nil {
-		panic(err)
+		revel.ERROR.Println("\n错误:" + err.Error())
+		panic(errors.Wrap(err, "获取菜单失败"))
 	}
 	return menuList
 }
