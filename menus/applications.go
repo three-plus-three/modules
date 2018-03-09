@@ -147,7 +147,7 @@ func ProductsWrap(env *environment.Environment, applicationID environment.ENV_PR
 		// Menu 表示一个菜单
 		himp := toolbox.Menu{
 			UID:   "app.prudects",
-			Title: "HIMP",
+			Title: "HIMP 平台",
 			//Permission string `json:"permission,omitempty" xorm:"permission"`
 			//License    string `json:"license,omitempty" xorm:"license"`
 			URL:  "#",
