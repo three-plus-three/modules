@@ -112,7 +112,7 @@ func ReadProductsFromDB(db *sql.DB, ignoreList []string) ([]toolbox.Menu, error)
 			// License    string `json:"license,omitempty" xorm:"license"`
 			URL:     url.String,
 			Icon:    icon.String,
-			Classes: classes.String + " special_link",
+			Classes: classes.String, //+ " special_link",
 		})
 	}
 
@@ -144,7 +144,22 @@ func ProductsWrap(env *environment.Environment, applicationID environment.ENV_PR
 			return nil, err
 		}
 
-		return append(value, value2...), nil
+		// Menu 表示一个菜单
+		himp := toolbox.Menu{
+			UID:   "app.prudects",
+			Title: "HIMP",
+			//Permission string `json:"permission,omitempty" xorm:"permission"`
+			//License    string `json:"license,omitempty" xorm:"license"`
+			URL:  "#",
+			Icon: "fa-desktop",
+			//Classes    string `json:"classes,omitempty" xorm:"classes"`
+			Children: value,
+		}
+
+		newList := make([]toolbox.Menu, len(value2)+1)
+		newList[0] = himp
+		copy(newList[1:], value2)
+		return newList, nil
 	}
 }
 
