@@ -136,9 +136,7 @@ func insertPermissionGroups(db *DB, group Group, parentID int64) error {
 	permissionGroup.Name = group.Name
 	permissionGroup.Description = group.Description
 	permissionGroup.IsDefault = true
-	if parentID != 0 {
-		permissionGroup.ParentID = parentID
-	}
+	permissionGroup.ParentID = parentID
 	id, err := db.PermissionGroups().Nullable("parent_id").Insert(&permissionGroup)
 	if err != nil {
 		return errors.New("InsertPermissionGroups " + permissionGroup.Name +
