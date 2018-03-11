@@ -132,6 +132,17 @@ func ProductsWrap(env *environment.Environment, applicationID environment.ENV_PR
 			if err != nil {
 				return nil, err
 			}
+
+			productsMenu, err := ReadProductsFromLayout(env)
+			if err != nil {
+				return nil, err
+			}
+			if productsMenu != nil && !productsMenu.Inline {
+				himp := productsMenu.toMenu()
+				himp.Children = append(himp.Children, value...)
+				value = []toolbox.Menu{himp}
+			}
+
 			cachedValue.Set(value, time.Now())
 		}
 
@@ -144,21 +155,9 @@ func ProductsWrap(env *environment.Environment, applicationID environment.ENV_PR
 			return nil, err
 		}
 
-		// Menu 表示一个菜单
-		himp := toolbox.Menu{
-			UID:   "app.prudects",
-			Title: "HIMP 平台",
-			//Permission string `json:"permission,omitempty" xorm:"permission"`
-			//License    string `json:"license,omitempty" xorm:"license"`
-			URL:  "#",
-			Icon: "fa-desktop",
-			//Classes    string `json:"classes,omitempty" xorm:"classes"`
-			Children: value,
-		}
-
-		newList := make([]toolbox.Menu, len(value2)+1)
-		newList[0] = himp
-		copy(newList[1:], value2)
+		newList := make([]toolbox.Menu, len(value2)+len(value))
+		copy(newList, value)
+		copy(newList[len(value):], value2)
 		return newList, nil
 	}
 }

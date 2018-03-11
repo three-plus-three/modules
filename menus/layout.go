@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/modules/urlutil"
@@ -348,4 +349,22 @@ func readLayout(in []byte) (Layout, error) {
 		return nil, errors.Wrap(err, "read layout fail")
 	}
 	return &layoutImpl{mainLayout: mainLayout}, nil
+}
+
+func ReadProductsFromLayout(env *environment.Environment) (*LayoutItem, error) {
+	layoutArgs := map[string]interface{}{
+		"httpAddress": env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID).UrlFor(),
+		"urlPrefix":   env.DaemonUrlPath,
+		"urlRoot":     env.DaemonUrlPath,
+	}
+	layout, err := ReadLayoutFromDirectory(env.Fs.FromLib("menu_layouts/default"), layoutArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "ReadProductsLayout")
+	}
+	for _, item := range layout.(*layoutImpl).mainLayout {
+		for item.UID == "app.products" {
+			return &item, nil
+		}
+	}
+	return nil, nil
 }
