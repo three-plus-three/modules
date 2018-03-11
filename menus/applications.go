@@ -140,7 +140,11 @@ func ProductsWrap(env *environment.Environment, applicationID environment.ENV_PR
 			if productsMenu != nil && !productsMenu.Inline {
 				himp := productsMenu.toMenu()
 				himp.Children = append(himp.Children, value...)
-				value = []toolbox.Menu{himp}
+				if len(himp.Children) != 0 {
+					value = []toolbox.Menu{himp}
+				} else {
+					value = []toolbox.Menu{}
+				}
 			}
 
 			cachedValue.Set(value, time.Now())
