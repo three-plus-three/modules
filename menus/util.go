@@ -32,6 +32,10 @@ func watchInTree(allList []toolbox.Menu, c *container, target string) []toolbox.
 	return allList
 }
 
+func isEmptyURL(u string) bool {
+	return c.layout.URL == "" || c.layout.URL == "#"
+}
+
 func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) (bool, []toolbox.Menu) {
 	for idx := range allList {
 		if allList[idx].UID == c.layout.Target {
@@ -86,12 +90,13 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 						c.items = append(c.items, c.layout.toMenu())
 					}
 				}
-
-				results = make([]toolbox.Menu, len(allList)+1)
-				copy(results, allList[:idx+1])
-				results[idx+1] = c.layout.toMenu()
-				results[idx+1].Children = c.items
-				copy(results[idx+2:], allList[idx+1:])
+				if len(c.items) != 0 || !isEmptyURL(c.layout.URL) {
+					results = make([]toolbox.Menu, len(allList)+1)
+					copy(results, allList[:idx+1])
+					results[idx+1] = c.layout.toMenu()
+					results[idx+1].Children = c.items
+					copy(results[idx+2:], allList[idx+1:])
+				}
 			case actInsertBeforeInTree:
 				if len(c.items) == 0 {
 					if c.layout.URL != "" && c.layout.Title != "" {
@@ -99,11 +104,13 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 					}
 				}
 
-				results = make([]toolbox.Menu, len(allList)+1)
-				copy(results, allList[:idx])
-				results[idx] = c.layout.toMenu()
-				results[idx].Children = c.items
-				copy(results[idx+1:], allList[idx:])
+				if len(c.items) != 0 || !isEmptyURL(c.layout.URL) {
+					results = make([]toolbox.Menu, len(allList)+1)
+					copy(results, allList[:idx])
+					results[idx] = c.layout.toMenu()
+					results[idx].Children = c.items
+					copy(results[idx+1:], allList[idx:])
+				}
 			default:
 				if len(c.items) == 0 {
 					if c.layout.Category == toolbox.MenuNull {
