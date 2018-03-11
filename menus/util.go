@@ -33,7 +33,7 @@ func watchInTree(allList []toolbox.Menu, c *container, target string) []toolbox.
 }
 
 func isEmptyURL(u string) bool {
-	return c.layout.URL == "" || c.layout.URL == "#"
+	return u == "" || u == "#"
 }
 
 func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) (bool, []toolbox.Menu) {
