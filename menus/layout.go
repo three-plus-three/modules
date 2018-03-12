@@ -205,6 +205,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 				}
 
 				if !found {
+					//log.Println("insertToTree:", "target =", c.layout.Target, ", uid =", c.layout.UID) // spew.Sprint(allList))
 					local = append(local, c)
 				}
 			default:

@@ -1,8 +1,6 @@
 package menus
 
 import (
-	"fmt"
-
 	"github.com/three-plus-three/modules/toolbox"
 )
 
@@ -39,7 +37,6 @@ func isEmptyURL(u string) bool {
 func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) (bool, []toolbox.Menu) {
 	for idx := range allList {
 		if allList[idx].UID == c.layout.Target {
-			fmt.Println(c.layout.Target, allList[idx].UID)
 			if isInline {
 				var results []toolbox.Menu
 				switch act {
@@ -86,7 +83,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 			switch act {
 			case actInsertAfterInTree:
 				if len(c.items) == 0 {
-					if c.layout.URL != "" && c.layout.Title != "" {
+					if !isEmptyURL(c.layout.URL) && c.layout.Title != "" {
 						c.items = append(c.items, c.layout.toMenu())
 					}
 				}
@@ -96,10 +93,13 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 					results[idx+1] = c.layout.toMenu()
 					results[idx+1].Children = c.items
 					copy(results[idx+2:], allList[idx+1:])
+				} else {
+					results = allList
+					//fmt.Println("==== after", c.layout.UID, c.layout.Target, len(c.items), c.layout.URL)
 				}
 			case actInsertBeforeInTree:
 				if len(c.items) == 0 {
-					if c.layout.URL != "" && c.layout.Title != "" {
+					if !isEmptyURL(c.layout.URL) && c.layout.Title != "" {
 						c.items = append(c.items, c.layout.toMenu())
 					}
 				}
@@ -110,6 +110,9 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 					results[idx] = c.layout.toMenu()
 					results[idx].Children = c.items
 					copy(results[idx+1:], allList[idx:])
+				} else {
+					results = allList
+					//fmt.Println("==== before", c.layout.UID, c.layout.Target, len(c.items), c.layout.URL)
 				}
 			default:
 				if len(c.items) == 0 {

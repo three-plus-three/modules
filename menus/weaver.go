@@ -190,9 +190,30 @@ func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
 }
 
 func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbox.Menu, error) {
+
+	generatecb := func() ([]toolbox.Menu, error) {
+		weaver.mu.RUnlock()
+		weaver.mu.Lock()
+
+		defer func() {
+			weaver.mu.Unlock()
+			weaver.mu.RLock()
+		}()
+
+		var err error
+		weaver.menuList, err = weaver.generate()
+		if err != nil {
+			weaver.Logger.Println("generate:", err)
+		}
+		return weaver.menuList, err
+	}
+
 	weaver.mu.RLock()
 	defer weaver.mu.RUnlock()
 	if len(args) == 0 {
+		if len(weaver.menuList) == 0 {
+			return generatecb()
+		}
 		return weaver.menuList, nil
 	}
 	if len(args) != 1 {
@@ -229,6 +250,9 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 		}()
 	}
 
+	if len(weaver.menuList) == 0 {
+		return generatecb()
+	}
 	return weaver.menuList, nil
 }
 
