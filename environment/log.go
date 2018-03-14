@@ -20,7 +20,9 @@ func (env *Environment) initLogger(name string) error {
 
 	zap.ReplaceGlobals(env.Logger)
 	env.SugaredLogger = env.Logger.Sugar()
-	env.undoRedirectStdLog = zap.RedirectStdLog(env.Logger)
+	if !env.notRedirectStdLog {
+		env.undoRedirectStdLog = zap.RedirectStdLog(env.Logger)
+	}
 	return nil
 }
 
@@ -33,7 +35,12 @@ func (env *Environment) reinitLogger(name string) error {
 	zap.ReplaceGlobals(env.Logger)
 	env.SugaredLogger = env.Logger.Sugar()
 
-	env.undoRedirectStdLog()
-	env.undoRedirectStdLog = zap.RedirectStdLog(env.Logger)
+	if env.undoRedirectStdLog != nil {
+		env.undoRedirectStdLog()
+	}
+
+	if !env.notRedirectStdLog {
+		env.undoRedirectStdLog = zap.RedirectStdLog(env.Logger)
+	}
 	return nil
 }

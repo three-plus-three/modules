@@ -23,6 +23,7 @@ type Options struct {
 	Name                 string
 	PrintIfFilesNotFound bool
 	Args                 []string
+	NotRedirectStdLog    bool
 	IsTest               bool
 }
 
@@ -61,6 +62,7 @@ type Environment struct {
 	Logger             *zap.Logger
 	SugaredLogger      *zap.SugaredLogger
 	undoRedirectStdLog func()
+	notRedirectStdLog  bool
 
 	Engine EngineConfig
 }
@@ -208,6 +210,7 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 	}
 
 	env := &Environment{
+		notRedirectStdLog:  opt.NotRedirectStdLog,
 		CurrentApplication: opt.CurrentApplication,
 		//rootDir: opt.rootDir,
 		Fs:     fs,
