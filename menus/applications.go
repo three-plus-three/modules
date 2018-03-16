@@ -106,9 +106,9 @@ func ReadProductsFromDB(db *sql.DB, ignoreList []string) ([]toolbox.Menu, error)
 		}
 
 		menuList = append(menuList, toolbox.Menu{
-			UID:   MenuIDPrefix + name,
-			Title: title,
-			// Permission: "product." + name,
+			UID:        MenuIDPrefix + name,
+			Title:      title,
+			Permission: "products." + name,
 			// License    string `json:"license,omitempty" xorm:"license"`
 			URL:     url.String,
 			Icon:    icon.String,
