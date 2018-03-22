@@ -144,7 +144,7 @@ func Read(r io.Reader) (map[string]string, error) {
 		if skipWhitespace(retain) != "" {
 			continue
 		}
-		cfg[key] = os.ExpandEnv(value)
+		cfg[key] = value
 	}
 
 	return expandAll(cfg), nil
@@ -161,11 +161,32 @@ func expandAll(cfg map[string]string) map[string]string {
 	}
 
 	for i := 0; i < 100; i++ {
+		oldRemain := remain
+		remain = 0
 		for k, v := range cfg {
 			cfg[k] = os.Expand(v, expend)
 		}
 		if 0 == remain {
 			break
+		}
+		if oldRemain == remain {
+			break
+		}
+	}
+
+	for i := 0; i < 100; i++ {
+		oldRemain := remain
+		remain = 0
+		for k, v := range cfg {
+			cfg[k] = os.Expand(v, expend)
+		}
+		if 0 == remain {
+			break
+		}
+		if oldRemain == remain {
+			for k, v := range cfg {
+				cfg[k] = os.ExpandEnv(v)
+			}
 		}
 	}
 	return cfg

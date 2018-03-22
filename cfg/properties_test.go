@@ -60,6 +60,7 @@ d#5= d#5
 						daemon.host=127.0.0.1
 						daemon.port=51791
   d10 = d10  
+  d11 = a${d10}b  
 `
 
 	excepted := map[string]string{"c": "b",
@@ -74,7 +75,8 @@ d#5= d#5
 		"d#9":         "d9",
 		"daemon.host": "127.0.0.1",
 		"daemon.port": "51791",
-		"d10":         "d10"}
+		"d10":         "d10",
+		"d11":         "ad10b"}
 
 	actual, e := Read(strings.NewReader(input))
 	if e != nil {
