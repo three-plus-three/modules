@@ -153,11 +153,11 @@ func Read(r io.Reader) (map[string]string, error) {
 func expandAll(cfg map[string]string) map[string]string {
 	remain := 0
 	expend := func(key string) string {
+		remain++
 		if value, ok := cfg[key]; ok {
 			return value
 		}
-		remain++
-		return key
+		return os.Getenv(key)
 	}
 
 	for i := 0; i < 100; i++ {
@@ -174,21 +174,6 @@ func expandAll(cfg map[string]string) map[string]string {
 		}
 	}
 
-	for i := 0; i < 100; i++ {
-		oldRemain := remain
-		remain = 0
-		for k, v := range cfg {
-			cfg[k] = os.Expand(v, expend)
-		}
-		if 0 == remain {
-			break
-		}
-		if oldRemain == remain {
-			for k, v := range cfg {
-				cfg[k] = os.ExpandEnv(v)
-			}
-		}
-	}
 	return cfg
 }
 
