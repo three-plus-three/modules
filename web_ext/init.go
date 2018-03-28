@@ -137,6 +137,9 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		if !strings.HasPrefix(cookiesPath, "/") {
 			cookiesPath = "/" + cookiesPath
 		}
+		if strings.HasSuffix(cookiesPath, "/") {
+			cookiesPath = strings.TrimSuffix(cookiesPath, "/")
+		}
 
 		GlobalSessionFilter = sessions.SessionFilter(sso.DefaultSessionKey,
 			cookiesPath, sha1.New, secretKey)
