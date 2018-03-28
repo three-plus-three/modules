@@ -21,7 +21,8 @@ func SaveDefaultPermissionGroups(db *DB, allDefaultGroups []Group) error {
 		for _, group := range allDefaultGroups {
 			foundIndex := -1
 			for idx := range allPermissionGroups {
-				if group.Name == allPermissionGroups[idx].Name &&
+				if (group.Name == allPermissionGroups[idx].Name ||
+					(group.Name+"(已删除)") == allPermissionGroups[idx].Name) &&
 					allPermissionGroups[idx].ParentID == 0 {
 					if foundIndex >= 0 {
 						err = deletePermissionGroups(db, allPermissionGroups[idx].ID)
