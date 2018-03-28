@@ -137,6 +137,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		if !strings.HasPrefix(cookiesPath, "/") {
 			cookiesPath = "/" + cookiesPath
 		}
+		// Play 中我们有删除后面的 '/', 所以我们这里也删除一下
 		if strings.HasSuffix(cookiesPath, "/") {
 			cookiesPath = strings.TrimSuffix(cookiesPath, "/")
 		}
