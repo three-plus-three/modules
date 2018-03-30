@@ -111,7 +111,9 @@ func (cfg *ServiceConfig) ListenAddr(s string) string {
 	if s != "" {
 		return s
 	}
-	return ":" + cfg.Port
+
+	listenAddress := cfg.env.Config.StringWithDefault("listen_address", "")
+	return net.JoinHostPort(listenAddress, cfg.Port)
 }
 
 // ListenAddr 服务的连接地址
