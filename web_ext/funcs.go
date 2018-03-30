@@ -165,11 +165,29 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 	revel.TemplateFuncs["current_user_has_query_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
 		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{QUERY})
 	}
-	revel.TemplateFuncs["current_user_has_menu"] = func(ctx map[string]interface{}, permissionName string) bool {
-		if permissionName == "" {
+	revel.TemplateFuncs["current_user_has_menu"] = func(ctx map[string]interface{}, menu interface{}) bool {
+		var menuItem *toolbox.Menu
+		switch m := menu.(type) {
+		case *toolbox.Menu:
+			menuItem = m
+		case toolbox.Menu:
+			menuItem = &m
+		default:
+			panic(fmt.Errorf("unknown menuItem -- %T - %v", menu, menu))
+		}
+		if menuItem.Permission == "" {
 			return true
 		}
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{QUERY})
+		o := ctx["currentUser"]
+		if o == nil {
+			return false
+		}
+
+		u, ok := o.(User)
+		if !ok {
+			return false
+		}
+		return hasMenu(lifecycle, ctx, u, menuItem)
 	}
 	revel.TemplateFuncs["user_has_permission"] = func(ctx map[string]interface{}, user, permissionName, op string) bool {
 		u := lifecycle.GetUser(user)
@@ -186,6 +204,19 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		}
 		return template.HTML(revel.MessageFunc(str, message, args...))
 	}
+}
+
+func hasMenu(lifecycle *Lifecycle, ctx map[string]interface{}, u User, item *toolbox.Menu) bool {
+	if u.HasPermission(item.Permission, QUERY) {
+		return true
+	}
+
+	for _, child := range item.Children {
+		if hasMenu(lifecycle, ctx, u, &child) {
+			return true
+		}
+	}
+	return false
 }
 
 func CurrentUserHasPermission(lifecycle *Lifecycle, ctx map[string]interface{}, permissionName string, opList []string) bool {
