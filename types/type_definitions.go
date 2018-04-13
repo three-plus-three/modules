@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"strings"
 	//"labix.org/v2/mgo/bson"
 	"encoding/json"
 	"net"
@@ -1467,9 +1468,65 @@ func (self *mutiValuesType) Parse(s string) (interface{}, error) {
 	return values, e
 }
 
+type nullType struct {
+	DName string
+}
+
+func (self *nullType) Name() string {
+	return self.DName
+}
+
+func (self *nullType) MakeValue() interface{} {
+	panic("not supported")
+}
+
+func (self *nullType) CreateEnumerationValidator(values []string) (Validator, error) {
+	panic("not supported")
+}
+
+func (self *nullType) CreatePatternValidator(pattern string) (Validator, error) {
+	panic("not supported")
+}
+
+func (self *nullType) CreateRangeValidator(minValue, maxValue string) (Validator, error) {
+	panic("not supported")
+}
+
+func (self *nullType) CreateLengthValidator(minLength, maxLength string) (Validator, error) {
+	panic("not supported")
+}
+
+func (self *nullType) ToInternal(v interface{}) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+	switch value := v.(type) {
+	case string:
+		return self.Parse(value)
+	case *string:
+		return self.Parse(*value)
+	case []byte:
+		return self.Parse(string(value))
+	}
+
+	return nil, errors.New("syntex error, it is not a nil")
+}
+
+func (self *nullType) ToExternal(v interface{}) interface{} {
+	return nil
+}
+
+func (self *nullType) Parse(s string) (interface{}, error) {
+	if strings.ToLower(s) == "null" {
+		return nil, nil
+	}
+	return nil, errors.New("syntex error, it is not nil")
+}
+
 var (
 	DATETIMELAYOUT = time.RFC3339
 
+	NullType            nullType            = nullType{"null"}
 	BooleanType         booleanType         = booleanType{"boolean"}
 	IntegerType         integerType         = integerType{"integer"}
 	DecimalType         decimalType         = decimalType{"decimal"}
@@ -1483,6 +1540,23 @@ var (
 	DynamicType         dynamicType         = dynamicType{stringType{PName: "dynamic"}}
 	DurationType        durationType        = durationType{PName: "duration"}
 	MutiValuesType      mutiValuesType      = mutiValuesType{}
+
+	MacAddressType = PhysicalAddressType
+	// Null            = NullType
+	// Boolean         = BooleanType
+	// Integer         = IntegerType
+	// Decimal         = DecimalType
+	// String          = StringType
+	// DateTime        = DateTimeType
+	// IPAddress       = IPAddressType
+	// PhysicalAddress = PhysicalAddressType
+	// MacAddress      = PhysicalAddressType
+	// Password        = PasswordType
+	// ObjectID        = ObjectIdType
+	// BigInteger      = BigIntegerType
+	// Dynamic         = DynamicType
+	// Duration        = DurationType
+	// MutiValues      = MutiValuesType
 
 	types = map[string]TypeDefinition{"boolean": &BooleanType,
 		"integer":         &IntegerType,
