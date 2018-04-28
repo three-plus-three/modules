@@ -56,6 +56,12 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 
 		if o, found := userCache.Get(userName); found && o != nil {
 			if u, ok := o.(web_ext.User); ok && u != nil {
+
+				if u.(*user).IsDisabled() {
+					err := errors.New("user with name is " + userName + " is disabled")
+					log.Println(err)
+					panic(err)
+				}
 				return u
 			}
 		}
@@ -109,6 +115,12 @@ func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
 				log.Println(err)
 				panic(err)
 			}
+		}
+
+		if u.IsDisabled() {
+			err = errors.New("user with name is " + userName + " is disabled")
+			log.Println(err)
+			panic(err)
 		}
 
 		condRoles := "exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
@@ -179,6 +191,10 @@ type user struct {
 	permissionGroupCache *GroupCache
 
 	super, administrator, visitor int64
+}
+
+func (u *user) IsDisabled() bool {
+	return u.u.IsDisabled()
 }
 
 func (u *user) ID() int64 {

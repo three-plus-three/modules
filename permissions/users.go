@@ -41,6 +41,11 @@ func KeyForOnlineUsers(key string) string {
 	return key
 }
 
+const (
+	UserNormal   = 0
+	ItsmReporter = 1
+)
+
 type User struct {
 	ID          int64                  `json:"id" xorm:"id pk autoincr"`
 	Name        string                 `json:"name" xorm:"name unique notnull"`
@@ -50,10 +55,15 @@ type User struct {
 	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb"`
 	Profiles    map[string]interface{} `json:"profiles" xorm:"profiles jsonb"`
 	Source      string                 `json:"source,omitempty" xorm:"source"`
+	Type        int                    `json:"type,omitempty" xorm:"type"`
 	Disabled    bool                   `json:"disabled,omitempty" xorm:"disabled"`
 	LockedAt    *time.Time             `json:"locked_at,omitempty" xorm:"locked_at null"`
 	CreatedAt   time.Time              `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt   time.Time              `json:"updated_at,omitempty" xorm:"updated_at updated"`
+}
+
+func (user *User) IsDisabled() bool {
+	return user.Disabled || user.Type == ItsmReporter
 }
 
 func (user *User) TableName() string {
@@ -67,7 +77,8 @@ func (user *User) IsBuiltin() bool {
 }
 
 func (user *User) IsHidden() bool {
-	return user.Name == web_ext.UserTPTNetwork
+	return user.Name == web_ext.UserTPTNetwork ||
+		user.Type == ItsmReporter
 }
 
 func (user *User) Validate(validation *revel.Validation) bool {
@@ -144,6 +155,8 @@ func KeyForUsers(key string) string {
 		return "user.Name"
 	case "nickname":
 		return "user.Nickname"
+	case "type":
+		return "user.Type"
 	case "password":
 		return "user.Password"
 	case "description":
