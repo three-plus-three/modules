@@ -55,15 +55,15 @@ type User struct {
 	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb"`
 	Profiles    map[string]interface{} `json:"profiles" xorm:"profiles jsonb"`
 	Source      string                 `json:"source,omitempty" xorm:"source"`
-	Type        int                    `json:"type,omitempty" xorm:"type"`
-	Disabled    bool                   `json:"disabled,omitempty" xorm:"disabled"`
-	LockedAt    *time.Time             `json:"locked_at,omitempty" xorm:"locked_at null"`
-	CreatedAt   time.Time              `json:"created_at,omitempty" xorm:"created_at created"`
-	UpdatedAt   time.Time              `json:"updated_at,omitempty" xorm:"updated_at updated"`
+	// Type        int                    `json:"type,omitempty" xorm:"type"`
+	Disabled  bool       `json:"disabled,omitempty" xorm:"disabled"`
+	LockedAt  *time.Time `json:"locked_at,omitempty" xorm:"locked_at null"`
+	CreatedAt time.Time  `json:"created_at,omitempty" xorm:"created_at created"`
+	UpdatedAt time.Time  `json:"updated_at,omitempty" xorm:"updated_at updated"`
 }
 
 func (user *User) IsDisabled() bool {
-	return user.Disabled || user.Type == ItsmReporter
+	return user.Disabled // || user.Type == ItsmReporter
 }
 
 func (user *User) TableName() string {
@@ -77,8 +77,7 @@ func (user *User) IsBuiltin() bool {
 }
 
 func (user *User) IsHidden() bool {
-	return user.Name == web_ext.UserTPTNetwork ||
-		user.Type == ItsmReporter
+	return user.Name == web_ext.UserTPTNetwork // || user.Type == ItsmReporter
 }
 
 func (user *User) Validate(validation *revel.Validation) bool {
