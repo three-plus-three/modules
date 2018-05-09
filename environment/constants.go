@@ -19,7 +19,8 @@ const (
 	ENV_LUA_BRIDGE_PROXY_ID
 	ENV_WEB_PROXY_ID
 	ENV_LOGGING_PROXY_ID
-	ENV_NFLOW_PROXY_ID
+	ENV_NFLOW1_PROXY_ID
+	ENV_NFLOW2_PROXY_ID
 	ENV_MC_PROXY_ID
 	ENV_MC_DEV_PROXY_ID
 	ENV_INFLUXDB_PROXY_ID
@@ -76,7 +77,7 @@ var (
 		{ID: ENV_LUA_BRIDGE_PROXY_ID, Name: "lua_bridge", Host: "127.0.0.1", Port: "37082"},
 		{ID: ENV_WEB_PROXY_ID, Name: "web", Host: "127.0.0.1", Port: "39000"},
 		{ID: ENV_LOGGING_PROXY_ID, Name: "es", Host: "127.0.0.1", Port: "37083"},
-		{ID: ENV_NFLOW_PROXY_ID, Name: "nflow", Host: "127.0.0.1", Port: "37084"},
+		{ID: ENV_NFLOW1_PROXY_ID, Name: "nflow", Host: "127.0.0.1", Port: "37084"},
 		{ID: ENV_MC_PROXY_ID, Name: "mc", Host: "127.0.0.1", Port: "37085"},
 		{ID: ENV_MC_DEV_PROXY_ID, Name: "mc_dev", Host: "127.0.0.1", Port: "9000"},
 		{ID: ENV_INFLUXDB_PROXY_ID, Name: "influxdb", Host: "127.0.0.1", Port: "37086"},
@@ -93,6 +94,7 @@ var (
 		// {ID: ENV_ES_PROXY_ID, Name: "es_old", Host: "127.0.0.1", Port: "39300"},
 		{ID: ENV_LOGANALYZER_PROXY_ID, Name: "loganalyzer", Host: "127.0.0.1", Port: "37097"},
 		{ID: ENV_AM_RECORD_MGR_ID, Name: "record_mgr", Host: "127.0.0.1", Port: "37098"},
+		{ID: ENV_NFLOW2_PROXY_ID, Name: "nflow2", Host: "127.0.0.1", Port: "37099"},
 	}
 )
 
