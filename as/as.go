@@ -245,7 +245,7 @@ func Bool(value interface{}) (bool, error) {
 	}
 	if s, ok := value.(string); ok {
 		switch s {
-		case "TRUE", "True", "true", "YES", "Yes", "yes":
+		case "TRUE", "True", "true", "YES", "Yes", "yes", "on", "enabled":
 			return true, nil
 		case "FALSE", "False", "false", "NO", "No", "no":
 			return false, nil

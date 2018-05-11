@@ -134,7 +134,7 @@ func NewEnvironment(opt Options) (*Environment, error) {
 				rootDir = filepath.Clean(filepath.Join(exeDir, ".."))
 			} else if opt.IsTest {
 				rootDir, _ = os.Getwd()
-			} else {
+			} else if rootDir = os.Getenv("hw_root_dir"); rootDir == "" {
 				found := false
 				for _, s := range []string{"../../../../cn/com/hengwei",
 					"../../../../../cn/com/hengwei",
