@@ -11,10 +11,13 @@ import (
 	"github.com/three-plus-three/sso/client/revel_sso"
 )
 
-const CREATE = "create"
-const DELETE = "delete"
-const UPDATE = "update"
-const QUERY = "query"
+// Action
+const (
+	CREATE = "create"
+	DELETE = "delete"
+	UPDATE = "update"
+	QUERY  = "query"
+)
 
 // UserAdmin admin 用户名
 const UserAdmin = "admin"
@@ -25,7 +28,7 @@ const UserGuest = "guest"
 // UserTPTNetwork tpt_nm 用户名
 const UserTPTNetwork = "tpt_nm"
 
-// UserAdmin super 角色名
+// RoleSuper super 角色名
 const RoleSuper = "super"
 
 // RoleAdministrator administrator 角色名

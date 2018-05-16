@@ -187,3 +187,11 @@ func Get(url string, result interface{}, cachedBuffer *bytes.Buffer) errors.Runt
 func Put(url string, body, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
 	return InvokeHttp("PUT", url, body, http.StatusOK, result, cachedBuffer)
 }
+
+func Delete(url string, body, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+	return InvokeHttp("DELETE", url, body, http.StatusOK, result, cachedBuffer)
+}
+
+func Do(method, url string, body, statusCode int, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+	return InvokeHttp(method, url, body, statusCode, result, cachedBuffer)
+}

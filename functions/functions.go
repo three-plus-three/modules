@@ -408,6 +408,10 @@ var genericMap = map[string]interface{}{
 		return false
 	},
 	"in": func(value1, value2 interface{}) bool {
+		if value1 == nil || value2 == nil {
+			return false
+		}
+
 		switch values := value1.(type) {
 		case []interface{}:
 			return valueInSlice(value2, values)
