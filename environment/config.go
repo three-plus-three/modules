@@ -172,14 +172,13 @@ func LoadConfigs(fs FileSystem, nm string, dumpFilesIfNotFound bool) map[string]
 		props, e := commons_cfg.ReadProperties(file)
 		if nil != e {
 			if dumpFilesIfNotFound {
-				log.Println("[warn] read properties '" + file + "' failed," + e.Error())
+				log.Println("read properties '" + file + "' failed," + e.Error())
 			}
 			return nil
 		}
 
-		if dumpFilesIfNotFound {
-			log.Println("[info] load properties '" + file + "'.")
-		}
+		log.Println("load properties '" + file + "'.")
+
 		if nil == cfg {
 			cfg = props
 		} else {
