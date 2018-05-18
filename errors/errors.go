@@ -75,6 +75,19 @@ func Wrap(e error, s string, args ...interface{}) error {
 	return native.New(fmt.Sprintf(s, args...) + ": " + e.Error())
 }
 
+//  RuntimeWrap 为 error 增加上下文信息
+func RuntimeWrap(e error, s string, args ...interface{}) RuntimeError {
+	if "" == s {
+		return ToRuntimeError(e)
+	}
+
+	msg := fmt.Sprintf(s, args...) + ": " + e.Error()
+	if re, ok := e.(RuntimeError); ok {
+		return NewApplicationError(re.Code(), msg)
+	}
+	return NewApplicationError(http.StatusInternalServerError, msg)
+}
+
 //  MutiErrors 拼接多个错误
 type MutiErrors struct {
 	msg  string
