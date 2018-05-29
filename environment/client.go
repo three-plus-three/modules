@@ -3,6 +3,7 @@ package environment
 import (
 	"bytes"
 	"context"
+	"net/http"
 	"net/url"
 
 	"github.com/three-plus-three/modules/errors"
@@ -18,6 +19,7 @@ type HttpClient struct {
 	body         interface{}
 	cached       *bytes.Buffer
 	exceptedCode int
+	auth         func(bool) (string, string, errors.RuntimeError)
 }
 
 func (hc *HttpClient) Clone() *HttpClient {
@@ -41,6 +43,11 @@ func (hc *HttpClient) Clone() *HttpClient {
 	}
 	copied.cached = nil
 	return copied
+}
+
+func (hc *HttpClient) AuthWith(auth func(bool) (string, string, errors.RuntimeError)) *HttpClient {
+	hc.auth = auth
+	return hc
 }
 
 func (hc *HttpClient) ExceptedCode(exceptedCode int) *HttpClient {
@@ -150,9 +157,32 @@ func (hc *HttpClient) GetBody() interface{} {
 }
 
 func (hc HttpClient) DoWithContext(ctx context.Context, action string, result interface{}) errors.RuntimeError {
-	urlStr := hc.cfg.UrlFor(hc.basePath)
+	err := hc.doWithContext(false, ctx, action, result)
+	if err != nil && err.HTTPCode() == http.StatusUnauthorized {
+		err = hc.doWithContext(true, ctx, action, result)
+	}
+	return err
+}
+
+func (hc HttpClient) doWithContext(force bool, ctx context.Context, action string, result interface{}) errors.RuntimeError {
+	var urlStr = hc.cfg.UrlFor(hc.basePath)
 	if len(hc.params) != 0 {
 		urlStr = urlStr + "?" + hc.params.Encode()
+		if hc.auth != nil {
+			key, value, err := hc.auth(force)
+			if err != nil {
+				return err
+			}
+
+			urlStr = urlStr + "&" + url.QueryEscape(key) + "=" + url.QueryEscape(value)
+		}
+	} else if hc.auth != nil {
+		key, value, err := hc.auth(force)
+		if err != nil {
+			return err
+		}
+
+		urlStr = urlStr + "?" + url.QueryEscape(key) + "=" + url.QueryEscape(value)
 	}
 	return httputil.InvokeHttpWithContext(ctx, action, urlStr, hc.body, hc.exceptedCode, result, hc.cached)
 }
