@@ -642,13 +642,13 @@ func (self *dateTimeType) CreateLengthValidator(minLength, maxLength string) (Va
 func (self *dateTimeType) ToInternal(v interface{}) (interface{}, error) {
 	switch value := v.(type) {
 	case string:
-		t, err := time.Parse(self.Layout, value)
+		t, err := self.Parse(value)
 		if nil != err {
 			return nil, err
 		}
 		return t, nil
 	case *string:
-		t, err := time.Parse(self.Layout, *value)
+		t, err := self.Parse(*value)
 		if nil != err {
 			return nil, err
 		}
@@ -673,7 +673,21 @@ func (self *dateTimeType) ToExternal(value interface{}) interface{} {
 
 func (self *dateTimeType) Parse(s string) (interface{}, error) {
 	t, e := time.Parse(self.Layout, s)
-	return t, e
+	if e == nil {
+		return t, nil
+	}
+
+	for _, layout := range []string{time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02 15:04:05Z07:00",
+		"2006-01-02 15:04:05",
+		"2006-01-02"} {
+		t, e := time.Parse(layout, s)
+		if e == nil {
+			return t, nil
+		}
+	}
+	return nil, e
 }
 
 type durationType struct {
@@ -690,14 +704,14 @@ func (self *durationType) MakeValue() interface{} {
 
 func (self *durationType) CreateEnumerationValidator(ss []string) (Validator, error) {
 	if nil == ss || 0 == len(ss) {
-		return nil, errors.New("values is null or empty.")
+		return nil, errors.New("values is null or empty")
 	}
 
 	values := make([]int64, 0, len(ss))
 	for i, s := range ss {
 		v, err := time.ParseDuration(s)
 		if nil != err {
-			return nil, fmt.Errorf("value[%d] '%v' is syntex error, %s", i, s, err.Error())
+			return nil, fmt.Errorf("value[%d] '%v' is syntex error, %s", i, s, err)
 		}
 		values = append(values, int64(v))
 	}
