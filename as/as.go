@@ -678,15 +678,19 @@ func Time(v interface{}) (time.Time, error) {
 		return time.Time{}, errType(v, "Time")
 	}
 
-	m, e := time.Parse(time.RFC3339, s)
-	if nil == e {
-		return m, nil
+	for _, layout := range []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02 15:04:05Z07:00",
+		"2006-01-02 15:04:05",
+		"2006-01-02",
+	} {
+		m, e := time.ParseInLocation(layout, s, time.Local)
+		if nil == e {
+			return m, nil
+		}
 	}
 
-	m, e = time.Parse(time.RFC3339Nano, s)
-	if nil == e {
-		return m, nil
-	}
 	return time.Time{}, errType(v, "Time")
 }
 
@@ -700,15 +704,19 @@ func TimeWithDefault(v interface{}, defValue time.Time) time.Time {
 		return defValue
 	}
 
-	m, e := time.Parse(time.RFC3339, s)
-	if nil == e {
-		return m
+	for _, layout := range []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02 15:04:05Z07:00",
+		"2006-01-02 15:04:05",
+		"2006-01-02",
+	} {
+		m, e := time.ParseInLocation(layout, s, time.Local)
+		if nil == e {
+			return m
+		}
 	}
 
-	m, e = time.Parse(time.RFC3339Nano, s)
-	if nil == e {
-		return m
-	}
 	return defValue
 }
 

@@ -672,7 +672,7 @@ func (self *dateTimeType) ToExternal(value interface{}) interface{} {
 }
 
 func (self *dateTimeType) Parse(s string) (interface{}, error) {
-	t, e := time.Parse(self.Layout, s)
+	t, e := time.ParseInLocation(self.Layout, s, time.Local)
 	if e == nil {
 		return t, nil
 	}
@@ -682,7 +682,7 @@ func (self *dateTimeType) Parse(s string) (interface{}, error) {
 		"2006-01-02 15:04:05Z07:00",
 		"2006-01-02 15:04:05",
 		"2006-01-02"} {
-		t, e := time.Parse(layout, s)
+		t, e := time.ParseInLocation(layout, s, time.Local)
 		if e == nil {
 			return t, nil
 		}
