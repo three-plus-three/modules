@@ -233,11 +233,17 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			results = removeInTree(results, c.layout.Target)
 		} else {
 			c.layout.forEach(func(menu *LayoutItem) {
-				results = removeInTree(results, menu.UID)
-				results = removeInTree(results, menu.Target)
+				if menu.UID != "" {
+					results = removeInTree(results, menu.UID)
+				}
+				if menu.Target != "" {
+					results = removeInTree(results, menu.Target)
+				}
 			})
 			forEach(c.items, func(menu *toolbox.Menu) {
-				results = removeInTree(results, menu.UID)
+				if menu.UID != "" {
+					results = removeInTree(results, menu.UID)
+				}
 			})
 		}
 	}
