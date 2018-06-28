@@ -368,6 +368,15 @@ func ReadProductsFromLayout(env *environment.Environment) (*LayoutItem, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "ReadProductsLayout")
 	}
+
+	customlayout, err := ReadLayoutFromDirectory(env.Fs.FromData("menu_layouts/default"), layoutArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "ReadProductsLayout")
+	}
+	if len(customlayout) > 0 {
+		layout = append(layout, customlayout...)
+	}
+
 	for _, item := range layout.(*layoutImpl).mainLayout {
 		for item.UID == "app.products" {
 			return &item, nil
