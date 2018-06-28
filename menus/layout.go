@@ -12,6 +12,7 @@ import (
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/modules/urlutil"
+	"github.com/three-plus-three/modules/util"
 )
 
 // 菜单的分类
@@ -350,8 +351,13 @@ func ReadLayout(filename string, args map[string]interface{}) (Layout, error) {
 }
 
 func readLayout(in []byte) (Layout, error) {
+	data, err := util.HjsonToJSON(in)
+	if err != nil {
+		return nil, errors.Wrap(err, "read layout fail")
+	}
+
 	var mainLayout []LayoutItem
-	err := json.Unmarshal(in, &mainLayout)
+	err = json.Unmarshal(data, &mainLayout)
 	if err != nil {
 		return nil, errors.Wrap(err, "read layout fail")
 	}
@@ -373,8 +379,8 @@ func ReadProductsFromLayout(env *environment.Environment) (*LayoutItem, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "ReadProductsLayout")
 	}
-	if len(customlayout) > 0 {
-		layout = append(layout, customlayout...)
+	if len(customlayout.(*layoutImpl).mainLayout) > 0 {
+		layout.(*layoutImpl).mainLayout = append(layout.(*layoutImpl).mainLayout, customlayout.(*layoutImpl).mainLayout...)
 	}
 
 	for _, item := range layout.(*layoutImpl).mainLayout {
