@@ -207,21 +207,21 @@ var tests = []struct {
 	},
 }
 
-func TestMenuSimple(t *testing.T) {
-	env := env_tests.Clone(nil)
-	// dataDrv, dataURL := env.Db.Models.Url()
-	// modelEngine, err := xorm.NewEngine(dataDrv, dataURL)
-	// if err != nil {
-	// 	t.Error(err)
-	// 	return
-	// }
-	// modelEngine.ShowSQL()
+// func TestMenuSimple2(t *testing.T) {
+// 	env := env_tests.Clone(nil)
+// 	// dataDrv, dataURL := env.Db.Models.Url()
+// 	// modelEngine, err := xorm.NewEngine(dataDrv, dataURL)
+// 	// if err != nil {
+// 	// 	t.Error(err)
+// 	// 	return
+// 	// }
+// 	// modelEngine.ShowSQL()
 
-	core, _ := engine.NewCore(&engine.Options{})
+// 	core, _ := engine.NewCore(&engine.Options{})
 
-	logger := log.New(os.Stderr, "[menu] ", log.LstdFlags)
-	weaver := &menuWeaver{Logger: logger, env: env, core: core, test.layout, layouts: nil}
-	if err := weaver.Init(); err != nil {
-		return nil, err
-	}
-}
+// 	logger := log.New(os.Stderr, "[menu] ", log.LstdFlags)
+// 	weaver := &menuWeaver{Logger: logger, env: env, core: core, test.layout, layouts: nil}
+// 	if err := weaver.Init(); err != nil {
+// 		return nil, err
+// 	}
+// }

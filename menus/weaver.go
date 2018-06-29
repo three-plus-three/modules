@@ -47,6 +47,9 @@ func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engin
 // Layout 菜单布避生成器
 type Layout interface {
 	Stats() interface{}
+
+	MergeFrom(Layout) error
+
 	Generate(map[string][]toolbox.Menu) ([]toolbox.Menu, error)
 }
 

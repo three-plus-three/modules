@@ -79,13 +79,18 @@ type layoutImpl struct {
 	mainLayout []LayoutItem
 }
 
-type container struct {
-	layout *LayoutItem
-	items  []toolbox.Menu
+func (layout *layoutImpl) MergeFrom(merge Layout) error {
+	layout.mainLayout = append(layout.mainLayout, merge.(*layoutImpl).mainLayout...)
+	return nil
 }
 
 func (layout *layoutImpl) Stats() interface{} {
 	return layout.mainLayout
+}
+
+type container struct {
+	layout *LayoutItem
+	items  []toolbox.Menu
 }
 
 func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.Menu, error) {
@@ -249,6 +254,20 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		}
 	}
 
+	for _, item := range layout.mainLayout {
+		if item.Category == categoryRemove {
+			if item.Target != "" {
+				results = removeInTree(results, item.Target)
+			}
+
+			item.forEach(func(menu *LayoutItem) {
+				if menu.Target != "" {
+					results = removeInTree(results, menu.Target)
+				}
+			})
+		}
+	}
+
 	for _, c := range watchList {
 		results = watchInTree(results, c, c.layout.Target)
 	}
@@ -268,7 +287,16 @@ func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolb
 			results[len(results)-1].Children =
 				mergeMenuArray(results[len(results)-1].Children, c.items)
 		}
-		byID[layout.UID] = c
+
+		if layout.UID == "" {
+			if layout.Category != categoryRemove {
+				panic("layout with target = '" + layout.Target + "' and category = '" + layout.Category + "' is invalid, uid is empty")
+			}
+		} else if _, exists := byID[layout.UID]; !exists {
+			byID[layout.UID] = c
+		} else {
+			panic("layout.UID '" + layout.UID + "' is duplicated")
+		}
 	}
 	return results
 }
@@ -282,6 +310,10 @@ type simpleLayout struct {
 
 func (layout *simpleLayout) Stats() interface{} {
 	return "simple"
+}
+
+func (layout *simpleLayout) MergeFrom(Layout) error {
+	return errors.New("simpleLayout is unsupported")
 }
 
 func (layout *simpleLayout) Generate(menuList map[string][]toolbox.Menu) ([]toolbox.Menu, error) {
@@ -379,8 +411,10 @@ func ReadProductsFromLayout(env *environment.Environment) (*LayoutItem, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "ReadProductsLayout")
 	}
-	if len(customlayout.(*layoutImpl).mainLayout) > 0 {
-		layout.(*layoutImpl).mainLayout = append(layout.(*layoutImpl).mainLayout, customlayout.(*layoutImpl).mainLayout...)
+	if customlayout != nil {
+		if err := layout.MergeFrom(customlayout); err != nil {
+			return nil, errors.Wrap(err, "ReadProductsLayout")
+		}
 	}
 
 	for _, item := range layout.(*layoutImpl).mainLayout {
