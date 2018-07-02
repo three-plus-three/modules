@@ -6,6 +6,7 @@ import (
 	native "errors"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 //  RuntimeError 一个带 Code 的 error
@@ -15,44 +16,17 @@ type RuntimeError interface {
 	Error() string
 }
 
-//  ErrNotFound 对象找不到
-type ErrNotFound struct {
-	typ string
-	id  interface{}
-}
-
-func (err *ErrNotFound) HTTPCode() int {
-	return http.StatusNotFound
-}
-
-func (err *ErrNotFound) Code() int {
-	return http.StatusNotFound
-}
-
-func (err *ErrNotFound) Error() string {
-	if nil == err.id {
-		return "not found"
-	}
-	return "record with type is '" + err.typ + "' and id is '" + fmt.Sprint(err.id) + "' isn't found"
-}
-
-//  IsNotFound 是不是一个未找到错误
-func IsNotFound(e error) bool {
-	_, ok := e.(*ErrNotFound)
-	if ok {
-		return ok
-	}
-	re, ok := e.(RuntimeError)
-	return ok && re.HTTPCode() == http.StatusNotFound
-}
-
 //  NotFound 创建一个 ErrNotFound
 func NotFound(id interface{}, typ ...string) RuntimeError {
 	if len(typ) == 0 {
-		return &ErrNotFound{id: id}
+		if id == nil {
+			return NewApplicationError(http.StatusNotFound, "not found")
+		}
+
+		return NewApplicationError(http.StatusNotFound, "record with id is '"+fmt.Sprint(id)+"' isn't found")
 	}
 
-	return &ErrNotFound{id: id, typ: typ[0]}
+	return NewApplicationError(http.StatusNotFound, "record with type is '"+typ[0]+"' and id is '"+fmt.Sprint(id)+"' isn't found")
 }
 
 //  New 创建一个 error
@@ -91,49 +65,81 @@ func RuntimeWrap(e error, s string, args ...interface{}) RuntimeError {
 	return NewApplicationError(http.StatusInternalServerError, msg)
 }
 
-//  MutiErrors 拼接多个错误
-type MutiErrors struct {
-	msg  string
-	errs []error
-}
-
-func (self *MutiErrors) Error() string {
-	return self.msg
-}
-func (self *MutiErrors) Errors() []error {
-	return self.errs
-}
-
 // Concat 拼接多个错误
-func Concat(errs []error, format string, args ...interface{}) error {
-	if len(errs) == 1 && format == "" {
+func Concat(errs ...error) error {
+	switch len(errs) {
+	case 0:
+		return nil
+	case 1:
 		return errs[0]
+	default:
+		return ErrAppend(errs)
+	}
+}
+
+func ErrAppend(errs []error, errMessage ...string) error {
+	var message string
+	if len(errMessage) > 0 {
+		message = strings.Join(errMessage, " ")
 	}
 
-	var buffer bytes.Buffer
-	isFirst := true
-	if format != "" {
-		isFirst = false
-		fmt.Fprintf(&buffer, format, args...)
-	}
-	for _, e := range errs {
-		if isFirst {
-			isFirst = false
-		} else {
-			buffer.WriteString("\n ")
+	if len(errs) == 0 {
+		if message == "" {
+			panic("Concat Fail")
 		}
-		buffer.WriteString(e.Error())
+		return New(message)
 	}
-	return &MutiErrors{msg: buffer.String(), errs: errs}
+
+	var appError *ApplicationError
+	if message == "" {
+		if len(errs) == 1 {
+			return errs[0]
+		}
+
+		if aerr, ok := errs[0].(*ApplicationError); ok && aerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+			appError = aerr
+			errs = errs[1:]
+		} else if aerr, ok := errs[len(errs)-1].(*ApplicationError); ok && aerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+			appError = aerr
+			errs = errs[:len(errs)-1]
+		}
+	}
+
+	if appError == nil {
+		appError = &ApplicationError{ErrCode: ErrCodeMultipleError, ErrMessage: message}
+	}
+
+	for _, e := range errs {
+		if me, ok := e.(*ApplicationError); ok {
+			if me.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) && me.ErrMessage == "" {
+				if len(me.Internals) > 0 {
+					appError.Internals = append(appError.Internals, me.Internals...)
+				}
+			} else {
+				appError.Internals = append(appError.Internals, me)
+			}
+
+			continue
+		}
+
+		appError.Internals = append(appError.Internals, ToApplicationError(e, 0))
+	}
+
+	return appError
 }
 
 // ApplicationError 应用错误
 type ApplicationError struct {
-	ErrCode    int    `json:"code,omitempty"`
-	ErrMessage string `json:"message"`
+	ErrCode    int                    `json:"code,omitempty"`
+	ErrMessage string                 `json:"message"`
+	Fields     map[string]interface{} `json:"fields,omitempty"`
+	Internals  []*ApplicationError    `json:"internals,omitempty"`
 }
 
 func (err *ApplicationError) HTTPCode() int {
+	if err.ErrCode > 1000 {
+		return err.ErrCode / 1000
+	}
 	return err.ErrCode
 }
 
@@ -142,29 +148,54 @@ func (err *ApplicationError) Code() int {
 }
 
 func (err *ApplicationError) Error() string {
+	if err.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+		var buffer bytes.Buffer
+		if err.ErrMessage != "" {
+			buffer.WriteString(err.ErrMessage)
+		} else {
+			buffer.WriteString("muti error:")
+		}
+		for _, e := range err.Internals {
+			buffer.WriteString("\r\n  ")
+			buffer.WriteString(e.Error())
+		}
+		return buffer.String()
+	}
 	return err.ErrMessage
 }
 
-// NewApplicationError 创建一个 RuntimeError
-func NewApplicationError(code int, msg string) RuntimeError {
+// NewRuntimeError 创建一个 RuntimeError
+func NewRuntimeError(code int, msg string) RuntimeError {
+	return &ApplicationError{ErrCode: code, ErrMessage: msg}
+}
+
+// NewApplicationError 创建一个 ApplicationError
+func NewApplicationError(code int, msg string) *ApplicationError {
 	return &ApplicationError{ErrCode: code, ErrMessage: msg}
 }
 
 // ToRuntimeError 转换成 RuntimeError
-func ToRuntimeError(e error) RuntimeError {
+func ToRuntimeError(e error, code ...int) RuntimeError {
 	if re, ok := e.(RuntimeError); ok {
 		return re
+	}
+	if len(code) > 0 {
+		return &ApplicationError{ErrCode: code[0], ErrMessage: e.Error()}
 	}
 	return &ApplicationError{ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
 }
 
 // ToApplicationError 转换成 ApplicationError
-func ToApplicationError(e error) *ApplicationError {
+func ToApplicationError(e error, code ...int) *ApplicationError {
 	if ae, ok := e.(*ApplicationError); ok {
 		return ae
 	}
 	if re, ok := e.(RuntimeError); ok {
 		return &ApplicationError{ErrCode: re.Code(), ErrMessage: re.Error()}
+	}
+
+	if len(code) > 0 {
+		return &ApplicationError{ErrCode: code[0], ErrMessage: e.Error()}
 	}
 	return &ApplicationError{ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
 }
