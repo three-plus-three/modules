@@ -77,6 +77,10 @@ func Concat(errs ...error) error {
 	}
 }
 
+func ErrArray(errs []error, format string, args ...interface{}) error {
+	return ErrAppend(errs, fmt.Sprintf(format, args...))
+}
+
 func ErrAppend(errs []error, errMessage ...string) error {
 	var message string
 	if len(errMessage) > 0 {
