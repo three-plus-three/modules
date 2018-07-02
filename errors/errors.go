@@ -72,6 +72,9 @@ func Wrap(e error, s string, args ...interface{}) error {
 	if "" == s {
 		return e
 	}
+	if re, ok := e.(RuntimeError); ok {
+		return NewApplicationError(re.Code(), fmt.Sprintf(s, args...)+": "+e.Error())
+	}
 	return native.New(fmt.Sprintf(s, args...) + ": " + e.Error())
 }
 
