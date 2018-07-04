@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -407,9 +408,11 @@ func ReadProductsFromLayout(env *environment.Environment) (*LayoutItem, error) {
 		return nil, errors.Wrap(err, "ReadProductsLayout")
 	}
 
-	customlayout, err := ReadLayoutFromDirectory(env.Fs.FromData("menu_layouts/default"), layoutArgs)
+	customlayout, err := ReadLayoutFromDirectory(env.Fs.FromDataConfig("menu_layouts/default"), layoutArgs)
 	if err != nil {
-		return nil, errors.Wrap(err, "ReadProductsLayout")
+		if !os.IsNotExist(err) {
+			return nil, errors.Wrap(err, "ReadProductsLayout")
+		}
 	}
 	if customlayout != nil {
 		if err := layout.MergeFrom(customlayout); err != nil {
