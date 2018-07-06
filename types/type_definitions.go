@@ -888,6 +888,9 @@ func (self *ipAddressType) ToInternal(v interface{}) (interface{}, error) {
 
 	switch value := v.(type) {
 	case string:
+		if value == "" {
+			return nil, nil
+		}
 		ip := net.ParseIP(value)
 		if nil == ip {
 			return nil, InvalidIPError
@@ -896,6 +899,9 @@ func (self *ipAddressType) ToInternal(v interface{}) (interface{}, error) {
 		addr := IPAddress(ip.String())
 		return addr, nil
 	case *string:
+		if *value == "" {
+			return nil, nil
+		}
 		ip := net.ParseIP(*value)
 		if nil == ip {
 			return nil, InvalidIPError
@@ -903,6 +909,9 @@ func (self *ipAddressType) ToInternal(v interface{}) (interface{}, error) {
 		addr := IPAddress(ip.String())
 		return addr, nil
 	case []byte:
+		if len(value) == 0 {
+			return nil, nil
+		}
 		ip := net.ParseIP(string(value))
 		if nil == ip {
 			return nil, InvalidIPError
@@ -944,6 +953,9 @@ func (self *ipAddressType) ToExternal(value interface{}) interface{} {
 }
 
 func (self *ipAddressType) Parse(s string) (interface{}, error) {
+	if s == "" {
+		return nil, nil
+	}
 	ip := net.ParseIP(s)
 	if nil == ip {
 		return nil, InvalidIPError
