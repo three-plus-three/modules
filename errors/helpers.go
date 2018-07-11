@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"database/sql"
 	"net/http"
 	"strings"
 	"unicode"
@@ -24,6 +25,9 @@ func IsTimeoutError(e error) bool {
 
 // IsNotFound 是不是一个未找到错误
 func IsNotFound(e error) bool {
+	if e == sql.ErrNoRows {
+		return true
+	}
 	re, ok := e.(RuntimeError)
 	return ok && re.HTTPCode() == http.StatusNotFound
 }

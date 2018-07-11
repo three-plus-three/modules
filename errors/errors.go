@@ -17,7 +17,7 @@ type RuntimeError interface {
 }
 
 //  NotFound 创建一个 ErrNotFound
-func NotFound(id interface{}, typ ...string) RuntimeError {
+func NotFound(id interface{}, typ ...string) *ApplicationError {
 	if len(typ) == 0 {
 		if id == nil {
 			return NewApplicationError(http.StatusNotFound, "not found")
