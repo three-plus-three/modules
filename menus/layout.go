@@ -337,6 +337,9 @@ func (layout *simpleLayout) Generate(menuList map[string][]toolbox.Menu) ([]tool
 func ReadLayoutFromDirectory(dirname string, args map[string]interface{}) (Layout, error) {
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
 		return nil, errors.Wrap(err, "read layout from directory fail")
 	}
 
@@ -365,6 +368,10 @@ func ReadLayoutFromDirectory(dirname string, args map[string]interface{}) (Layou
 func ReadLayout(filename string, args map[string]interface{}) (Layout, error) {
 	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+
 		return nil, errors.Wrap(err, "read layout fail")
 	}
 
@@ -405,7 +412,14 @@ func ReadProductsFromLayout(env *environment.Environment) (*LayoutItem, error) {
 	}
 	layout, err := ReadLayoutFromDirectory(env.Fs.FromLib("menu_layouts/default"), layoutArgs)
 	if err != nil {
-		return nil, errors.Wrap(err, "ReadProductsLayout")
+		if !os.IsNotExist(err) {
+			return nil, errors.Wrap(err, "ReadProductsLayout")
+		}
+	}
+	if layout == nil {
+		return nil, errors.Wrap(&os.PathError{Op: "open",
+			Path: env.Fs.FromLib("menu_layouts/default"),
+			Err:  os.ErrNotExist}, "ReadProductsLayout")
 	}
 
 	customlayout, err := ReadLayoutFromDirectory(env.Fs.FromDataConfig("menu_layouts/default"), layoutArgs)
