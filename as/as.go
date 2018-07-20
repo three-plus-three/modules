@@ -99,6 +99,170 @@ func IsEmptyArray(value interface{}) bool {
 	return true
 }
 
+func Int64Array(value interface{}) ([]int64, error) {
+	switch a := value.(type) {
+	case []interface{}:
+		ints := make([]int64, len(a))
+		for i := range a {
+			iv, err := Int64(a[i])
+			if err != nil {
+				return nil, errType(value, "int64Array")
+			}
+			ints[i] = iv
+		}
+		return ints, nil
+	case []string:
+		ints := make([]int64, len(a))
+		for i := range a {
+			iv, err := strconv.ParseInt(a[i], 10, 64)
+			if err != nil {
+				return nil, errType(value, "int64Array")
+			}
+			ints[i] = iv
+		}
+		return ints, nil
+	case []int64:
+		return a, nil
+	case []int:
+		ints := make([]int64, len(a))
+		for i := range a {
+			ints[i] = int64(a[i])
+		}
+		return ints, nil
+	case []int32:
+		ints := make([]int64, len(a))
+		for i := range a {
+			ints[i] = int64(a[i])
+		}
+		return ints, nil
+	case []uint64:
+		ints := make([]int64, len(a))
+		for i := range a {
+			if a[i] > math.MaxInt64 {
+				return nil, errType(value, "int64Array")
+			}
+			ints[i] = int64(a[i])
+		}
+		return ints, nil
+	case []uint:
+		ints := make([]int64, len(a))
+		for i := range a {
+			ints[i] = int64(a[i])
+		}
+		return ints, nil
+	case []uint32:
+		ints := make([]int64, len(a))
+		for i := range a {
+			ints[i] = int64(a[i])
+		}
+		return ints, nil
+	default:
+		rv := reflect.ValueOf(value)
+		if rv.Kind() == reflect.Ptr {
+			rv = rv.Elem()
+		}
+
+		if rv.Kind() == reflect.Slice {
+			aLen := rv.Len()
+			ints := make([]int64, aLen)
+			for i := 0; i < aLen; i++ {
+				iv, err := Int64(rv.Index(i).Interface())
+				if err != nil {
+					return nil, errType(value, "int64Array")
+				}
+				ints[i] = iv
+			}
+			return ints, nil
+		}
+	}
+	return nil, errType(value, "int64Array")
+}
+
+func Uint64Array(value interface{}) ([]uint64, error) {
+	switch a := value.(type) {
+	case []interface{}:
+		uints := make([]uint64, len(a))
+		for i := range a {
+			iv, err := Uint64(a[i])
+			if err != nil {
+				return nil, errType(value, "uint64Array")
+			}
+			uints[i] = iv
+		}
+		return uints, nil
+	case []string:
+		uints := make([]uint64, len(a))
+		for i := range a {
+			iv, err := strconv.ParseUint(a[i], 10, 64)
+			if err != nil {
+				return nil, errType(value, "uint64Array")
+			}
+			uints[i] = iv
+		}
+		return uints, nil
+	case []int64:
+		uints := make([]uint64, len(a))
+		for i := range a {
+			if a[i] < 0 {
+				return nil, errType(value, "uint64Array")
+			}
+			uints[i] = uint64(a[i])
+		}
+		return uints, nil
+	case []int:
+		uints := make([]uint64, len(a))
+		for i := range a {
+			if a[i] < 0 {
+				return nil, errType(value, "uint64Array")
+			}
+			uints[i] = uint64(a[i])
+		}
+		return uints, nil
+	case []int32:
+		uints := make([]uint64, len(a))
+		for i := range a {
+			if a[i] < 0 {
+				return nil, errType(value, "uint64Array")
+			}
+			uints[i] = uint64(a[i])
+		}
+		return uints, nil
+	case []uint64:
+		return a, nil
+	case []uint:
+		uints := make([]uint64, len(a))
+		for i := range a {
+			uints[i] = uint64(a[i])
+		}
+		return uints, nil
+	case []uint32:
+		uints := make([]uint64, len(a))
+		for i := range a {
+			uints[i] = uint64(a[i])
+		}
+		return uints, nil
+	default:
+		rv := reflect.ValueOf(value)
+		if rv.Kind() == reflect.Ptr {
+			rv = rv.Elem()
+		}
+
+		if rv.Kind() == reflect.Slice {
+			aLen := rv.Len()
+			uints := make([]uint64, aLen)
+			for i := 0; i < aLen; i++ {
+				iv, err := Uint64(rv.Index(i).Interface())
+				if err != nil {
+					return nil, errType(value, "uint64Array")
+				}
+				uints[i] = iv
+			}
+			return uints, nil
+		}
+	}
+	return nil, errType(value, "uint64Array")
+}
+
 func Array(value interface{}) ([]interface{}, error) {
 	if a, ok := value.([]interface{}); ok {
 		return a, nil
