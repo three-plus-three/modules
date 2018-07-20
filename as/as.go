@@ -1058,6 +1058,61 @@ func IPStrings(value interface{}) ([]string, error) {
 		}
 		return results, nil
 	}
+	return nil, errType(value, "IPStringArray")
+}
+
+func IPAddresses(value interface{}) ([]net.IP, error) {
+	switch svalue := value.(type) {
+	case []string:
+		results := make([]net.IP, 0, len(svalue))
+		for idx := range svalue {
+			if svalue[idx] == "" {
+				continue
+			}
+
+			addr := net.ParseIP(svalue[idx])
+			if addr == nil {
+				return nil, errType(value, "IPArray")
+			}
+			results = append(results, addr)
+		}
+		return results, nil
+	case []net.IP:
+		return svalue, nil
+	case []*net.IP:
+		results := make([]net.IP, 0, len(svalue))
+		for idx := range svalue {
+			if svalue[idx] != nil {
+				results = append(results, *svalue[idx])
+			}
+		}
+		return results, nil
+	case []interface{}:
+		results := make([]net.IP, 0, len(svalue))
+		for idx := range svalue {
+			if svalue[idx] == nil {
+				continue
+			}
+
+			switch tvalue := svalue[idx].(type) {
+			case string:
+				addr := net.ParseIP(tvalue)
+				if addr == nil {
+					return nil, errType(value, "IPArray")
+				}
+				results = append(results, addr)
+			case net.IP:
+				results = append(results, tvalue)
+			case *net.IP:
+				if tvalue != nil {
+					results = append(results, *tvalue)
+				}
+			default:
+				return nil, errType(value, "IPArray")
+			}
+		}
+		return results, nil
+	}
 	return nil, errType(value, "IPArray")
 }
 
@@ -1097,6 +1152,61 @@ func MacStrings(value interface{}) ([]string, error) {
 				return nil, err
 			}
 			results[idx] = addr
+		}
+		return results, nil
+	}
+	return nil, errType(value, "MacStringArray")
+}
+
+func HardwareAddresses(value interface{}) ([]net.HardwareAddr, error) {
+	switch svalue := value.(type) {
+	case []string:
+		results := make([]net.HardwareAddr, 0, len(svalue))
+		for idx := range svalue {
+			if svalue[idx] == "" {
+				continue
+			}
+
+			addr, err := net.ParseMAC(svalue[idx])
+			if err != nil {
+				return nil, errType(value, "MacArray")
+			}
+			results = append(results, addr)
+		}
+		return results, nil
+	case []net.HardwareAddr:
+		return svalue, nil
+	case []*net.HardwareAddr:
+		results := make([]net.HardwareAddr, 0, len(svalue))
+		for idx := range svalue {
+			if svalue[idx] != nil {
+				results = append(results, *svalue[idx])
+			}
+		}
+		return results, nil
+	case []interface{}:
+		results := make([]net.HardwareAddr, 0, len(svalue))
+		for idx := range svalue {
+			if svalue[idx] == nil {
+				continue
+			}
+
+			switch tvalue := svalue[idx].(type) {
+			case string:
+				addr, err := net.ParseMAC(tvalue)
+				if err != nil {
+					return nil, errType(value, "MacArray")
+				}
+				results = append(results, addr)
+			case net.HardwareAddr:
+				results = append(results, tvalue)
+			case *net.HardwareAddr:
+				if tvalue != nil {
+					results = append(results, *tvalue)
+				}
+			default:
+				return nil, errType(value, "MacArray")
+			}
 		}
 		return results, nil
 	}
