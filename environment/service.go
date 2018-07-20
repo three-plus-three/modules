@@ -190,15 +190,15 @@ func (cfg *ServiceConfig) Url() string {
 	var s string
 	if ENV_LCN_PROXY_ID == cfg.Id {
 		if "" == cfg.Path {
-			s = "https://" + host + ":" + port
+			s = "https://" + net.JoinHostPort(host, port)
 		} else {
-			s = "https://" + host + ":" + port + "/" + cfg.Path
+			s = "https://" + net.JoinHostPort(host, port) + "/" + cfg.Path
 		}
 	} else {
 		if "" == cfg.Path {
-			s = "http://" + host + ":" + port
+			s = "http://" + net.JoinHostPort(host, port)
 		} else {
-			s = "http://" + host + ":" + port + "/" + cfg.Path
+			s = "http://" + net.JoinHostPort(host, port) + "/" + cfg.Path
 		}
 	}
 	cfg.surl.Store(s)

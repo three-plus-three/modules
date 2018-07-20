@@ -3,6 +3,7 @@ package environment
 import (
 	"errors"
 	"fmt"
+	"net"
 )
 
 // DbConfig 数据库配置
@@ -17,11 +18,11 @@ type DbConfig struct {
 
 func (db *DbConfig) Host() string {
 	if "" != db.Port && "0" != db.Port {
-		return db.Address + ":" + db.Port
+		return net.JoinHostPort(db.Address, db.Port)
 	}
 	switch db.DbType {
 	case "postgresql":
-		return db.Address + ":35432"
+		return net.JoinHostPort(db.Address, "35432")
 	default:
 		panic(errors.New("unknown db type - " + db.DbType))
 	}
@@ -39,8 +40,8 @@ func (db *DbConfig) dbUrl() (string, string, error) {
 		if db.Port == "" {
 			db.Port = "3306"
 		}
-		return "mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?autocommit=true&parseTime=true",
-			db.Username, db.Password, db.Address, db.Port, db.Schema), nil
+		return "mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s?autocommit=true&parseTime=true",
+			db.Username, db.Password, net.JoinHostPort(db.Address, db.Port), db.Schema), nil
 	case "odbc_with_mssql":
 		return "odbc_with_mssql", fmt.Sprintf("dsn=%s;uid=%s;pwd=%s",
 			db.Schema, db.Username, db.Password), nil
