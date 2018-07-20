@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"net"
 	"reflect"
 	"strconv"
 	"time"
@@ -1016,4 +1017,88 @@ func Biginteger(value interface{}) (big.Int, error) {
 		return intValue, ErrValueNull
 	}
 	return intValue, errType(value, "big.Int")
+}
+
+func IPString(value interface{}) (string, error) {
+	switch svalue := value.(type) {
+	case string:
+		return svalue, nil
+	case net.IP:
+		return svalue.String(), nil
+	case *net.IP:
+		return svalue.String(), nil
+	}
+	return "", errType(value, "IP")
+}
+
+func IPStrings(value interface{}) ([]string, error) {
+	switch svalue := value.(type) {
+	case []string:
+		return svalue, nil
+	case []net.IP:
+		results := make([]string, len(svalue))
+		for idx := range svalue {
+			results[idx] = svalue[idx].String()
+		}
+		return results, nil
+	case []*net.IP:
+		results := make([]string, len(svalue))
+		for idx := range svalue {
+			results[idx] = svalue[idx].String()
+		}
+		return results, nil
+	case []interface{}:
+		results := make([]string, len(svalue))
+		for idx := range svalue {
+			addr, err := IPString(svalue[idx])
+			if err != nil {
+				return nil, err
+			}
+			results[idx] = addr
+		}
+		return results, nil
+	}
+	return nil, errType(value, "IPArray")
+}
+
+func MacString(value interface{}) (string, error) {
+	switch svalue := value.(type) {
+	case string:
+		return svalue, nil
+	case net.HardwareAddr:
+		return svalue.String(), nil
+	case *net.HardwareAddr:
+		return svalue.String(), nil
+	}
+	return "", errType(value, "HardwareAddr")
+}
+
+func MacStrings(value interface{}) ([]string, error) {
+	switch svalue := value.(type) {
+	case []string:
+		return svalue, nil
+	case []net.HardwareAddr:
+		results := make([]string, len(svalue))
+		for idx := range svalue {
+			results[idx] = svalue[idx].String()
+		}
+		return results, nil
+	case []*net.HardwareAddr:
+		results := make([]string, len(svalue))
+		for idx := range svalue {
+			results[idx] = svalue[idx].String()
+		}
+		return results, nil
+	case []interface{}:
+		results := make([]string, len(svalue))
+		for idx := range svalue {
+			addr, err := MacString(svalue[idx])
+			if err != nil {
+				return nil, err
+			}
+			results[idx] = addr
+		}
+		return results, nil
+	}
+	return nil, errType(value, "MacArray")
 }
