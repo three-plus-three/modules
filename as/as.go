@@ -791,6 +791,49 @@ func StringWithDefault(v interface{}, defaultStr string) string {
 	return s
 }
 
+func DurationArray(value interface{}) ([]time.Duration, error) {
+	switch svalue := value.(type) {
+	case []string:
+		results := make([]time.Duration, 0, len(svalue))
+		for idx := range svalue {
+			if svalue[idx] == "" {
+				continue
+			}
+
+			addr, err := Duration(svalue[idx])
+			if err != nil {
+				return nil, errType(value, "DurationArray")
+			}
+			results = append(results, addr)
+		}
+		return results, nil
+	case []time.Duration:
+		return svalue, nil
+	case []interface{}:
+		results := make([]time.Duration, 0, len(svalue))
+		for idx := range svalue {
+			if svalue[idx] == nil {
+				continue
+			}
+
+			switch tvalue := svalue[idx].(type) {
+			case string:
+				addr, err := Duration(tvalue)
+				if err != nil {
+					return nil, errType(value, "DurationArray")
+				}
+				results = append(results, addr)
+			case time.Duration:
+				results = append(results, tvalue)
+			default:
+				return nil, errType(value, "DurationArray")
+			}
+		}
+		return results, nil
+	}
+	return nil, errType(value, "DurationArray")
+}
+
 func Duration(v interface{}) (time.Duration, error) {
 	if t, ok := v.(time.Duration); ok {
 		return t, nil
