@@ -40,11 +40,20 @@ const RoleVisitor = "visitor"
 // RoleGuest guest 角色名
 const RoleGuest = "guest"
 
-// InitUser 初始化用户的回调函数
-var InitUser = func(lifecycle *Lifecycle) func(userName string) User {
-	return func(userName string) User {
-		return &user{lifecycle: lifecycle, name: userName}
-	}
+// UserOption 用户选项
+type UserOption interface {
+	apply()
+}
+
+// UserIncludeDisabled 禁用的用户也返回
+type UserIncludeDisabled struct{}
+
+func (u UserIncludeDisabled) apply() {}
+
+// UserManager 用户管理
+type UserManager interface {
+	ByName(username string, opts ...UserOption) User
+	ByID(userID int64, opts ...UserOption) User
 }
 
 // User 用户信息
@@ -73,6 +82,18 @@ type User interface {
 
 	// 用户是否有指定的权限
 	HasPermission(permissionName, op string) bool
+}
+
+type userManager struct {
+	lifecycle *Lifecycle
+}
+
+func (um *userManager) ByName(username string, opts ...UserOption) User {
+	return &user{lifecycle: um.lifecycle, name: username}
+}
+
+func (um *userManager) ByID(userID int64, opts ...UserOption) User {
+	return nil
 }
 
 type user struct {
@@ -120,6 +141,11 @@ func (u *user) HasPermission(permissionName, op string) bool {
 	return true
 }
 
+// InitUser 初始化用户的回调函数
+var InitUser = func(lifecycle *Lifecycle) UserManager {
+	return &userManager{lifecycle: lifecycle}
+}
+
 // Lifecycle 表示一个运行周期，它包含了所有业务相关的对象
 type Lifecycle struct {
 	concurrency.Base
@@ -134,7 +160,8 @@ type Lifecycle struct {
 	ApplicationContext string
 	ApplicationRoot    string
 
-	GetUser     func(userName string) User
+	UserManager UserManager
+	GetUser     func(userName string, opts ...UserOption) User
 	CurrentUser func(c *revel.Controller) User
 	CheckUser   revel_sso.CheckFunc
 	menuClient  menus.Client

@@ -147,14 +147,15 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 
 		initTemplateFuncs(lifecycle)
 
-		lifecycle.GetUser = InitUser(lifecycle)
+		lifecycle.UserManager = InitUser(lifecycle)
+		lifecycle.GetUser = lifecycle.UserManager.ByName
 		lifecycle.CurrentUser = func(c *revel.Controller) User {
 			username := c.Session[sso.SESSION_USER_KEY]
 			if username == "" {
 				return nil
 			}
 
-			return lifecycle.GetUser(username)
+			return lifecycle.UserManager.ByName(username)
 		}
 		lifecycle.CheckUser = initSSO(env)
 

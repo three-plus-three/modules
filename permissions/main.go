@@ -2,7 +2,9 @@ package permissions
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	cache "github.com/patrickmn/go-cache"
@@ -12,185 +14,276 @@ import (
 	"github.com/three-plus-three/modules/web_ext"
 )
 
-func InitUser(lifecycle *web_ext.Lifecycle) func(userName string) web_ext.User {
-	db := &DB{DB: orm.DB{Engine: lifecycle.ModelEngine}}
-	permissionGroupCache := &GroupCache{}
-	var lastErr concurrency.ErrorValue
+func InitUser(lifecycle *web_ext.Lifecycle) web_ext.UserManager {
+	um := &userManager{
+		db:                   &DB{DB: orm.DB{Engine: lifecycle.ModelEngine}},
+		permissionGroupCache: &GroupCache{},
 
-	refresh := func() {
-		lastErr.Set(permissionGroupCache.refresh(db))
+		cacheByName: cache.New(5*time.Minute, 10*time.Minute),
+		cacheByID:   cache.New(5*time.Minute, 10*time.Minute),
 	}
-	permissionGroupCache.Init(5*time.Minute, refresh)
-	refresh()
+	um.refresh()
 
-	userCache := cache.New(5*time.Minute, 10*time.Minute)
-
-	var superRole Role
-	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&superRole); e != nil {
-		superRole.Name = web_ext.RoleSuper
+	if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&um.superRole); e != nil {
+		um.superRole.Name = web_ext.RoleSuper
 		log.Println("[warn] role", web_ext.RoleSuper, "isnot found -", e)
 	}
 
-	var adminRole Role
-	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&adminRole); e != nil {
-		adminRole.Name = web_ext.RoleAdministrator
+	if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&um.adminRole); e != nil {
+		um.adminRole.Name = web_ext.RoleAdministrator
 		log.Println("[warn] role", web_ext.RoleAdministrator, "isnot found -", e)
 	}
 
-	var visitorRole Role
-	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&visitorRole); e != nil {
-		visitorRole.Name = web_ext.RoleVisitor
+	if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&um.visitorRole); e != nil {
+		um.visitorRole.Name = web_ext.RoleVisitor
 		log.Println("[warn] role", web_ext.RoleVisitor, "isnot found -", e)
 	}
 
-	var guestRole Role
-	if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&guestRole); e != nil {
-		guestRole.Name = web_ext.RoleGuest
+	if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&um.guestRole); e != nil {
+		um.guestRole.Name = web_ext.RoleGuest
 		log.Println("[warn] role", web_ext.RoleGuest, "isnot found -", e)
 	}
 
-	return func(userName string) web_ext.User {
-		if e := lastErr.Get(); e != nil {
-			panic(e)
+	return um
+}
+
+type userManager struct {
+	db                   *DB
+	permissionGroupCache *GroupCache
+	cacheByName          *cache.Cache
+	cacheByID            *cache.Cache
+	lastErr              concurrency.ErrorValue
+
+	superRole   Role
+	adminRole   Role
+	visitorRole Role
+	guestRole   Role
+}
+
+func (um *userManager) refresh() {
+	refresh := func() {
+		um.lastErr.Set(um.permissionGroupCache.refresh(um.db))
+	}
+	um.permissionGroupCache.Init(5*time.Minute, refresh)
+}
+
+func (um *userManager) cacheIt(u web_ext.User) {
+	um.cacheByName.SetDefault(u.Name(), u)
+	um.cacheByID.SetDefault(strconv.FormatInt(u.ID(), 10), u)
+}
+
+func (um *userManager) ensureRoles() {
+	if um.superRole.ID == 0 {
+		if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&um.superRole); e != nil {
+			log.Println("[warn] role", web_ext.RoleSuper, "isnot found -", e)
+		} else {
+			um.cacheByID.Flush()
+			um.cacheByName.Flush()
 		}
+	}
+	if um.adminRole.ID == 0 {
+		if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&um.adminRole); e != nil {
+			log.Println("[warn] role", web_ext.RoleAdministrator, "isnot found -", e)
+		} else {
+			um.cacheByID.Flush()
+			um.cacheByName.Flush()
+		}
+	}
+	if um.visitorRole.ID == 0 {
+		if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&um.visitorRole); e != nil {
+			log.Println("[warn] role", web_ext.RoleVisitor, "isnot found -", e)
+		} else {
+			um.cacheByID.Flush()
+			um.cacheByName.Flush()
+		}
+	}
+	if um.guestRole.ID == 0 {
+		if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&um.guestRole); e != nil {
+			log.Println("[warn] role", web_ext.RoleGuest, "isnot found -", e)
+		} else {
+			um.cacheByID.Flush()
+			um.cacheByName.Flush()
+		}
+	}
+}
 
-		if o, found := userCache.Get(userName); found && o != nil {
-			if u, ok := o.(web_ext.User); ok && u != nil {
+func (um *userManager) ByName(userName string, opts ...web_ext.UserOption) web_ext.User {
+	if e := um.lastErr.Get(); e != nil {
+		panic(e)
+	}
 
-				if u.(*user).IsDisabled() {
-					err := errors.New("user with name is " + userName + " is disabled")
-					log.Println(err)
-					panic(err)
-				}
+	var includeDisabled bool
+	for _, opt := range opts {
+		switch opt.(type) {
+		case web_ext.UserIncludeDisabled:
+			includeDisabled = true
+		}
+	}
+
+	if o, found := um.cacheByName.Get(userName); found && o != nil {
+		if u, ok := o.(web_ext.User); ok && u != nil {
+			if includeDisabled {
 				return u
 			}
-		}
 
-		if superRole.ID == 0 {
-			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&superRole); e != nil {
-				log.Println("[warn] role", web_ext.RoleSuper, "isnot found -", e)
-			}
-		}
-		if adminRole.ID == 0 {
-			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&adminRole); e != nil {
-				log.Println("[warn] role", web_ext.RoleAdministrator, "isnot found -", e)
-			}
-		}
-		if visitorRole.ID == 0 {
-			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&visitorRole); e != nil {
-				log.Println("[warn] role", web_ext.RoleVisitor, "isnot found -", e)
-			}
-		}
-		if guestRole.ID == 0 {
-			if e := db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&guestRole); e != nil {
-				log.Println("[warn] role", web_ext.RoleGuest, "isnot found -", e)
-			}
-		}
-
-		var u = &user{db: db,
-			lifecycle:            lifecycle,
-			permissionGroupCache: permissionGroupCache,
-			super:                superRole.ID,
-			administrator:        adminRole.ID,
-			visitor:              visitorRole.ID}
-		err := db.Users().Where(orm.Cond{"name": userName}).Omit("profiles").One(&u.u)
-		if err != nil {
-			switch userName {
-			case web_ext.UserAdmin:
-				u.u.Name = userName
-				u.roleNames = []string{web_ext.RoleAdministrator}
-				u.roles = []Role{adminRole}
-
-				userCache.SetDefault(userName, u)
-				return u
-			case web_ext.UserGuest:
-				u.u.Name = userName
-				u.roleNames = []string{web_ext.RoleGuest}
-				u.roles = []Role{guestRole}
-
-				userCache.SetDefault(userName, u)
-				return u
-			default:
-				err = errors.New("query user with name is " + userName + "fail: " + err.Error())
+			if u.(*user).IsDisabled() {
+				err := errors.New("user with name is " + userName + " is disabled")
 				log.Println(err)
 				panic(err)
 			}
+			return u
 		}
+	}
 
+	um.ensureRoles()
+
+	var u = &user{um: um}
+	err := um.db.Users().Where(orm.Cond{"name": userName}).Omit("profiles").One(&u.u)
+	if err != nil {
+		switch userName {
+		case web_ext.UserAdmin:
+			u.u.Name = userName
+			u.roleNames = []string{web_ext.RoleAdministrator}
+			u.roles = []Role{um.adminRole}
+
+			um.cacheIt(u)
+			return u
+		case web_ext.UserGuest:
+			u.u.Name = userName
+			u.roleNames = []string{web_ext.RoleGuest}
+			u.roles = []Role{um.guestRole}
+			um.cacheIt(u)
+			return u
+		default:
+			err = errors.New("query user with name is " + userName + "fail: " + err.Error())
+			log.Println(err)
+			panic(err)
+		}
+	}
+
+	if !includeDisabled {
 		if u.IsDisabled() {
 			err = errors.New("user with name is " + userName + " is disabled")
 			log.Println(err)
 			panic(err)
 		}
+	}
 
-		condRoles := "exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
-			db.Users().Name() + " as users on users_roles.user_id = users.id " +
-			" where users_roles.role_id = " + db.Roles().Name() + ".id and users.name = ?)"
-		err = db.Roles().Where(condRoles, userName).
-			All(&u.roles)
-		if err != nil {
-			err = errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error())
-			log.Println("[permission] ", err)
+	return um.load(u)
+}
+
+func (um *userManager) ByID(userID int64, opts ...web_ext.UserOption) web_ext.User {
+	if e := um.lastErr.Get(); e != nil {
+		panic(e)
+	}
+
+	var includeDisabled bool
+	for _, opt := range opts {
+		switch opt.(type) {
+		case web_ext.UserIncludeDisabled:
+			includeDisabled = true
+		}
+	}
+
+	if o, found := um.cacheByID.Get(strconv.FormatInt(userID, 10)); found && o != nil {
+		if u, ok := o.(web_ext.User); ok && u != nil {
+			if includeDisabled {
+				return u
+			}
+
+			if u.(*user).IsDisabled() {
+				err := errors.New("user with name is " + u.Name() + " is disabled")
+				log.Println(err)
+				panic(err)
+			}
+			return u
+		}
+	}
+
+	um.ensureRoles()
+
+	var u = &user{um: um}
+	err := um.db.Users().ID(userID).Omit("profiles").Get(&u.u)
+	if err != nil {
+		err = errors.New("query user with id is " + fmt.Sprint(userID) + "fail: " + err.Error())
+		log.Println(err)
+		panic(err)
+	}
+
+	if !includeDisabled {
+		if u.IsDisabled() {
+			err = errors.New("query user with id is " + fmt.Sprint(userID) + "fail: " + err.Error())
+			log.Println(err)
 			panic(err)
 		}
+	}
 
-		if u.administrator != 0 {
-			for _, role := range u.roles {
-				if role.ID == u.administrator {
-					u.Roles() // 缓存 roleNames
+	return um.load(u)
+}
 
-					userCache.SetDefault(userName, u)
-					return u
-				}
+func (um *userManager) load(u *user) web_ext.User {
+	condRoles := "exists (select * from " + um.db.UsersAndRoles().Name() + " as users_roles " +
+		" where users_roles.role_id = " + um.db.Roles().Name() + ".id and users_roles.user_id = ?)"
+	err := um.db.Roles().Where(condRoles, u.ID()).All(&u.roles)
+	if err != nil {
+		err = errors.New("query permissions and roles with user is " + u.Name() + " fail: " + err.Error())
+		log.Println("[permission] ", err)
+		panic(err)
+	}
+
+	u.roleNames = nil
+	u.Roles() // 缓存 roleNames
+
+	if um.superRole.ID != 0 {
+		for _, role := range u.roles {
+			if role.ID == um.superRole.ID {
+				um.cacheIt(u)
+				return u
+			}
+		}
+	}
+
+	if um.adminRole.ID != 0 {
+		for _, role := range u.roles {
+			if role.ID == um.adminRole.ID {
+				um.cacheIt(u)
+				return u
 			}
 		}
 
 		if u.u.Name == web_ext.UserAdmin {
-			u.u.Name = userName
-			u.roles = append(u.roles, adminRole)
+			u.roles = append(u.roles, um.adminRole)
+
+			u.roleNames = nil
 			u.Roles() // 缓存 roleNames
 
-			userCache.SetDefault(userName, u)
+			um.cacheIt(u)
 			return u
 		}
-
-		pgRoleCond := "exists (select * from " + db.UsersAndRoles().Name() + " as users_roles join " +
-			db.Users().Name() + " as users on users_roles.user_id = users.id " +
-			"where users_roles.role_id = " + db.PermissionGroupsAndRoles().Name() + ".role_id and users.name = ?)"
-		err = db.PermissionGroupsAndRoles().Where(pgRoleCond, userName).All(&u.permissionsAndRoles)
-		if err != nil {
-			err := errors.New("query permissions and roles with user is " + userName + " fail: " + err.Error())
-			log.Println("[permission] ", err)
-			panic(err)
-		}
-
-		// sqlStr := "select * from " + db.PermissionGroupAndRoles().Name() + "as pg " +
-		// 	" where exists (select * from " + db.UserAndRole().Name() + " as uar join " +
-		// 	db.User().Name() + " as user on uar.user_id = user.id where role.id = uar.role_id and user.name = ?)"
-
-		// var roles []PermissionGroupAndRole
-		// err = db.Role().Query(sqlStr, user).All(&roles)
-		// if err != nil {
-		// 	panic(errors.New("query roles with user is " + user + "fail: " + err.Error()))
-		// }
-
-		u.Roles() // 缓存 roleNames
-
-		userCache.SetDefault(userName, u)
-		return u
 	}
+
+	var roleIDs = make([]int64, len(u.roles))
+	for idx := range u.roles {
+		roleIDs[idx] = u.u.ID
+	}
+
+	err = um.db.PermissionGroupsAndRoles().Where(orm.Cond{"role_id IN": roleIDs}).All(&u.permissionsAndRoles)
+	if err != nil {
+		err := errors.New("query permissions and roles with user is " + u.Name() + " fail: " + err.Error())
+		log.Println("[permission] ", err)
+		panic(err)
+	}
+
+	um.cacheIt(u)
+	return u
 }
 
 type user struct {
-	db                   *DB
-	lifecycle            *web_ext.Lifecycle
-	u                    User
-	roles                []Role
-	roleNames            []string
-	permissionsAndRoles  []PermissionGroupAndRole
-	permissionGroupCache *GroupCache
-
-	super, administrator, visitor int64
+	um                  *userManager
+	permissionsAndRoles []PermissionGroupAndRole
+	u                   User
+	roles               []Role
+	roleNames           []string
 }
 
 func (u *user) IsDisabled() bool {
@@ -220,7 +313,7 @@ func (u *user) WriteProfile(key, value string) error {
 		}
 
 		updateStr := `UPDATE hengwei_users SET profiles = profiles -$1::text WHERE id = $2`
-		_, err := u.db.Exec(updateStr, key, u.ID())
+		_, err := u.um.db.Exec(updateStr, key, u.ID())
 		if err != nil {
 			return errors.Wrap(err, "WriteProfile")
 		}
@@ -233,7 +326,7 @@ func (u *user) WriteProfile(key, value string) error {
 		updateStr = `UPDATE hengwei_users SET profiles = jsonb_build_object($1::text, $2::text) WHERE id = $3`
 	}
 
-	_, err := u.db.Exec(updateStr, key, value, u.ID())
+	_, err := u.um.db.Exec(updateStr, key, value, u.ID())
 	if err != nil {
 		return errors.Wrap(err, "WriteProfile")
 	}
@@ -247,7 +340,7 @@ func (u *user) readProfiles() error {
 	}
 
 	var txt []byte //sql.NullString
-	err := u.db.Engine.DB().DB.QueryRow("SELECT profiles FROM hengwei_users WHERE id = $1", u.ID()).Scan(&txt)
+	err := u.um.db.Engine.DB().DB.QueryRow("SELECT profiles FROM hengwei_users WHERE id = $1", u.ID()).Scan(&txt)
 	if err != nil {
 		return errors.Wrap(err, "readProfiles")
 	}
@@ -295,6 +388,8 @@ func (u *user) Data(key string) interface{} {
 		return u.u.ID
 	case "name":
 		return u.u.Name
+	case "nickname":
+		return u.u.Nickname
 	case "description":
 		return u.u.Description
 	case "attributes":
@@ -317,24 +412,25 @@ func (u *user) HasPermission(permissionID, op string) bool {
 	if u.Name() == web_ext.UserAdmin {
 		return true
 	}
-	if u.administrator != 0 {
+
+	if u.um.superRole.ID != 0 {
 		for _, role := range u.roles {
-			if role.ID == u.administrator {
-				return true
-			}
-		}
-	}
-	if u.super != 0 {
-		for _, role := range u.roles {
-			if role.ID == u.super {
+			if role.ID == u.um.superRole.ID {
 				return true
 			}
 		}
 	}
 
-	if u.visitor != 0 && web_ext.QUERY == op {
+	if u.um.adminRole.ID != 0 {
 		for _, role := range u.roles {
-			if role.ID == u.visitor {
+			if role.ID == u.um.adminRole.ID {
+				return true
+			}
+		}
+	}
+	if u.um.visitorRole.ID != 0 && web_ext.QUERY == op {
+		for _, role := range u.roles {
+			if role.ID == u.um.visitorRole.ID {
 				return true
 			}
 		}
@@ -371,7 +467,7 @@ func (u *user) HasPermission(permissionID, op string) bool {
 }
 
 func (u *user) hasPermission(groupID int64, permissionID string) bool {
-	group := u.permissionGroupCache.Get(groupID)
+	group := u.um.permissionGroupCache.Get(groupID)
 	if group == nil {
 		log.Println("[permissions] permission group with id is", groupID, "isn't found.")
 		return false
@@ -402,7 +498,7 @@ func (u *user) hasPermissionInGroup(group *Permissions, permissionID string) boo
 	}
 
 	// 在子组中查找这个权限
-	children := u.permissionGroupCache.GetChildren(group.ID)
+	children := u.um.permissionGroupCache.GetChildren(group.ID)
 	if len(children) != 0 {
 		for _, child := range children {
 			if u.hasPermissionInGroup(child, permissionID) {

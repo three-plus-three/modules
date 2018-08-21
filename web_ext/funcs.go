@@ -11,6 +11,7 @@ import (
 	"github.com/revel/revel"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/forms"
+	"github.com/three-plus-three/modules/as"
 	"github.com/three-plus-three/modules/functions"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/modules/urlutil"
@@ -203,6 +204,30 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 			str = revel.Config.StringDefault("i18n.default_language", "zh")
 		}
 		return template.HTML(revel.MessageFunc(str, message, args...))
+	}
+
+	revel.TemplateFuncs["username"] = func(userID interface{}, defaultValue ...string) string {
+		uid, err := as.Int64(userID)
+		if err != nil {
+			if len(defaultValue) > 0 {
+				return defaultValue[0]
+			}
+			panic(errors.New("user id '" + fmt.Sprint(userID) + "' is invalid user identifier"))
+		}
+
+		if userID == 0 {
+			return ""
+		}
+
+		u := lifecycle.UserManager.ByID(uid)
+		if u == nil {
+			if len(defaultValue) > 0 {
+				return defaultValue[0]
+			}
+			panic(errors.New("user id '" + fmt.Sprint(userID) + "' isnot found"))
+		}
+
+		return u.Nickname()
 	}
 }
 
