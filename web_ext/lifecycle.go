@@ -54,6 +54,15 @@ func (u UserIncludeDisabled) apply() {}
 type UserManager interface {
 	ByName(username string, opts ...UserOption) User
 	ByID(userID int64, opts ...UserOption) User
+	GroupByID(groupID int64, opts ...UserOption) UserGroup
+}
+
+// UserGroup 用户组信息
+type UserGroup interface {
+	ID() int64
+
+	// 用户登录名
+	Name() string
 }
 
 // User 用户信息
@@ -93,6 +102,10 @@ func (um *userManager) ByName(username string, opts ...UserOption) User {
 }
 
 func (um *userManager) ByID(userID int64, opts ...UserOption) User {
+	return nil
+}
+
+func (um *userManager) GroupByID(groupID int64, opts ...UserOption) UserGroup {
 	return nil
 }
 

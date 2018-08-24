@@ -19,7 +19,7 @@ func TestUser(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	readUser := InitUser(lifecycle)
+	um := InitUser(lifecycle)
 
 	if err := DropTables(lifecycle.ModelEngine); err != nil {
 		t.Error(err)
@@ -37,7 +37,7 @@ func TestUser(t *testing.T) {
 		return
 	}
 
-	u := readUser("abc")
+	u := um.ByName("abc")
 
 	err = u.WriteProfile("a", "b")
 	if err != nil {
@@ -105,7 +105,6 @@ func TestHasPermission(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	readUser := InitUser(lifecycle)
 
 	if err := DropTables(lifecycle.ModelEngine); err != nil {
 		t.Error(err)
@@ -138,12 +137,14 @@ func TestHasPermission(t *testing.T) {
 			}, nil
 		}))
 
-	u := readUser("admin")
+	um := InitUser(lifecycle)
+
+	u := um.ByName("admin")
 	if !u.HasPermission("perm_not_exists_in_db", CREATE) {
 		t.Error("admin 有任何权限")
 	}
 
-	u = readUser("adm")
+	u = um.ByName("adm")
 	if !u.HasPermission("perm_not_exists_in_db", CREATE) {
 		t.Error("有 administrator 角色的用户有任何权限")
 	}
@@ -152,7 +153,7 @@ func TestHasPermission(t *testing.T) {
 		t.Error("有 administrator 角色的用户有任何权限")
 	}
 
-	u = readUser("viewer")
+	u = um.ByName("viewer")
 	if !u.HasPermission("perm_not_exists_in_db", QUERY) {
 		t.Error("有 visitor 角色的用户有任何读权限")
 	}
@@ -169,13 +170,15 @@ func TestHasPermission(t *testing.T) {
 		t.Error("有 visitor 角色的用户没有任何写权限")
 	}
 
-	u = readUser("t70")
+	u = um.ByName("t70")
 	if !u.HasPermission("p12", CREATE) {
-		t.Error("except no p1 create")
-	}
-
-	if !u.HasPermission("p12", CREATE) {
-		t.Error("except has p11 create")
+		t.Log(u.Roles())
+		t.Log(u.(*user).permissionsAndRoles)
+		t.Log(u.(*user).permissionsAndRoles[0].GroupID)
+		t.Log(u.(*user).permissionsAndRoles[1].GroupID)
+		t.Log(um.(*userManager).permissionGroupCache.Get(u.(*user).permissionsAndRoles[0].GroupID))
+		t.Log(um.(*userManager).permissionGroupCache.Get(u.(*user).permissionsAndRoles[1].GroupID))
+		t.Error("except no p12 create")
 	}
 
 	// 1个用户有1个角色 关联父子关系的两个权限组 操作相同 其权限相同
@@ -196,12 +199,12 @@ func TestHasPermission(t *testing.T) {
 	if !u.HasPermission("p32", UPDATE) {
 		t.Error("1个用户有1个角色 关联父子关系的两个权限组 操作不相同 其权限不相同 查子组权限")
 	}
-	u = readUser("t71")
+	u = um.ByName("t71")
 	//1个用户有1个角色 关联无上下关系两个权限组 操作不相同 其权限相同
 	if !u.HasPermission("p12", UPDATE) {
 		t.Error("1个用户有1个角色 关联无上下关系两个权限组 操作不相同 其权限相同")
 	}
-	u = readUser("t72")
+	u = um.ByName("t72")
 	//1个用户有2个角色  关联同一个权限组  操作不同
 	if !u.HasPermission("p22", UPDATE) {
 		t.Error("1个用户有2个角色  关联同一个权限组  操作不同")
@@ -215,7 +218,7 @@ func TestHasPermission(t *testing.T) {
 		t.Error("1个用户有2个角色  关联有父子关系权限组  操作不相同   两组权限相同")
 	}
 
-	u = readUser("t73")
+	u = um.ByName("t73")
 	//1个用户有2个角色  角色1关联父子组  角色2关联父组     操作全不相同   父子组权限不相同 	查询的是父组权限
 	if !u.HasPermission("p13", UPDATE) {
 		t.Error("1个用户有2个角色  角色1关联父子组  角色2关联父组 操作全不相同   父子组权限不相同 	查询的是父组权限")
@@ -231,7 +234,7 @@ func TestHasPermission(t *testing.T) {
 		t.Error("1个用户有2个角色  角色1关联父子组  角色2关联父组 操作全不相同   父子组权限不相同 	查询的是父组权限")
 	}
 
-	u = readUser("A1")
+	u = um.ByName("A1")
 	//用户关联1个角色
 	if !u.HasPermission("um_1", CREATE) {
 		t.Error("权限组与权限的Tags关联")

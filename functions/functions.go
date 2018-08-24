@@ -466,6 +466,14 @@ var genericMap = map[string]interface{}{
 
 	// Crypto:
 	"genPrivateKey": generatePrivateKey,
+
+	// slice
+	"isLast":     isLast,
+	"isNotLast":  isNotLast,
+	"isFirst":    isFirst,
+	"isNotFirst": isNotFirst,
+	"isEmpty":    isEmpty,
+	"isNotEmpty": isNotEmpty,
 }
 
 func split(sep, orig string) map[string]string {
@@ -934,4 +942,52 @@ func untilStep(start, stop, step int) []int {
 		v = append(v, i)
 	}
 	return v
+}
+
+func isEmpty(list interface{}) bool {
+	if list == nil {
+		return true
+	}
+	rValue := reflect.ValueOf(list)
+	if rValue.Kind() != reflect.Slice {
+		return false
+	}
+	return rValue.Len() == 0
+}
+
+func isNotEmpty(list interface{}) bool {
+	return !isEmpty(list)
+}
+
+func isLast(list interface{}, idx int) bool {
+	if list == nil {
+		return false
+	}
+	rValue := reflect.ValueOf(list)
+	if rValue.Kind() != reflect.Slice {
+		return false
+	}
+	return idx == (rValue.Len() - 1)
+}
+
+func isNotLast(list interface{}, idx int) bool {
+	return !isLast(list, idx)
+}
+
+func isFirst(list interface{}, idx int) bool {
+	if list == nil {
+		return false
+	}
+	rValue := reflect.ValueOf(list)
+	if rValue.Kind() != reflect.Slice {
+		return false
+	}
+	if rValue.Len() == 0 {
+		return false
+	}
+	return idx == 0
+}
+
+func isNotFirst(list interface{}, idx int) bool {
+	return !isFirst(list, idx)
 }

@@ -21,6 +21,7 @@ func InitUser(lifecycle *web_ext.Lifecycle) web_ext.UserManager {
 
 		cacheByName: cache.New(5*time.Minute, 10*time.Minute),
 		cacheByID:   cache.New(5*time.Minute, 10*time.Minute),
+		groupByID:   cache.New(5*time.Minute, 10*time.Minute),
 	}
 	um.refresh()
 
@@ -52,6 +53,7 @@ type userManager struct {
 	permissionGroupCache *GroupCache
 	cacheByName          *cache.Cache
 	cacheByID            *cache.Cache
+	groupByID            *cache.Cache
 	lastErr              concurrency.ErrorValue
 
 	superRole   Role
@@ -65,6 +67,40 @@ func (um *userManager) refresh() {
 		um.lastErr.Set(um.permissionGroupCache.refresh(um.db))
 	}
 	um.permissionGroupCache.Init(5*time.Minute, refresh)
+}
+
+func (um *userManager) GroupByID(groupID int64, opts ...web_ext.UserOption) web_ext.UserGroup {
+	if e := um.lastErr.Get(); e != nil {
+		panic(e)
+	}
+
+	if o, found := um.groupByID.Get(strconv.FormatInt(groupID, 10)); found && o != nil {
+		if u, ok := o.(web_ext.UserGroup); ok && u != nil {
+			return u
+		}
+	}
+
+	var ug = &userGroup{um: um}
+	err := um.db.UserGroups().ID(groupID).Get(&ug.ug)
+	if err != nil {
+		err = errors.New("query usergroup with id is " + fmt.Sprint(groupID) + "fail: " + err.Error())
+		log.Println(err)
+		panic(err)
+	}
+	return ug
+}
+
+type userGroup struct {
+	um *userManager
+	ug UserGroup
+}
+
+func (ug *userGroup) ID() int64 {
+	return ug.ug.ID
+}
+
+func (ug *userGroup) Name() string {
+	return ug.ug.Name
 }
 
 func (um *userManager) cacheIt(u web_ext.User) {

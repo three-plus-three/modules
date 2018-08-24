@@ -219,7 +219,7 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 			return ""
 		}
 
-		u := lifecycle.UserManager.ByID(uid)
+		u := lifecycle.UserManager.ByID(uid, UserIncludeDisabled{})
 		if u == nil {
 			if len(defaultValue) > 0 {
 				return defaultValue[0]
@@ -228,6 +228,30 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		}
 
 		return u.Nickname()
+	}
+
+	revel.TemplateFuncs["usergroupname"] = func(groupID interface{}, defaultValue ...string) string {
+		uid, err := as.Int64(groupID)
+		if err != nil {
+			if len(defaultValue) > 0 {
+				return defaultValue[0]
+			}
+			panic(errors.New("user id '" + fmt.Sprint(groupID) + "' is invalid user identifier"))
+		}
+
+		if groupID == 0 {
+			return ""
+		}
+
+		u := lifecycle.UserManager.GroupByID(uid)
+		if u == nil {
+			if len(defaultValue) > 0 {
+				return defaultValue[0]
+			}
+			panic(errors.New("user id '" + fmt.Sprint(groupID) + "' isnot found"))
+		}
+
+		return u.Name()
 	}
 }
 

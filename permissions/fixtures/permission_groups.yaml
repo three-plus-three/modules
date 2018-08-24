@@ -45,7 +45,7 @@
     id: 'PK_GENERATE(hengwei_permissions_and_groups_21)'
   fields:
     group_id: PK_REFERENCE(permission_group_key_2)
-    permission_object: p12
+    permission_object: p22
     type: 0
 
 - table: 'hengwei_permissions_and_groups'
@@ -79,7 +79,7 @@
     id: 'PK_GENERATE(hengwei_permissions_and_groups_11)'
   fields:
     group_id: PK_REFERENCE(permission_group_key_3)
-    permission_object: p11
+    permission_object: p31
     type: 0
 
 - table: 'hengwei_permissions_and_groups'
