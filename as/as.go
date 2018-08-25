@@ -729,12 +729,32 @@ func Float64(value interface{}) (float64, error) {
 	return 0, errType(value, "float64")
 }
 
+func Float64WithDefault(value interface{}, defaultValue float64) float64 {
+	f64, err := Float64(value)
+	if nil != err {
+		return defaultValue
+	}
+	return f64
+}
+
 func Float32(value interface{}) (float32, error) {
 	f64, err := Float64(value)
 	if nil != err {
 		return 0, errType(value, "float32")
 	}
+
+	if f64 > math.MaxFloat32 {
+		return 0, errType(value, "float32")
+	}
 	return float32(f64), nil
+}
+
+func Float32WithDefault(value interface{}, defaultValue float32) float32 {
+	f64, err := Float64(value)
+	if nil != err {
+		return defaultValue
+	}
+	return float32(f64)
 }
 
 // String type AsSerts to `string`
