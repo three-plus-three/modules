@@ -2,6 +2,7 @@ package menus
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,6 +27,10 @@ func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engin
 	weaver := &menuWeaver{Logger: logger, env: env, core: core, layout: layout, layouts: layouts}
 	if err := weaver.Init(); err != nil {
 		return nil, err
+	}
+
+	if "true" == os.Getenv("tpt_custom_menu_enabled") {
+		weaver.customEnabled = true
 	}
 
 	return weaver, nil
@@ -54,12 +59,12 @@ type Layout interface {
 }
 
 type menuWeaver struct {
-	Logger *log.Logger
-	env    *environment.Environment
-	core   *hub_engine.Core
-	//db      *DB
-	layout  Layout
-	layouts map[string]Layout
+	Logger        *log.Logger
+	env           *environment.Environment
+	core          *hub_engine.Core
+	layout        Layout
+	layouts       map[string]Layout
+	customEnabled bool
 
 	mu               sync.RWMutex
 	byApplications   map[string][]toolbox.Menu
@@ -189,6 +194,27 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 }
 
 func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
+
+	if weaver.customEnabled {
+		filename := ctx
+		if filename == "" {
+			filename = "default.json"
+		}
+		in, err := ioutil.ReadFile(weaver.env.Fs.FromDataConfig("custom_menus", filename))
+		if err != nil && !os.IsNotExist(err) {
+			weaver.Logger.Println(err)
+		}
+
+		if len(in) != 0 {
+			var menuList []toolbox.Menu
+			err := json.Unmarshal(in, &menuList)
+			if err != nil {
+				weaver.Logger.Println(err)
+			} else {
+				return menuList, nil
+			}
+		}
+	}
 	return weaver.read(ctx)
 }
 
