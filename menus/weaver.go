@@ -29,7 +29,7 @@ func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engin
 		return nil, err
 	}
 
-	if "true" == os.Getenv("tpt_custom_menu_enabled") {
+	if os.Getenv("tpt_custom_menu_enabled") == "true" {
 		weaver.customEnabled = true
 	}
 

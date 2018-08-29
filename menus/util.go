@@ -37,32 +37,6 @@ func isEmptyURL(u string) bool {
 func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) (bool, []toolbox.Menu) {
 	for idx := range allList {
 		if allList[idx].UID == c.layout.Target {
-
-			if act == actReplaceInTree {
-				if allList[idx].Title == "" {
-					allList[idx].Title = c.layout.Title
-				}
-				if allList[idx].Permission == "" {
-					allList[idx].Permission = c.layout.Permission
-				}
-				if allList[idx].License == "" {
-					allList[idx].License = c.layout.License
-				}
-				if allList[idx].URL == "" || allList[idx].URL == "#" {
-					allList[idx].URL = c.layout.URL
-				}
-				if allList[idx].Icon == "" {
-					allList[idx].Icon = c.layout.Icon
-				}
-				if allList[idx].Classes == "" {
-					allList[idx].Classes = c.layout.Classes
-				}
-				if len(c.items) > 0 {
-					allList[idx].Children = append(allList[idx].Children, c.items...)
-				}
-				return true, allList
-			}
-
 			if isInline {
 				var results []toolbox.Menu
 				switch act {
@@ -88,6 +62,22 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 					copy(results, allList[:idx])
 					copy(results[idx:], c.items)
 					copy(results[idx+len(c.items):], allList[idx:])
+
+				case actReplaceInTree:
+					if len(c.items) == 0 {
+						if c.layout.URL != "" && c.layout.Title != "" {
+							c.items = append(c.items, c.layout.toMenu())
+						}
+					}
+
+					if len(c.items) > 0 {
+						results = make([]toolbox.Menu, len(allList)+len(c.items))
+						copy(results, allList[:idx])
+						copy(results[idx:], c.items)
+						copy(results[idx+len(c.items):], allList[idx:])
+					} else {
+						results = allList
+					}
 				default:
 					if len(c.items) == 0 {
 						if c.layout.Category == toolbox.MenuNull {
@@ -138,7 +128,27 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 					copy(results[idx+1:], allList[idx:])
 				} else {
 					results = allList
-					//fmt.Println("==== before", c.layout.UID, c.layout.Target, len(c.items), c.layout.URL)
+				}
+			case actReplaceInTree:
+				if len(c.items) == 0 {
+					if !isEmptyURL(c.layout.URL) && c.layout.Title != "" {
+						item := c.layout.toMenu()
+						mergeMenuNonrecursive(&item, &allList[idx])
+						c.items = append(c.items, item)
+					}
+				}
+
+				if len(c.items) != 0 || !isEmptyURL(c.layout.URL) {
+					item := c.layout.toMenu()
+					mergeMenuNonrecursive(&item, &allList[idx])
+
+					results = make([]toolbox.Menu, len(allList)+1)
+					copy(results, allList[:idx])
+					results[idx] = item
+					results[idx].Children = c.items
+					copy(results[idx+1:], allList[idx:])
+				} else {
+					results = allList
 				}
 			default:
 				if len(c.items) == 0 {
@@ -262,7 +272,7 @@ func mergeMenuNonrecursive(to, from *toolbox.Menu) {
 	if to.License == "" {
 		to.License = from.License
 	}
-	if to.URL == "" || to.URL == "#" {
+	if isEmptyURL(to.URL) && !isEmptyURL(from.URL) {
 		to.URL = from.URL
 	}
 	if to.Icon == "" {
