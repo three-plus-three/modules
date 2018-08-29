@@ -203,10 +203,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 				case locationBefore:
 					found, results = insertBefore(results, c, c.layout.Inline)
 				case locationReplace:
-					found, results = insertBefore(results, c, c.layout.Inline)
-					if found {
-						removeList = append(removeList, c)
-					}
+					found, results = replaceInTree(results, c, c.layout.Inline)
 				default:
 					return nil, errors.New("菜单 " + c.layout.UID + " 的 location 不正确")
 				}
