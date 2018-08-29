@@ -84,7 +84,7 @@ func (srv *Server) stats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
-	ctx := r.URL.Query().Get("ctx")
+	ctx := r.URL.Query().Get("app")
 	if ctx == "stats" {
 		err := renderJSON(w, http.StatusOK, srv.weaver.Stats())
 		if err != nil {
