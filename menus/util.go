@@ -37,6 +37,32 @@ func isEmptyURL(u string) bool {
 func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) (bool, []toolbox.Menu) {
 	for idx := range allList {
 		if allList[idx].UID == c.layout.Target {
+
+			if act == actReplaceInTree {
+				if allList[idx].Title == "" {
+					allList[idx].Title = c.layout.Title
+				}
+				if allList[idx].Permission == "" {
+					allList[idx].Permission = c.layout.Permission
+				}
+				if allList[idx].License == "" {
+					allList[idx].License = c.layout.License
+				}
+				if allList[idx].URL == "" || allList[idx].URL == "#" {
+					allList[idx].URL = c.layout.URL
+				}
+				if allList[idx].Icon == "" {
+					allList[idx].Icon = c.layout.Icon
+				}
+				if allList[idx].Classes == "" {
+					allList[idx].Classes = c.layout.Classes
+				}
+				if len(c.items) > 0 {
+					allList[idx].Children = append(allList[idx].Children, c.items...)
+				}
+				return true, allList
+			}
+
 			if isInline {
 				var results []toolbox.Menu
 				switch act {
