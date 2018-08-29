@@ -194,12 +194,14 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 }
 
 func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
-
 	if weaver.customEnabled {
 		filename := ctx
 		if filename == "" {
 			filename = "default.json"
+		} else {
+			filename = filename + ".json"
 		}
+
 		in, err := ioutil.ReadFile(weaver.env.Fs.FromDataConfig("custom_menus", filename))
 		if err != nil && !os.IsNotExist(err) {
 			weaver.Logger.Println(err)
