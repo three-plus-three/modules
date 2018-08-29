@@ -37,6 +37,7 @@ func isEmptyURL(u string) bool {
 func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) (bool, []toolbox.Menu) {
 	for idx := range allList {
 		if allList[idx].UID == c.layout.Target {
+
 			if isInline {
 				var results []toolbox.Menu
 				switch act {
