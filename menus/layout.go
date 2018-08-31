@@ -300,7 +300,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		results = watchInTree(results, c, c.layout.Target)
 	}
 
-	return clearDividerFromList(results), nil
+	return ClearDividerFromList(results), nil
 }
 
 func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolbox.Menu {

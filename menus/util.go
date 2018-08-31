@@ -338,7 +338,7 @@ func forEach(allList []toolbox.Menu, cb func(menu *toolbox.Menu)) {
 	}
 }
 
-func clearDividerFromList(list []toolbox.Menu) []toolbox.Menu {
+func ClearDividerFromList(list []toolbox.Menu) []toolbox.Menu {
 	if len(list) == 0 {
 		return nil
 	}
@@ -346,7 +346,7 @@ func clearDividerFromList(list []toolbox.Menu) []toolbox.Menu {
 	offset := 0
 	prev := true
 	for idx := range list {
-		list[idx].Children = clearDividerFromList(list[idx].Children)
+		list[idx].Children = ClearDividerFromList(list[idx].Children)
 		if list[idx].UID == toolbox.MenuDivider {
 			if prev {
 				continue

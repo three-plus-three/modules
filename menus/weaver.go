@@ -330,7 +330,7 @@ func isSame(allItems, subset []toolbox.Menu) bool {
 
 // 	sortMenuList(topMenuList)
 // 	results := copyToMenuList(topMenuList)
-// 	results = clearDividerFromList(results)
+// 	results = ClearDividerFromList(results)
 // 	return results
 // }
 
