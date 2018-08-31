@@ -137,7 +137,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			// 	}
 
 			// 	for idx := range menu.Children {
-			// 		if !walk(menu.Children[idx]) {
+			// 		if !walk(menu.Children[idx]) {]
 			// 			return false
 			// 		}
 			// 	}
@@ -317,14 +317,20 @@ func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolb
 		}
 
 		if layout.UID == "" {
-			if layout.Category != categoryRemove {
-				panic(errors.New("layout with target = '" + layout.Target + "' and category = '" + layout.Category + "' is invalid, uid is empty"))
+			if layout.Title == "divider" {
+				continue
 			}
-		} else if old, exists := byID[layout.UID]; !exists {
-			byID[layout.UID] = c
-		} else if layout.Title != "divider" {
+			if layout.Category == categoryRemove {
+				continue
+			}
+			panic(errors.New("layout with target = '" + layout.Target + "' and category = '" + layout.Category + "' is invalid, uid is empty"))
+		}
+
+		if old, exists := byID[layout.UID]; exists {
 			panic(errors.New("layout.UID '" + layout.UID + "' is duplicated - old is " + old.layout.Title + ", new is " + layout.Title))
 		}
+
+		byID[layout.UID] = c
 	}
 	return results
 }
