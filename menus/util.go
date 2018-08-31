@@ -178,12 +178,12 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 }
 
 // SearchMenuInTree 在菜单树中查找指定的菜单
-func SearchMenuInTree(allList []toolbox.Menu, name string) *toolbox.Menu {
+func SearchMenuInTree(allList []toolbox.Menu, uid string) *toolbox.Menu {
 	for idx := range allList {
-		if allList[idx].UID == name {
+		if allList[idx].UID == uid {
 			return &allList[idx]
 		}
-		found := SearchMenuInTree(allList[idx].Children, name)
+		found := SearchMenuInTree(allList[idx].Children, uid)
 		if found != nil {
 			return found
 		}
@@ -278,6 +278,27 @@ func mergeMenuNonrecursive(to, from *toolbox.Menu) {
 	}
 	if to.Icon == "" {
 		to.Icon = from.Icon
+	}
+}
+
+func mergeLayoutMenuNonrecursive(layout *LayoutItem, from *toolbox.Menu) {
+	if layout.Title == "" {
+		layout.Title = from.Title
+	}
+	if layout.Permission == "" {
+		layout.Permission = from.Permission
+	}
+	if layout.License == "" {
+		layout.License = from.License
+	}
+	if isEmptyURL(layout.URL) && !isEmptyURL(from.URL) {
+		layout.URL = from.URL
+	}
+	if layout.Icon == "" {
+		layout.Icon = from.Icon
+	}
+	if layout.Classes == "" {
+		layout.Classes = from.Classes
 	}
 }
 

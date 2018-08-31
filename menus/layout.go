@@ -105,8 +105,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 	var remains []toolbox.Menu
 
 	for appName, menuList := range byApps {
-		//for _, appName := range appNames {
-		//	menuList := byApps[appName]
 		c, ok := byID["app."+appName]
 		if ok {
 			c.items = mergeMenuArray(c.items, menuList)
@@ -124,29 +122,32 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 				continue
 			}
 
-			if c.layout.Title == "" {
-				c.layout.Title = remains[idx].Title
-			}
-			if c.layout.Classes == "" {
-				c.layout.Classes = remains[idx].Classes
-			}
-			if c.layout.Permission == "" {
-				c.layout.Permission = remains[idx].Permission
-			}
-			if c.layout.License == "" {
-				c.layout.License = remains[idx].License
-			}
-			if c.layout.URL == "" || c.layout.URL == "#" {
-				c.layout.URL = remains[idx].URL
-			}
-			if c.layout.Icon == "" {
-				c.layout.Icon = remains[idx].Icon
-			}
-
+			mergeLayoutMenuNonrecursive(c.layout, &remains[idx])
 			c.items = mergeMenuArray(c.items, remains[idx].Children)
 		}
 
 		if len(remains) == len(local) {
+
+			// local = nil
+			// var walk func(toolbox.Menu) bool
+			// walk = func(menu toolbox.Menu) bool {
+
+			// 	if !isEmptyURL(menu) {
+
+			// 	}
+
+			// 	for idx := range menu.Children {
+			// 		if !walk(menu.Children[idx]) {
+			// 			return false
+			// 		}
+			// 	}
+			// 	return true
+			// }
+
+			// for idx := range remains {
+			// 	walk(local[idx])
+			// }
+
 			var buf bytes.Buffer
 			buf.WriteString("下列菜单不能处理:")
 			for _, menu := range local {
@@ -186,6 +187,11 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 					from := c.layout.toMenu()
 					from.Children = c.items
 					mergeMenuRecursive(&results[foundIdx], &from)
+					break
+				}
+				if found := SearchMenuInTree(results, c.layout.UID); found != nil {
+					menu := c.layout.toMenu()
+					mergeMenuNonrecursive(found, &menu)
 				} else {
 					local = append(local, c)
 				}
@@ -196,7 +202,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			case categoryLocation:
 
 				var found bool
-
 				switch strings.ToLower(strings.TrimSpace(c.layout.Location)) {
 				case locationAfter:
 					found, results = insertAfter(results, c, c.layout.Inline)
@@ -221,16 +226,38 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		}
 
 		if len(local) == len(allList) {
-			var buf bytes.Buffer
-			buf.WriteString("下列 layout 菜单不能处理:")
-			for _, menu := range local {
-				buf.WriteString(menu.layout.UID)
-				buf.WriteString("(")
-				buf.WriteString(menu.layout.Title)
-				buf.WriteString("),")
+			// var buf bytes.Buffer
+			// buf.WriteString("下列 layout 菜单不能处理:")
+			// for _, menu := range local {
+			// 	buf.WriteString(menu.layout.UID)
+			// 	buf.WriteString("(")
+			// 	buf.WriteString(menu.layout.Title)
+			// 	buf.WriteString("),")
+			// }
+			// buf.Truncate(buf.Len() - 1)
+			// return nil, errors.New(buf.String())
+
+			var children []toolbox.Menu
+			for idx := range local {
+				if isEmptyURL(local[idx].layout.URL) {
+					continue
+				}
+				children = append(children, local[idx].layout.toMenu())
 			}
-			buf.Truncate(buf.Len() - 1)
-			return nil, errors.New(buf.String())
+
+			if len(children) != 0 {
+				results = append(results, toolbox.Menu{
+					UID:   "nm.orphan",
+					Title: "其它",
+					//Permission string `json:"permission,omitempty" xorm:"permission"`
+					//License    string `json:"license,omitempty" xorm:"license"`
+					//URL        string `json:"url,omitempty" xorm:"url"`
+					//Icon       string `json:"icon,omitempty" xorm:"icon"`
+					//Classes    string `json:"classes,omitempty" xorm:"classes"`
+					Children: children,
+				})
+				break
+			}
 		}
 		allList = local
 	}
@@ -291,12 +318,12 @@ func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolb
 
 		if layout.UID == "" {
 			if layout.Category != categoryRemove {
-				panic("layout with target = '" + layout.Target + "' and category = '" + layout.Category + "' is invalid, uid is empty")
+				panic(errors.New("layout with target = '" + layout.Target + "' and category = '" + layout.Category + "' is invalid, uid is empty"))
 			}
-		} else if _, exists := byID[layout.UID]; !exists {
+		} else if old, exists := byID[layout.UID]; !exists {
 			byID[layout.UID] = c
-		} else {
-			panic("layout.UID '" + layout.UID + "' is duplicated")
+		} else if layout.Title != "divider" {
+			panic(errors.New("layout.UID '" + layout.UID + "' is duplicated - old is " + old.layout.Title + ", new is " + layout.Title))
 		}
 	}
 	return results
