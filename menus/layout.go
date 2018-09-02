@@ -94,6 +94,27 @@ type container struct {
 	items  []toolbox.Menu
 }
 
+func inChildren(children []toolbox.Menu, item toolbox.Menu, skips ...int) bool {
+	for idx := range children {
+		skip := false
+		for i := range skips {
+			if i == idx {
+				skip = true
+				break
+			}
+		}
+
+		if skip {
+			continue
+		}
+
+		if children[idx].UID == item.UID {
+			return true
+		}
+	}
+	return false
+}
+
 func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.Menu, error) {
 	if len(byApps) == 0 {
 		return nil, nil
@@ -132,7 +153,14 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			}
 
 			if foundIdx >= 0 {
-				mergeMenuRecursive(&results[foundIdx], &remains[idx])
+				if inChildren(results, remains[idx], foundIdx) {
+					mergeMenuNonrecursive(&results[foundIdx], &remains[idx])
+					if len(remains[idx].Children) > 0 {
+						local = append(local, remains[idx].Children...)
+					}
+				} else {
+					mergeMenuRecursive(&results[foundIdx], &remains[idx])
+				}
 			} else {
 				local = append(local, remains[idx])
 			}
