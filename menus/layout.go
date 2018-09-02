@@ -117,47 +117,30 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		var local []toolbox.Menu
 		for idx := range remains {
 			c, ok := byID[remains[idx].UID]
-			if !ok {
-				local = append(local, remains[idx])
+			if ok {
+				mergeLayoutMenuNonrecursive(c.layout, &remains[idx])
+				c.items = mergeMenuArray(c.items, remains[idx].Children)
 				continue
 			}
 
-			mergeLayoutMenuNonrecursive(c.layout, &remains[idx])
-			c.items = mergeMenuArray(c.items, remains[idx].Children)
+			foundIdx := -1
+			for ridx := range results {
+				if results[ridx].UID == remains[idx].UID {
+					foundIdx = ridx
+					break
+				}
+			}
+
+			if foundIdx >= 0 {
+				mergeMenuRecursive(&results[foundIdx], &remains[idx])
+			} else {
+				local = append(local, remains[idx])
+			}
 		}
 
 		if len(remains) == len(local) {
-
-			// local = nil
-			// var walk func(toolbox.Menu) bool
-			// walk = func(menu toolbox.Menu) bool {
-
-			// 	if !isEmptyURL(menu) {
-
-			// 	}
-
-			// 	for idx := range menu.Children {
-			// 		if !walk(menu.Children[idx]) {]
-			// 			return false
-			// 		}
-			// 	}
-			// 	return true
-			// }
-
-			// for idx := range remains {
-			// 	walk(local[idx])
-			// }
-
-			var buf bytes.Buffer
-			buf.WriteString("下列菜单不能处理:")
-			for _, menu := range local {
-				buf.WriteString(menu.UID)
-				buf.WriteString("(")
-				buf.WriteString(menu.Title)
-				buf.WriteString("),")
-			}
-			buf.Truncate(buf.Len() - 1)
-			return nil, errors.New(buf.String())
+			remains = local
+			break
 		}
 
 		remains = local
@@ -175,26 +158,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		var local []*container
 		for _, c := range allList {
 			switch c.layout.Category {
-			case "":
-				foundIdx := -1
-				for idx := range results {
-					if results[idx].UID == c.layout.UID {
-						foundIdx = idx
-						break
-					}
-				}
-				if foundIdx >= 0 {
-					from := c.layout.toMenu()
-					from.Children = c.items
-					mergeMenuRecursive(&results[foundIdx], &from)
-					break
-				}
-				if found := SearchMenuInTree(results, c.layout.UID); found != nil {
-					menu := c.layout.toMenu()
-					mergeMenuNonrecursive(found, &menu)
-				} else {
-					local = append(local, c)
-				}
 			case categoryRemove:
 				removeList = append(removeList, c)
 			case categoryWatch:
@@ -300,20 +263,49 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		results = watchInTree(results, c, c.layout.Target)
 	}
 
+	if len(remains) > 0 {
+		var local []toolbox.Menu
+
+		var walk func([]toolbox.Menu)
+		walk = func(a []toolbox.Menu) {
+			for idx := range a {
+				if found := SearchMenuInTree(results, a[idx].UID); found != nil {
+					mergeMenuNonrecursive(found, &a[idx])
+				} else if len(a[idx].Children) > 0 && !isEmptyURL(a[idx].URL) {
+					local = append(local, a[idx])
+				}
+				walk(a[idx].Children)
+			}
+		}
+
+		walk(remains)
+
+		if len(local) > 0 {
+			var buf bytes.Buffer
+			buf.WriteString("下列菜单不能处理:")
+			for _, menu := range local {
+				buf.WriteString(menu.UID)
+				buf.WriteString("(")
+				buf.WriteString(menu.Title)
+				buf.WriteString("),")
+			}
+			buf.Truncate(buf.Len() - 1)
+			return nil, errors.New(buf.String())
+		}
+	}
+
 	return ClearDividerFromList(results), nil
 }
 
 func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolbox.Menu {
 	results := make([]toolbox.Menu, 0, len(mainLayout))
 	for idx, layout := range mainLayout {
-		c := &container{
-			layout: &mainLayout[idx],
-		}
+
 		if isMenu(layout.Category) {
-			results = append(results, layout.toMenu())
-			c.items = toToolboxMenus(layout.Children, byID)
-			results[len(results)-1].Children =
-				mergeMenuArray(results[len(results)-1].Children, c.items)
+			menu := layout.toMenu()
+			menu.Children = toToolboxMenus(layout.Children, byID)
+			results = append(results, menu)
+			continue
 		}
 
 		if layout.UID == "" {
@@ -329,7 +321,11 @@ func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolb
 		if old, exists := byID[layout.UID]; exists {
 			panic(errors.New("layout.UID '" + layout.UID + "' is duplicated - old is " + old.layout.Title + ", new is " + layout.Title))
 		}
-
+		c := &container{
+			layout: &mainLayout[idx],
+			items:  toToolboxMenus(layout.Children, byID),
+		}
+		//c.items = toToolboxMenus(layout.Children, byID)
 		byID[layout.UID] = c
 	}
 	return results
