@@ -123,7 +123,7 @@ func mergeByID(results, a, returns []toolbox.Menu) []toolbox.Menu {
 	for idx := range a {
 		if found := SearchMenuInTree(results, a[idx].UID); found != nil {
 			mergeMenuNonrecursive(found, &a[idx])
-		} else if len(a[idx].Children) > 0 && !isEmptyURL(a[idx].URL) {
+		} else if !isEmptyURL(a[idx].URL) {
 			returns = append(returns, a[idx])
 		}
 		returns = mergeByID(results, a[idx].Children, returns)
