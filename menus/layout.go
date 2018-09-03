@@ -97,7 +97,7 @@ type container struct {
 func inChildren(children []toolbox.Menu, item toolbox.Menu, skips ...int) bool {
 	for idx := range children {
 		skip := false
-		for i := range skips {
+		for _, i := range skips {
 			if i == idx {
 				skip = true
 				break
@@ -109,6 +109,10 @@ func inChildren(children []toolbox.Menu, item toolbox.Menu, skips ...int) bool {
 		}
 
 		if children[idx].UID == item.UID {
+			return true
+		}
+
+		if inChildren(children[idx].Children, item, skips...) {
 			return true
 		}
 	}
@@ -153,6 +157,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			}
 
 			if foundIdx >= 0 {
+
 				if inChildren(results, remains[idx], foundIdx) {
 					mergeMenuNonrecursive(&results[foundIdx], &remains[idx])
 					if len(remains[idx].Children) > 0 {
