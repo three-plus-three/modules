@@ -1,6 +1,10 @@
 package toolbox
 
-import "strings"
+import (
+	"bytes"
+	"io"
+	"strings"
+)
 
 // 菜单的分类
 const (
@@ -70,4 +74,116 @@ func (menu Menu) IsActive(name string) bool {
 // Fail 产生一个 panic
 func (menu Menu) Fail() interface{} {
 	panic("菜单的级数太多了，最多只支持 3 级 - " + menu.Title + "/" + menu.UID)
+}
+
+func FormatMenus(out io.Writer, isIgnore func(name string) bool, menuList []Menu, layer int, indent bool) {
+	if isIgnore == nil {
+		isIgnore = func(string) bool {
+			return false
+		}
+	}
+	if layer > 0 && indent {
+		out.Write(bytes.Repeat([]byte("  "), layer))
+	}
+	out.Write([]byte("[\r\n"))
+	layer++
+	for idx, menu := range menuList {
+		if layer > 0 {
+			out.Write(bytes.Repeat([]byte("  "), layer))
+		}
+		out.Write([]byte("{"))
+
+		needComma := false
+		if menu.UID != "" && !isIgnore("uid") {
+			io.WriteString(out, `"uid":"`)
+			io.WriteString(out, menu.UID)
+			io.WriteString(out, "\"")
+			needComma = true
+		}
+
+		if menu.Title != "" && !isIgnore("title") {
+			if needComma {
+				io.WriteString(out, `,`)
+			}
+			io.WriteString(out, `"title":"`)
+			io.WriteString(out, menu.Title)
+			io.WriteString(out, "\"")
+			needComma = true
+		}
+
+		if menu.Permission != "" && !isIgnore("permission") {
+			if needComma {
+				io.WriteString(out, `,`)
+			}
+			io.WriteString(out, `"permission":"`)
+			io.WriteString(out, menu.Permission)
+			io.WriteString(out, "\"")
+			needComma = true
+		}
+
+		if menu.License != "" && !isIgnore("license") {
+			if needComma {
+				io.WriteString(out, `,`)
+			}
+			io.WriteString(out, `"license":"`)
+			io.WriteString(out, menu.License)
+			io.WriteString(out, "\"")
+			needComma = true
+		}
+		if menu.Icon != "" && !isIgnore("icon") {
+			if needComma {
+				io.WriteString(out, `,`)
+			}
+			io.WriteString(out, `"icon":"`)
+			io.WriteString(out, menu.Icon)
+			io.WriteString(out, "\"")
+		}
+
+		if menu.Classes != "" && !isIgnore("classes") {
+			if needComma {
+				io.WriteString(out, `,`)
+			}
+			io.WriteString(out, `"classes":"`)
+			io.WriteString(out, menu.Classes)
+			io.WriteString(out, "\"")
+			needComma = true
+		}
+
+		if menu.URL != "" && !isIgnore("url") {
+			if needComma {
+				io.WriteString(out, `,`)
+			}
+			io.WriteString(out, `"url":"`)
+			io.WriteString(out, menu.URL)
+			io.WriteString(out, "\"")
+			needComma = true
+		}
+
+		if len(menu.Children) > 0 && !isIgnore("children") {
+			if needComma {
+				io.WriteString(out, `,`)
+			}
+
+			out.Write([]byte("\r\n"))
+			if layer > 0 {
+				out.Write(bytes.Repeat([]byte("  "), layer+1))
+			}
+
+			io.WriteString(out, `"children":`)
+			FormatMenus(out, isIgnore, menu.Children, layer+1, false)
+		}
+
+		out.Write([]byte("}"))
+
+		if idx != len(menuList)-1 {
+			out.Write([]byte(",\r\n"))
+		} else {
+			out.Write([]byte("\r\n"))
+		}
+	}
+
+	if (layer - 1) > 0 {
+		out.Write(bytes.Repeat([]byte("  "), layer))
+	}
+	out.Write([]byte("]"))
 }

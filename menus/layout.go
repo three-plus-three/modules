@@ -119,6 +119,19 @@ func inChildren(children []toolbox.Menu, item toolbox.Menu, skips ...int) bool {
 	return false
 }
 
+func mergeByID(results, a, returns []toolbox.Menu) []toolbox.Menu {
+	for idx := range a {
+		if found := SearchMenuInTree(results, a[idx].UID); found != nil {
+			mergeMenuNonrecursive(found, &a[idx])
+		} else if len(a[idx].Children) > 0 && !isEmptyURL(a[idx].URL) {
+			returns = append(returns, a[idx])
+		}
+		returns = mergeByID(results, a[idx].Children, returns)
+	}
+
+	return returns
+}
+
 func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.Menu, error) {
 	if len(byApps) == 0 {
 		return nil, nil
@@ -132,7 +145,9 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 	for appName, menuList := range byApps {
 		c, ok := byID["app."+appName]
 		if ok {
-			c.items = mergeMenuArray(c.items, menuList)
+			if c.layout.Category != categoryRemove {
+				c.items = mergeMenuArray(c.items, menuList)
+			}
 			continue
 		}
 		remains = append(remains, menuList...)
@@ -141,13 +156,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 	for len(remains) > 0 {
 		var local []toolbox.Menu
 		for idx := range remains {
-			c, ok := byID[remains[idx].UID]
-			if ok {
-				mergeLayoutMenuNonrecursive(c.layout, &remains[idx])
-				c.items = mergeMenuArray(c.items, remains[idx].Children)
-				continue
-			}
-
 			foundIdx := -1
 			for ridx := range results {
 				if results[ridx].UID == remains[idx].UID {
@@ -157,7 +165,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			}
 
 			if foundIdx >= 0 {
-
 				if inChildren(results, remains[idx], foundIdx) {
 					mergeMenuNonrecursive(&results[foundIdx], &remains[idx])
 					if len(remains[idx].Children) > 0 {
@@ -166,9 +173,16 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 				} else {
 					mergeMenuRecursive(&results[foundIdx], &remains[idx])
 				}
-			} else {
-				local = append(local, remains[idx])
+				continue
 			}
+
+			c, ok := byID[remains[idx].UID]
+			if ok {
+				mergeLayoutMenuNonrecursive(c.layout, &remains[idx])
+				c.items = mergeMenuArray(c.items, remains[idx].Children)
+				continue
+			}
+			local = append(local, remains[idx])
 		}
 
 		if len(remains) == len(local) {
@@ -297,22 +311,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 	}
 
 	if len(remains) > 0 {
-		var local []toolbox.Menu
-
-		var walk func([]toolbox.Menu)
-		walk = func(a []toolbox.Menu) {
-			for idx := range a {
-				if found := SearchMenuInTree(results, a[idx].UID); found != nil {
-					mergeMenuNonrecursive(found, &a[idx])
-				} else if len(a[idx].Children) > 0 && !isEmptyURL(a[idx].URL) {
-					local = append(local, a[idx])
-				}
-				walk(a[idx].Children)
-			}
-		}
-
-		walk(remains)
-
+		var local = mergeByID(results, remains, nil)
 		if len(local) > 0 {
 			found := SearchMenuInTree(results, "nm.orphan")
 			if found != nil {
