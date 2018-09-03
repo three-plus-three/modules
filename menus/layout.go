@@ -112,7 +112,7 @@ func inChildren(children []toolbox.Menu, item toolbox.Menu, skips ...int) bool {
 			return true
 		}
 
-		if inChildren(children[idx].Children, item, skips...) {
+		if inChildren(children[idx].Children, item) {
 			return true
 		}
 	}
@@ -252,8 +252,8 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 					//Classes    string `json:"classes,omitempty" xorm:"classes"`
 					Children: children,
 				})
-				break
 			}
+			break
 		}
 		allList = local
 	}
@@ -314,16 +314,33 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		walk(remains)
 
 		if len(local) > 0 {
-			var buf bytes.Buffer
-			buf.WriteString("下列菜单不能处理:")
-			for _, menu := range local {
-				buf.WriteString(menu.UID)
-				buf.WriteString("(")
-				buf.WriteString(menu.Title)
-				buf.WriteString("),")
+			found := SearchMenuInTree(results, "nm.orphan")
+			if found != nil {
+				results = append(results, toolbox.Menu{
+					UID:   "nm.orphan",
+					Title: "其它",
+				})
+
+				found = &results[len(results)-1]
 			}
-			buf.Truncate(buf.Len() - 1)
-			return nil, errors.New(buf.String())
+
+			for idx := range local {
+				if !isEmptyURL(local[idx].URL) {
+					continue
+				}
+
+				found.Children = append(found.Children, local[idx])
+			}
+			// var buf bytes.Buffer
+			// buf.WriteString("下列菜单不能处理:")
+			// for _, menu := range local {
+			// 	buf.WriteString(menu.UID)
+			// 	buf.WriteString("(")
+			// 	buf.WriteString(menu.Title)
+			// 	buf.WriteString("),")
+			// }
+			// buf.Truncate(buf.Len() - 1)
+			// return nil, errors.New(buf.String())
 		}
 	}
 
