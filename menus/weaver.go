@@ -23,8 +23,8 @@ import (
 // ErrAlreadyClosed  server is closed
 var ErrAlreadyClosed = errors.New("server is closed")
 
-func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engine.Core, layout Layout, layouts map[string]Layout) (Weaver, error) {
-	weaver := &menuWeaver{Logger: logger, env: env, core: core, layout: layout, layouts: layouts}
+func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engine.Core, layout Layout, layouts map[string]Layout, hasPermissions func(menu toolbox.Menu) (bool, error)) (Weaver, error) {
+	weaver := &menuWeaver{Logger: logger, env: env, core: core, layout: layout, layouts: layouts, hasPermissions: hasPermissions}
 	if err := weaver.Init(); err != nil {
 		return nil, err
 	}
@@ -66,6 +66,7 @@ type menuWeaver struct {
 	layouts       map[string]Layout
 	customEnabled bool
 
+	hasPermissions   func(menu toolbox.Menu) (bool, error)
 	mu               sync.RWMutex
 	byApplications   map[string][]toolbox.Menu
 	menuList         []toolbox.Menu
@@ -213,7 +214,8 @@ func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
 			if err != nil {
 				weaver.Logger.Println(err)
 			} else {
-				return menuList, nil
+				menuList, err = weaver.deleteByPermissions(menuList)
+				return ClearDividerFromList(menuList), err
 			}
 		}
 	}
@@ -231,10 +233,13 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 			weaver.mu.RLock()
 		}()
 
-		var err error
-		weaver.menuList, err = weaver.generate()
+		menuList, err := weaver.generate()
 		if err != nil {
 			weaver.Logger.Println("generate:", err)
+		} else if menuList, err = weaver.deleteByPermissions(menuList); err == nil {
+			weaver.Logger.Println("generate:", err)
+		} else {
+			weaver.menuList = ClearDividerFromList(menuList)
 		}
 		return weaver.menuList, err
 	}
@@ -274,8 +279,12 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 			// 	byApps[name] = toMenuTree(app)
 			// }
 			menuList, err := layout.Generate(weaver.byApplications)
-			if err != nil {
-				weaver.menuListByLayout[layoutName] = menuList
+			if err == nil {
+				menuList, err = weaver.deleteByPermissions(menuList)
+				menuList = ClearDividerFromList(menuList)
+				if err == nil {
+					weaver.menuListByLayout[layoutName] = menuList
+				}
 			}
 			return menuList, err
 		}()
@@ -285,6 +294,39 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 		return generatecb()
 	}
 	return weaver.menuList, nil
+}
+
+func (weaver *menuWeaver) deleteByPermissions(menuList []toolbox.Menu) ([]toolbox.Menu, error) {
+	if len(menuList) == 0 || weaver.hasPermissions == nil {
+		return menuList, nil
+	}
+
+	offset := 0
+	for idx := range menuList {
+		if menuList[idx].Title != toolbox.MenuDivider {
+			ok, err := weaver.hasPermissions(menuList[idx])
+			if err != nil {
+				return nil, err
+			}
+
+			if !ok {
+				continue
+			}
+		}
+
+		children, err := weaver.deleteByPermissions(menuList[idx].Children)
+		if err != nil {
+			return nil, err
+		}
+		menuList[idx].Children = children
+
+		if offset != idx {
+			menuList[offset] = menuList[idx]
+		}
+		offset++
+	}
+
+	return menuList[:offset], nil
 }
 
 func isSame(allItems, subset []toolbox.Menu) bool {
