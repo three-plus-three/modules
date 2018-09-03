@@ -223,7 +223,6 @@ func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
 }
 
 func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbox.Menu, error) {
-
 	generatecb := func() ([]toolbox.Menu, error) {
 		weaver.mu.RUnlock()
 		weaver.mu.Lock()
@@ -246,15 +245,15 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 
 	weaver.mu.RLock()
 	defer weaver.mu.RUnlock()
-	if len(args) == 0 {
-		if len(weaver.menuList) == 0 {
-			return generatecb()
-		}
-		return weaver.menuList, nil
-	}
-	if len(args) != 1 {
-		return nil, errors.New("arguments is too many")
-	}
+	// if layoutName == "" &&  len(args) == 0 {
+	// 	if len(weaver.menuList) == 0 {
+	// 		return generatecb()
+	// 	}
+	// 	return weaver.menuList, nil
+	// }
+	// if len(args) != 1 {
+	// 	return nil, errors.New("arguments is too many")
+	// }
 
 	if weaver.menuListByLayout != nil {
 		byLayout, ok := weaver.menuListByLayout[layoutName]
@@ -283,6 +282,9 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 				menuList, err = weaver.deleteByPermissions(menuList)
 				menuList = ClearDividerFromList(menuList)
 				if err == nil {
+					if weaver.menuListByLayout == nil {
+						weaver.menuListByLayout = map[string][]toolbox.Menu{}
+					}
 					weaver.menuListByLayout[layoutName] = menuList
 				}
 			}

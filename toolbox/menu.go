@@ -69,5 +69,5 @@ func (menu Menu) IsActive(name string) bool {
 
 // Fail 产生一个 panic
 func (menu Menu) Fail() interface{} {
-	panic("菜单的级数太多了，最多只支持 3 级")
+	panic("菜单的级数太多了，最多只支持 3 级 - " + menu.Title + "/" + menu.UID)
 }
