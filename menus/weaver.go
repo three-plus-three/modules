@@ -235,7 +235,7 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 		menuList, err := weaver.generate()
 		if err != nil {
 			weaver.Logger.Println("generate:", err)
-		} else if menuList, err = weaver.deleteByPermissions(menuList); err == nil {
+		} else if menuList, err = weaver.deleteByPermissions(menuList); err != nil {
 			weaver.Logger.Println("generate:", err)
 		} else {
 			weaver.menuList = ClearDividerFromList(menuList)
@@ -327,7 +327,6 @@ func (weaver *menuWeaver) deleteByPermissions(menuList []toolbox.Menu) ([]toolbo
 		}
 		offset++
 	}
-
 	return menuList[:offset], nil
 }
 

@@ -6043,7 +6043,7 @@
             }
         ]
     },
-    "results": [
+    "menuList": [
   {"uid":"am.home","title":"资产主页","icon":"fa-home","url":"/hengwei/am/home"},
   {"uid":"am.common_functions","title":"常用功能","icon":"fa-list",
     "children":[

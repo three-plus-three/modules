@@ -121,6 +121,7 @@ func inChildren(children []toolbox.Menu, item toolbox.Menu, skips ...int) bool {
 
 func mergeByID(results, a, returns []toolbox.Menu) []toolbox.Menu {
 	for idx := range a {
+		// fmt.Println(a[idx].UID, a[idx].URL)
 		if found := SearchMenuInTree(results, a[idx].UID); found != nil {
 			mergeMenuNonrecursive(found, &a[idx])
 		} else if !isEmptyURL(a[idx].URL) {
@@ -165,6 +166,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			}
 
 			if foundIdx >= 0 {
+
 				if inChildren(results, remains[idx], foundIdx) {
 					mergeMenuNonrecursive(&results[foundIdx], &remains[idx])
 					if len(remains[idx].Children) > 0 {
@@ -178,15 +180,21 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 
 			c, ok := byID[remains[idx].UID]
 			if ok {
+
 				mergeLayoutMenuNonrecursive(c.layout, &remains[idx])
 				c.items = mergeMenuArray(c.items, remains[idx].Children)
 				continue
 			}
 			local = append(local, remains[idx])
+
 		}
 
 		if len(remains) == len(local) {
 			remains = local
+
+			// for idx := range remains {
+			// 	fmt.Println("============ not found", remains[idx].UID)
+			// }
 			break
 		}
 
@@ -227,7 +235,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 				}
 
 				if !found {
-					//log.Println("insertToTree:", "target =", c.layout.Target, ", uid =", c.layout.UID) // spew.Sprint(allList))
+					// fmt.Println("insertToTree:", "target =", c.layout.Target, ", uid =", c.layout.UID) // spew.Sprint(allList))
 					local = append(local, c)
 				}
 			default:
@@ -314,7 +322,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		var local = mergeByID(results, remains, nil)
 		if len(local) > 0 {
 			found := SearchMenuInTree(results, "nm.orphan")
-			if found != nil {
+			if found == nil {
 				results = append(results, toolbox.Menu{
 					UID:   "nm.orphan",
 					Title: "其它",
@@ -324,7 +332,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			}
 
 			for idx := range local {
-				if !isEmptyURL(local[idx].URL) {
+				if isEmptyURL(local[idx].URL) {
 					continue
 				}
 

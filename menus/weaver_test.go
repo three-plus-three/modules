@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/aryann/difflib"
-
 	"github.com/three-plus-three/modules/hub/engine"
 	"github.com/three-plus-three/modules/toolbox"
 )
@@ -221,60 +220,75 @@ func TestMenuSimple2(t *testing.T) {
 	// }
 	// modelEngine.ShowSQL()
 
-	core, _ := engine.NewCore(&engine.Options{})
+	for _, test := range []struct {
+		filename string
+		layout   string
+	}{
+		//	{filename: "tests\\test1.json", layout: "am"},
+		{filename: "tests\\test2.json"},
+	} {
+		t.Run(test.filename, func(t *testing.T) {
+			core, _ := engine.NewCore(&engine.Options{})
 
-	logger := log.New(os.Stderr, "[menu] ", log.LstdFlags)
-	weaver := &menuWeaver{Logger: logger, env: env, core: core, layouts: nil}
+			logger := log.New(os.Stderr, "[menu] ", log.LstdFlags)
+			weaver := &menuWeaver{Logger: logger, env: env, core: core, layouts: nil}
 
-	data, err := ioutil.ReadFile("tests\\test1.json")
-	if err != nil {
-		t.Error(err)
-		return
-	}
+			data, err := ioutil.ReadFile(test.filename)
+			if err != nil {
+				t.Error(err)
+				return
+			}
 
-	var udata = &struct {
-		Apps    map[string][]toolbox.Menu `json:"applications"`
-		Layouts map[string][]LayoutItem   `json:"layout"`
-		Results []toolbox.Menu            `json:"results"`
-	}{}
-	err = json.Unmarshal(data, &udata)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+			var udata = &struct {
+				Apps    map[string][]toolbox.Menu `json:"applications"`
+				Layouts map[string][]LayoutItem   `json:"layout"`
+				Results []toolbox.Menu            `json:"menuList"`
+			}{}
+			err = json.Unmarshal(data, &udata)
+			if err != nil {
+				t.Error(err)
+				return
+			}
 
-	weaver.byApplications = udata.Apps
-	weaver.layouts = map[string]Layout{}
-	for key, value := range udata.Layouts {
-		weaver.layouts[key] = &layoutImpl{value}
-	}
+			weaver.byApplications = udata.Apps
+			weaver.layouts = map[string]Layout{}
+			for key, value := range udata.Layouts {
+				weaver.layouts[key] = &layoutImpl{value}
+			}
 
-	weaver.layout = weaver.layouts["default"]
+			weaver.layout = weaver.layouts["default"]
 
-	if err := weaver.Init(); err != nil {
-		t.Error(err)
-		return
-	}
-	weaver.byApplications = udata.Apps
+			if err := weaver.Init(); err != nil {
+				t.Error(err)
+				return
+			}
+			weaver.byApplications = udata.Apps
+			weaver.menuList = nil
+			weaver.menuListByLayout = map[string][]toolbox.Menu{}
 
-	results, err := weaver.Generate("am")
-	if err != nil {
-		t.Error(err)
-		return
-	}
+			results, err := weaver.Generate(test.layout)
+			if err != nil {
+				t.Error(err)
+				return
+			}
 
-	if !isSameMenuArray(results, udata.Results) {
-		t.Error("not same")
-		var s1, s2 strings.Builder
-		toolbox.FormatMenus(&s1, nil, results, 0, true)
-		toolbox.FormatMenus(&s2, nil, udata.Results, 0, true)
+			if !isSameMenuArray(results, udata.Results) {
+				t.Error("not same")
+				var s1, s2 strings.Builder
+				toolbox.FormatMenus(&s1, nil, udata.Results, 0, true)
+				toolbox.FormatMenus(&s2, nil, results, 0, true)
 
-		seq1 := strings.Split(s1.String(), "\n")
-		seq2 := strings.Split(s2.String(), "\n")
-		records := difflib.Diff(seq1, seq2)
-		for idx := range records {
-			t.Log(records[idx])
-		}
-		return
+				seq1 := strings.Split(s1.String(), "\n")
+				seq2 := strings.Split(s2.String(), "\n")
+				records := difflib.Diff(seq1, seq2)
+				for idx := range records {
+					t.Log(records[idx])
+				}
+
+				// toolbox.FormatMenus(os.Stdout, nil, results, 0, true)
+
+				return
+			}
+		})
 	}
 }
