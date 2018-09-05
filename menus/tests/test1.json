@@ -1727,7 +1727,16 @@
                 "location": "",
                 "target": "",
                 "inline": false,
-                "uid": "app.nm",
+                "uid": "app.products",
+                "title": "",
+                "url": ""
+            },
+            {
+                "category": "remove",
+                "location": "",
+                "target": "",
+                "inline": false,
+                "uid": "app.wserver",
                 "title": "",
                 "url": ""
             },

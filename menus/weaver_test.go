@@ -224,8 +224,9 @@ func TestMenuSimple2(t *testing.T) {
 		filename string
 		layout   string
 	}{
-		//	{filename: "tests\\test1.json", layout: "am"},
+		{filename: "tests\\test1.json", layout: "am"},
 		{filename: "tests\\test2.json"},
+		{filename: "tests\\test3.json", layout: "vpn_management"},
 	} {
 		t.Run(test.filename, func(t *testing.T) {
 			core, _ := engine.NewCore(&engine.Options{})
