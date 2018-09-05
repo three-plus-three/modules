@@ -36,7 +36,7 @@ const (
 	ENV_ITSM_PROXY_ID
 	ENV_LOGANALYZER_PROXY_ID
 	ENV_AM_RECORD_MGR_ID
-	ENV_VPN_ID
+	ENV_VPN_PROXY_ID
 	ENV_MODELS_PROXY_ID        // Deprecated
 	ENV_SAMPLING_STUB_PROXY_ID // Deprecated
 	ENV_TSDB_PROXY_ID          // Deprecated
@@ -92,7 +92,7 @@ var (
 		{ID: ENV_MINIO_PROXY_ID, Name: "minio", Host: "127.0.0.1", Port: "37094"},
 		{ID: ENV_UM_PROXY_ID, Name: "um", Host: "127.0.0.1", Port: "37095"},
 		{ID: ENV_ITSM_PROXY_ID, Name: "itsm", Host: "127.0.0.1", Port: "37096"},
-		{ID: ENV_VPN_ID, Name: "vpn_management", Host: "127.0.0.1", Port: "39001"},
+		{ID: ENV_VPN_PROXY_ID, Name: "vpn_management", Host: "127.0.0.1", Port: "39001"},
 
 		// {ID: ENV_ES_PROXY_ID, Name: "es_old", Host: "127.0.0.1", Port: "39300"},
 		{ID: ENV_LOGANALYZER_PROXY_ID, Name: "loganalyzer", Host: "127.0.0.1", Port: "37097"},
