@@ -23,8 +23,8 @@ import (
 // ErrAlreadyClosed  server is closed
 var ErrAlreadyClosed = errors.New("server is closed")
 
-func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engine.Core, layout Layout, layouts map[string]Layout, hasPermissions func(menu toolbox.Menu) (bool, error)) (Weaver, error) {
-	weaver := &menuWeaver{Logger: logger, env: env, core: core, layout: layout, layouts: layouts, hasPermissions: hasPermissions}
+func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engine.Core, layout Layout, layouts map[string]Layout, hasLicense func(ctx string, menu toolbox.Menu) (bool, error)) (Weaver, error) {
+	weaver := &menuWeaver{Logger: logger, env: env, core: core, layout: layout, layouts: layouts, hasLicense: hasLicense}
 	if err := weaver.Init(); err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ type menuWeaver struct {
 	layouts       map[string]Layout
 	customEnabled bool
 
-	hasPermissions   func(menu toolbox.Menu) (bool, error)
+	hasLicense       func(ctx string, menu toolbox.Menu) (bool, error)
 	mu               sync.RWMutex
 	byApplications   map[string][]toolbox.Menu
 	menuList         []toolbox.Menu
@@ -214,7 +214,7 @@ func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
 			if err != nil {
 				weaver.Logger.Println(err)
 			} else {
-				menuList, err = weaver.deleteByPermissions(menuList)
+				menuList, err = weaver.deleteByLicense(ctx, menuList)
 				return ClearDividerFromList(menuList), err
 			}
 		}
@@ -222,7 +222,7 @@ func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
 	return weaver.read(ctx)
 }
 
-func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbox.Menu, error) {
+func (weaver *menuWeaver) read(ctx string, args ...interface{}) ([]toolbox.Menu, error) {
 	generatecb := func() ([]toolbox.Menu, error) {
 		weaver.mu.RUnlock()
 		weaver.mu.Lock()
@@ -235,7 +235,7 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 		menuList, err := weaver.generate()
 		if err != nil {
 			weaver.Logger.Println("generate:", err)
-		} else if menuList, err = weaver.deleteByPermissions(menuList); err != nil {
+		} else if menuList, err = weaver.deleteByLicense(ctx, menuList); err != nil {
 			weaver.Logger.Println("generate:", err)
 		} else {
 			weaver.menuList = ClearDividerFromList(menuList)
@@ -245,7 +245,7 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 
 	weaver.mu.RLock()
 	defer weaver.mu.RUnlock()
-	// if layoutName == "" &&  len(args) == 0 {
+	// if ctx == "" &&  len(args) == 0 {
 	// 	if len(weaver.menuList) == 0 {
 	// 		return generatecb()
 	// 	}
@@ -256,13 +256,13 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 	// }
 
 	if weaver.menuListByLayout != nil {
-		byLayout, ok := weaver.menuListByLayout[layoutName]
+		byLayout, ok := weaver.menuListByLayout[ctx]
 		if ok {
 			return byLayout, nil
 		}
 	}
 
-	layout, ok := weaver.layouts[layoutName]
+	layout, ok := weaver.layouts[ctx]
 	if ok && layout != nil {
 		return func() ([]toolbox.Menu, error) {
 			weaver.mu.RUnlock()
@@ -279,13 +279,13 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 			// }
 			menuList, err := layout.Generate(weaver.byApplications)
 			if err == nil {
-				menuList, err = weaver.deleteByPermissions(menuList)
+				menuList, err = weaver.deleteByLicense(ctx, menuList)
 				menuList = ClearDividerFromList(menuList)
 				if err == nil {
 					if weaver.menuListByLayout == nil {
 						weaver.menuListByLayout = map[string][]toolbox.Menu{}
 					}
-					weaver.menuListByLayout[layoutName] = menuList
+					weaver.menuListByLayout[ctx] = menuList
 				}
 			}
 			return menuList, err
@@ -298,15 +298,15 @@ func (weaver *menuWeaver) read(layoutName string, args ...interface{}) ([]toolbo
 	return weaver.menuList, nil
 }
 
-func (weaver *menuWeaver) deleteByPermissions(menuList []toolbox.Menu) ([]toolbox.Menu, error) {
-	if len(menuList) == 0 || weaver.hasPermissions == nil {
+func (weaver *menuWeaver) deleteByLicense(ctx string, menuList []toolbox.Menu) ([]toolbox.Menu, error) {
+	if len(menuList) == 0 || weaver.hasLicense == nil {
 		return menuList, nil
 	}
 
 	offset := 0
 	for idx := range menuList {
 		if menuList[idx].Title != toolbox.MenuDivider {
-			ok, err := weaver.hasPermissions(menuList[idx])
+			ok, err := weaver.hasLicense(ctx, menuList[idx])
 			if err != nil {
 				return nil, err
 			}
@@ -316,7 +316,7 @@ func (weaver *menuWeaver) deleteByPermissions(menuList []toolbox.Menu) ([]toolbo
 			}
 		}
 
-		children, err := weaver.deleteByPermissions(menuList[idx].Children)
+		children, err := weaver.deleteByLicense(ctx, menuList[idx].Children)
 		if err != nil {
 			return nil, err
 		}
