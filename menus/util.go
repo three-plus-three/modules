@@ -346,7 +346,7 @@ func ClearDividerFromList(list []toolbox.Menu) []toolbox.Menu {
 	prev := true
 	for idx := range list {
 		list[idx].Children = ClearDividerFromList(list[idx].Children)
-		if list[idx].UID == toolbox.MenuDivider {
+		if list[idx].UID == toolbox.MenuDivider || list[idx].Title == toolbox.MenuDivider {
 			if prev {
 				continue
 			}

@@ -141,7 +141,11 @@ func (weaver *menuWeaver) Init() error {
 	weaver.menuList, err = weaver.generate()
 	if err != nil {
 		weaver.Logger.Println("LoadFromDB:", err)
+	} else if weaver.menuList, err = weaver.deleteByLicense("default", weaver.menuList); err != nil {
+		weaver.Logger.Println("LoadFromDB:", err)
 	}
+
+	weaver.menuList = ClearDividerFromList(weaver.menuList)
 	return nil
 }
 
@@ -170,6 +174,12 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 	if err != nil {
 		return errors.New("Generate: " + err.Error())
 	}
+
+	weaver.menuList, err = weaver.deleteByLicense("default", weaver.menuList)
+	if err != nil {
+		return errors.New("Generate: " + err.Error())
+	}
+	weaver.menuList = ClearDividerFromList(weaver.menuList)
 
 	weaver.core.CreateTopicIfNotExists("menus.changed").
 		Send(hub.Message([]byte(strconv.Itoa(len(menuList)))))
@@ -305,23 +315,32 @@ func (weaver *menuWeaver) deleteByLicense(ctx string, menuList []toolbox.Menu) (
 
 	offset := 0
 	for idx := range menuList {
+
+		isOK := true
 		if menuList[idx].Title != toolbox.MenuDivider {
 			ok, err := weaver.hasLicense(ctx, menuList[idx])
 			if err != nil {
 				return nil, err
 			}
 
-			if !ok {
+			if !ok && len(menuList[idx].Children) == 0 {
 				continue
 			}
+			isOK = ok
 		}
+		if !isOK {
+			children, err := weaver.deleteByLicense(ctx, menuList[idx].Children)
+			if err != nil {
+				return nil, err
+			}
 
-		children, err := weaver.deleteByLicense(ctx, menuList[idx].Children)
-		if err != nil {
-			return nil, err
+			children = ClearDividerFromList(children)
+			if len(children) <= 0 {
+				continue
+			}
+
+			menuList[idx].Children = children
 		}
-		menuList[idx].Children = children
-
 		if offset != idx {
 			menuList[offset] = menuList[idx]
 		}
