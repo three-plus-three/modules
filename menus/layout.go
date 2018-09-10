@@ -42,7 +42,7 @@ type LayoutItem struct {
 	Title      string `json:"title" xorm:"title notnull"`
 	Classes    string `json:"classes,omitempty" xorm:"classes"`
 	Permission string `json:"permission,omitempty" xorm:"permission"`
-	License    string `json:"license,omitempty" xorm:"license"`
+	License    string `json:"-" xorm:"-"`
 	URL        string `json:"url" xorm:"url"`
 	Icon       string `json:"icon,omitempty" xorm:"icon"`
 

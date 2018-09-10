@@ -65,11 +65,6 @@ func TestLayoutSimple(t *testing.T) {
 			Icon:  "fa-cog",
 			Children: []toolbox.Menu{
 				{
-					UID:   "system.divider1",
-					Title: "divider",
-					URL:   "#",
-				},
-				{
 					UID:   "system.sql_script_manage",
 					Title: "数据库脚本管理",
 					URL:   "/hengwei/web/tools/sql_script_manage",
@@ -148,11 +143,6 @@ func TestLayoutInsertAfter(t *testing.T) {
 			URL:   "#",
 			Icon:  "fa-cog",
 			Children: []toolbox.Menu{
-				{
-					UID:   "system.divider1",
-					Title: "divider",
-					URL:   "#",
-				},
 				{
 					UID:   "system.sql_script_manage",
 					Title: "数据库脚本管理",
@@ -287,11 +277,6 @@ func TestLayoutInsertAfterInline(t *testing.T) {
 			Icon:  "fa-cog",
 			Children: []toolbox.Menu{
 				{
-					UID:   "system.divider1",
-					Title: "divider",
-					URL:   "#",
-				},
-				{
 					UID:   "system.sql_script_manage",
 					Title: "数据库脚本管理",
 					URL:   "/hengwei/web/tools/sql_script_manage",
@@ -369,11 +354,6 @@ func TestLayoutInsertBefore(t *testing.T) {
 			URL:   "#",
 			Icon:  "fa-cog",
 			Children: []toolbox.Menu{
-				{
-					UID:   "system.divider1",
-					Title: "divider",
-					URL:   "#",
-				},
 				{
 					UID:   "system.sql_script_manage",
 					Title: "数据库脚本管理",
@@ -499,11 +479,6 @@ func TestLayoutInsertBeforeInline(t *testing.T) {
 			Icon:  "fa-cog",
 			Children: []toolbox.Menu{
 				{
-					UID:   "system.divider1",
-					Title: "divider",
-					URL:   "#",
-				},
-				{
 					UID:   "system.sql_script_manage",
 					Title: "数据库脚本管理",
 					URL:   "/hengwei/web/tools/sql_script_manage",
@@ -579,11 +554,6 @@ func TestLayoutReplace(t *testing.T) {
 			URL:   "#",
 			Icon:  "fa-cog",
 			Children: []toolbox.Menu{
-				{
-					UID:   "system.divider1",
-					Title: "divider",
-					URL:   "#",
-				},
 				{
 					UID:   "system.sql_script_manage",
 					Title: "数据库脚本管理",
@@ -689,11 +659,6 @@ func TestLayoutRemove(t *testing.T) {
 			URL:   "#",
 			Icon:  "fa-cog",
 			Children: []toolbox.Menu{
-				{
-					UID:   "system.divider1",
-					Title: "divider",
-					URL:   "#",
-				},
 				{
 					UID:   "system.sql_script_manage",
 					Title: "数据库脚本管理",
@@ -1745,11 +1710,6 @@ func TestLayoutInRealWorld(t *testing.T) {
     "url": "#",
     "icon": "fa-cog",
     "children": [
-      {
-        "uid": "system.divider1",
-        "title": "divider",
-        "url": "#"
-      },
       {
         "uid": "HengweiUsers",
         "title": "用户管理",
