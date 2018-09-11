@@ -300,7 +300,7 @@ func (um *userManager) load(u *user) web_ext.User {
 
 	var roleIDs = make([]int64, len(u.roles))
 	for idx := range u.roles {
-		roleIDs[idx] = u.u.ID
+		roleIDs[idx] = u.roles[idx].ID
 	}
 
 	err = um.db.PermissionGroupsAndRoles().Where(orm.Cond{"role_id IN": roleIDs}).All(&u.permissionsAndRoles)

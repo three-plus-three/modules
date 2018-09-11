@@ -206,6 +206,8 @@ func (tk *Tickable) Init(interval time.Duration, cb func()) {
 	tk.cb = cb
 	tk.interval = interval
 
+	cb()
+
 	timer := time.AfterFunc(tk.interval, tk.tick)
 	tk.timer.Store(timer)
 }

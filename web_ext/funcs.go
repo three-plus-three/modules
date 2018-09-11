@@ -176,9 +176,15 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		default:
 			panic(fmt.Errorf("unknown menuItem -- %T - %v", menu, menu))
 		}
-		if menuItem.Permission == "" {
+
+		if menuItem.Title == toolbox.MenuDivider {
 			return true
 		}
+
+		if menuItem.Permission == "" && menuItem.UID == "" {
+			return true
+		}
+
 		o := ctx["currentUser"]
 		if o == nil {
 			return false
@@ -256,7 +262,12 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 }
 
 func hasMenu(lifecycle *Lifecycle, ctx map[string]interface{}, u User, item *toolbox.Menu) bool {
-	if u.HasPermission(item.Permission, QUERY) {
+	permissionID := item.Permission
+	if permissionID == "" {
+		permissionID = item.UID
+	}
+
+	if u.HasPermission(permissionID, QUERY) {
 		return true
 	}
 
