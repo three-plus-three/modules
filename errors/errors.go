@@ -46,10 +46,12 @@ func Wrap(e error, s string, args ...interface{}) error {
 	if "" == s {
 		return e
 	}
+
+	msg := fmt.Sprintf(s, args...) + ": " + e.Error()
 	if re, ok := e.(RuntimeError); ok {
-		return NewApplicationError(re.Code(), fmt.Sprintf(s, args...)+": "+e.Error())
+		return &ApplicationError{Parent: e, ErrCode: re.Code(), ErrMessage: msg}
 	}
-	return native.New(fmt.Sprintf(s, args...) + ": " + e.Error())
+	return &ApplicationError{Parent: e, ErrCode: http.StatusInternalServerError, ErrMessage: msg}
 }
 
 //  RuntimeWrap 为 error 增加上下文信息
@@ -60,9 +62,9 @@ func RuntimeWrap(e error, s string, args ...interface{}) RuntimeError {
 
 	msg := fmt.Sprintf(s, args...) + ": " + e.Error()
 	if re, ok := e.(RuntimeError); ok {
-		return NewApplicationError(re.Code(), msg)
+		return &ApplicationError{Parent: e, ErrCode: re.Code(), ErrMessage: msg}
 	}
-	return NewApplicationError(http.StatusInternalServerError, msg)
+	return &ApplicationError{Parent: e, ErrCode: http.StatusInternalServerError, ErrMessage: msg}
 }
 
 // Concat 拼接多个错误
@@ -134,6 +136,7 @@ func ErrAppend(errs []error, errMessage ...string) error {
 
 // ApplicationError 应用错误
 type ApplicationError struct {
+	Parent     error                  `json:"-"`
 	ErrCode    int                    `json:"code,omitempty"`
 	ErrMessage string                 `json:"message"`
 	Fields     map[string]interface{} `json:"fields,omitempty"`
@@ -184,9 +187,9 @@ func ToRuntimeError(e error, code ...int) RuntimeError {
 		return re
 	}
 	if len(code) > 0 {
-		return &ApplicationError{ErrCode: code[0], ErrMessage: e.Error()}
+		return &ApplicationError{Parent: e, ErrCode: code[0], ErrMessage: e.Error()}
 	}
-	return &ApplicationError{ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
+	return &ApplicationError{Parent: e, ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
 }
 
 // ToApplicationError 转换成 ApplicationError
@@ -195,16 +198,29 @@ func ToApplicationError(e error, code ...int) *ApplicationError {
 		return ae
 	}
 	if re, ok := e.(RuntimeError); ok {
-		return &ApplicationError{ErrCode: re.Code(), ErrMessage: re.Error()}
+		return &ApplicationError{Parent: e, ErrCode: re.Code(), ErrMessage: re.Error()}
 	}
 
 	if len(code) > 0 {
-		return &ApplicationError{ErrCode: code[0], ErrMessage: e.Error()}
+		return &ApplicationError{Parent: e, ErrCode: code[0], ErrMessage: e.Error()}
 	}
-	return &ApplicationError{ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
+	return &ApplicationError{Parent: e, ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
 }
 
 // BadArgument 创建一个 ErrBadArgument
 func BadArgument(msg string) *ApplicationError {
 	return &ApplicationError{ErrCode: http.StatusBadRequest, ErrMessage: msg}
+}
+
+func Is(realError, exceptedError error) bool {
+	if realError == exceptedError {
+		return true
+	}
+
+	ae, ok := realError.(*ApplicationError)
+	if !ok || ae.Parent == nil {
+		return false
+	}
+
+	return Is(ae.Parent, exceptedError)
 }

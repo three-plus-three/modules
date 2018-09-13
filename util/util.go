@@ -1,6 +1,7 @@
 package util
 
 import (
+	"database/sql"
 	"encoding/json"
 	"io"
 	"log"
@@ -9,6 +10,10 @@ import (
 // CloseWith 捕获错误并打印
 func CloseWith(closer io.Closer) {
 	if err := closer.Close(); err != nil {
+		if err == sql.ErrTxDone {
+			return
+		}
+
 		log.Println("[WARN]", err)
 		panic(err)
 	}
