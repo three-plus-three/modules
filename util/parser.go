@@ -113,7 +113,7 @@ func NewLineParser(scanner *bufio.Scanner, value map[string]interface{}) *LinePa
 	return &LineParser{scanner: UndoScanner{Scanner: scanner}}
 }
 
-func (p *LineParser) Next(skipEmptyLine ...bool) bool {
+func (p *LineParser) Scan(skipEmptyLine ...bool) bool {
 	if len(skipEmptyLine) > 0 && skipEmptyLine[0] {
 		for p.scanner.Scan() {
 			p.lineNumber++
@@ -142,6 +142,10 @@ func (s *LineParser) LineNumber() int {
 
 func (s *LineParser) Err() error {
 	return s.scanner.Err()
+}
+
+func (s *LineParser) SetError(err error) {
+	s.scanner.Error = err
 }
 
 func (s *LineParser) Bytes() []byte {
