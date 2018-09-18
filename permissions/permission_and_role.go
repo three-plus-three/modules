@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/revel/revel"
-	"github.com/three-plus-three/modules/web_ext"
+	"github.com/three-plus-three/modules/toolbox"
 )
 
 type PermissionGroup struct {
@@ -75,10 +75,10 @@ func KeyForPermissionsAndGroups(key string) string {
 	return key
 }
 
-const CREATE = web_ext.CREATE
-const DELETE = web_ext.DELETE
-const UPDATE = web_ext.UPDATE
-const QUERY = web_ext.QUERY
+const CREATE = toolbox.CREATE
+const DELETE = toolbox.DELETE
+const UPDATE = toolbox.UPDATE
+const QUERY = toolbox.QUERY
 
 type PermissionGroupAndRole struct {
 	ID              int64 `json:"id" xorm:"id pk autoincr"`

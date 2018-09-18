@@ -11,7 +11,6 @@ import (
 	"github.com/revel/revel"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/forms"
-	"github.com/three-plus-three/modules/as"
 	"github.com/three-plus-three/modules/functions"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/modules/urlutil"
@@ -148,62 +147,6 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		revel.TemplateFuncs[k] = v
 	}
 
-	revel.TemplateFuncs["current_user_has_permission"] = func(ctx map[string]interface{}, permissionName string, op ...string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, op)
-	}
-	revel.TemplateFuncs["current_user_has_new_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{CREATE})
-	}
-	revel.TemplateFuncs["current_user_has_del_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{DELETE})
-	}
-	revel.TemplateFuncs["current_user_has_edit_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{UPDATE})
-	}
-	revel.TemplateFuncs["current_user_has_write_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{CREATE, DELETE, UPDATE})
-	}
-	revel.TemplateFuncs["current_user_has_query_permission"] = func(ctx map[string]interface{}, permissionName string) bool {
-		return CurrentUserHasPermission(lifecycle, ctx, permissionName, []string{QUERY})
-	}
-	revel.TemplateFuncs["current_user_has_menu"] = func(ctx map[string]interface{}, menu interface{}) bool {
-		var menuItem *toolbox.Menu
-		switch m := menu.(type) {
-		case *toolbox.Menu:
-			menuItem = m
-		case toolbox.Menu:
-			menuItem = &m
-		default:
-			panic(fmt.Errorf("unknown menuItem -- %T - %v", menu, menu))
-		}
-
-		if menuItem.Title == toolbox.MenuDivider {
-			return true
-		}
-
-		if menuItem.Permission == "" && menuItem.UID == "" {
-			return true
-		}
-
-		o := ctx["currentUser"]
-		if o == nil {
-			return false
-		}
-
-		u, ok := o.(User)
-		if !ok {
-			return false
-		}
-		return hasMenu(lifecycle, ctx, u, menuItem)
-	}
-	revel.TemplateFuncs["user_has_permission"] = func(ctx map[string]interface{}, user, permissionName, op string) bool {
-		u := lifecycle.GetUser(user)
-		if u != nil {
-			return false
-		}
-		return u.HasPermission(permissionName, op)
-	}
-
 	revel.TemplateFuncs["msg"] = func(viewArgs map[string]interface{}, message string, args ...interface{}) template.HTML {
 		str, ok := viewArgs[revel.CurrentLocaleViewArg].(string)
 		if !ok {
@@ -212,89 +155,7 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return template.HTML(revel.MessageFunc(str, message, args...))
 	}
 
-	revel.TemplateFuncs["username"] = func(userID interface{}, defaultValue ...string) string {
-		uid, err := as.Int64(userID)
-		if err != nil {
-			if len(defaultValue) > 0 {
-				return defaultValue[0]
-			}
-			panic(errors.New("user id '" + fmt.Sprint(userID) + "' is invalid user identifier"))
-		}
-
-		if userID == 0 {
-			return ""
-		}
-
-		u := lifecycle.UserManager.ByID(uid, UserIncludeDisabled{})
-		if u == nil {
-			if len(defaultValue) > 0 {
-				return defaultValue[0]
-			}
-			panic(errors.New("user id '" + fmt.Sprint(userID) + "' isnot found"))
-		}
-
-		return u.Nickname()
-	}
-
-	revel.TemplateFuncs["usergroupname"] = func(groupID interface{}, defaultValue ...string) string {
-		uid, err := as.Int64(groupID)
-		if err != nil {
-			if len(defaultValue) > 0 {
-				return defaultValue[0]
-			}
-			panic(errors.New("user id '" + fmt.Sprint(groupID) + "' is invalid user identifier"))
-		}
-
-		if groupID == 0 {
-			return ""
-		}
-
-		u := lifecycle.UserManager.GroupByID(uid)
-		if u == nil {
-			if len(defaultValue) > 0 {
-				return defaultValue[0]
-			}
-			panic(errors.New("user id '" + fmt.Sprint(groupID) + "' isnot found"))
-		}
-
-		return u.Name()
-	}
-}
-
-func hasMenu(lifecycle *Lifecycle, ctx map[string]interface{}, u User, item *toolbox.Menu) bool {
-	permissionID := item.Permission
-	if permissionID == "" {
-		permissionID = item.UID
-	}
-
-	if u.HasPermission(permissionID, QUERY) {
-		return true
-	}
-
-	for _, child := range item.Children {
-		if hasMenu(lifecycle, ctx, u, &child) {
-			return true
-		}
-	}
-	return false
-}
-
-func CurrentUserHasPermission(lifecycle *Lifecycle, ctx map[string]interface{}, permissionName string, opList []string) bool {
-	o := ctx["currentUser"]
-	if o == nil {
-		return false
-	}
-
-	u, ok := o.(User)
-	if !ok {
-		return false
-	}
-	for _, op := range opList {
-		if u.HasPermission(permissionName, op) {
-			return true
-		}
-	}
-	return false
+	toolbox.InitUserFuncs(lifecycle.UserManager, nil, revel.TemplateFuncs)
 }
 
 var localeMessages = map[string]string{

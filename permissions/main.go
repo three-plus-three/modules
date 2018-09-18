@@ -7,16 +7,17 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-xorm/xorm"
 	cache "github.com/patrickmn/go-cache"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/errors"
-	"github.com/three-plus-three/modules/web_ext"
+	"github.com/three-plus-three/modules/toolbox"
 )
 
-func InitUser(lifecycle *web_ext.Lifecycle) web_ext.UserManager {
+func InitUser(engine *xorm.Engine) toolbox.UserManager {
 	um := &userManager{
-		db:                   &DB{DB: orm.DB{Engine: lifecycle.ModelEngine}},
+		db:                   &DB{DB: orm.DB{Engine: engine}},
 		permissionGroupCache: &GroupCache{},
 
 		cacheByName: cache.New(5*time.Minute, 10*time.Minute),
@@ -25,24 +26,24 @@ func InitUser(lifecycle *web_ext.Lifecycle) web_ext.UserManager {
 	}
 	um.refresh()
 
-	if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&um.superRole); e != nil {
-		um.superRole.Name = web_ext.RoleSuper
-		log.Println("[warn] role", web_ext.RoleSuper, "isnot found -", e)
+	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleSuper}).One(&um.superRole); e != nil {
+		um.superRole.Name = toolbox.RoleSuper
+		log.Println("[warn] role", toolbox.RoleSuper, "isnot found -", e)
 	}
 
-	if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&um.adminRole); e != nil {
-		um.adminRole.Name = web_ext.RoleAdministrator
-		log.Println("[warn] role", web_ext.RoleAdministrator, "isnot found -", e)
+	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleAdministrator}).One(&um.adminRole); e != nil {
+		um.adminRole.Name = toolbox.RoleAdministrator
+		log.Println("[warn] role", toolbox.RoleAdministrator, "isnot found -", e)
 	}
 
-	if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&um.visitorRole); e != nil {
-		um.visitorRole.Name = web_ext.RoleVisitor
-		log.Println("[warn] role", web_ext.RoleVisitor, "isnot found -", e)
+	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleVisitor}).One(&um.visitorRole); e != nil {
+		um.visitorRole.Name = toolbox.RoleVisitor
+		log.Println("[warn] role", toolbox.RoleVisitor, "isnot found -", e)
 	}
 
-	if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&um.guestRole); e != nil {
-		um.guestRole.Name = web_ext.RoleGuest
-		log.Println("[warn] role", web_ext.RoleGuest, "isnot found -", e)
+	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleGuest}).One(&um.guestRole); e != nil {
+		um.guestRole.Name = toolbox.RoleGuest
+		log.Println("[warn] role", toolbox.RoleGuest, "isnot found -", e)
 	}
 
 	return um
@@ -69,13 +70,13 @@ func (um *userManager) refresh() {
 	um.permissionGroupCache.Init(5*time.Minute, refresh)
 }
 
-func (um *userManager) GroupByID(groupID int64, opts ...web_ext.UserOption) web_ext.UserGroup {
+func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) toolbox.UserGroup {
 	if e := um.lastErr.Get(); e != nil {
 		panic(e)
 	}
 
 	if o, found := um.groupByID.Get(strconv.FormatInt(groupID, 10)); found && o != nil {
-		if u, ok := o.(web_ext.UserGroup); ok && u != nil {
+		if u, ok := o.(toolbox.UserGroup); ok && u != nil {
 			return u
 		}
 	}
@@ -103,39 +104,39 @@ func (ug *userGroup) Name() string {
 	return ug.ug.Name
 }
 
-func (um *userManager) cacheIt(u web_ext.User) {
+func (um *userManager) cacheIt(u toolbox.User) {
 	um.cacheByName.SetDefault(u.Name(), u)
 	um.cacheByID.SetDefault(strconv.FormatInt(u.ID(), 10), u)
 }
 
 func (um *userManager) ensureRoles() {
 	if um.superRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleSuper}).One(&um.superRole); e != nil {
-			log.Println("[warn] role", web_ext.RoleSuper, "isnot found -", e)
+		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleSuper}).One(&um.superRole); e != nil {
+			log.Println("[warn] role", toolbox.RoleSuper, "isnot found -", e)
 		} else {
 			um.cacheByID.Flush()
 			um.cacheByName.Flush()
 		}
 	}
 	if um.adminRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleAdministrator}).One(&um.adminRole); e != nil {
-			log.Println("[warn] role", web_ext.RoleAdministrator, "isnot found -", e)
+		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleAdministrator}).One(&um.adminRole); e != nil {
+			log.Println("[warn] role", toolbox.RoleAdministrator, "isnot found -", e)
 		} else {
 			um.cacheByID.Flush()
 			um.cacheByName.Flush()
 		}
 	}
 	if um.visitorRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleVisitor}).One(&um.visitorRole); e != nil {
-			log.Println("[warn] role", web_ext.RoleVisitor, "isnot found -", e)
+		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleVisitor}).One(&um.visitorRole); e != nil {
+			log.Println("[warn] role", toolbox.RoleVisitor, "isnot found -", e)
 		} else {
 			um.cacheByID.Flush()
 			um.cacheByName.Flush()
 		}
 	}
 	if um.guestRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": web_ext.RoleGuest}).One(&um.guestRole); e != nil {
-			log.Println("[warn] role", web_ext.RoleGuest, "isnot found -", e)
+		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleGuest}).One(&um.guestRole); e != nil {
+			log.Println("[warn] role", toolbox.RoleGuest, "isnot found -", e)
 		} else {
 			um.cacheByID.Flush()
 			um.cacheByName.Flush()
@@ -143,7 +144,7 @@ func (um *userManager) ensureRoles() {
 	}
 }
 
-func (um *userManager) ByName(userName string, opts ...web_ext.UserOption) web_ext.User {
+func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) toolbox.User {
 	if e := um.lastErr.Get(); e != nil {
 		panic(e)
 	}
@@ -151,13 +152,13 @@ func (um *userManager) ByName(userName string, opts ...web_ext.UserOption) web_e
 	var includeDisabled bool
 	for _, opt := range opts {
 		switch opt.(type) {
-		case web_ext.UserIncludeDisabled:
+		case toolbox.UserIncludeDisabled:
 			includeDisabled = true
 		}
 	}
 
 	if o, found := um.cacheByName.Get(userName); found && o != nil {
-		if u, ok := o.(web_ext.User); ok && u != nil {
+		if u, ok := o.(toolbox.User); ok && u != nil {
 			if includeDisabled {
 				return u
 			}
@@ -177,16 +178,16 @@ func (um *userManager) ByName(userName string, opts ...web_ext.UserOption) web_e
 	err := um.db.Users().Where(orm.Cond{"name": userName}).Omit("profiles").One(&u.u)
 	if err != nil {
 		switch userName {
-		case web_ext.UserAdmin:
+		case toolbox.UserAdmin:
 			u.u.Name = userName
-			u.roleNames = []string{web_ext.RoleAdministrator}
+			u.roleNames = []string{toolbox.RoleAdministrator}
 			u.roles = []Role{um.adminRole}
 
 			um.cacheIt(u)
 			return u
-		case web_ext.UserGuest:
+		case toolbox.UserGuest:
 			u.u.Name = userName
-			u.roleNames = []string{web_ext.RoleGuest}
+			u.roleNames = []string{toolbox.RoleGuest}
 			u.roles = []Role{um.guestRole}
 			um.cacheIt(u)
 			return u
@@ -208,7 +209,7 @@ func (um *userManager) ByName(userName string, opts ...web_ext.UserOption) web_e
 	return um.load(u)
 }
 
-func (um *userManager) ByID(userID int64, opts ...web_ext.UserOption) web_ext.User {
+func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) toolbox.User {
 	if e := um.lastErr.Get(); e != nil {
 		panic(e)
 	}
@@ -216,13 +217,13 @@ func (um *userManager) ByID(userID int64, opts ...web_ext.UserOption) web_ext.Us
 	var includeDisabled bool
 	for _, opt := range opts {
 		switch opt.(type) {
-		case web_ext.UserIncludeDisabled:
+		case toolbox.UserIncludeDisabled:
 			includeDisabled = true
 		}
 	}
 
 	if o, found := um.cacheByID.Get(strconv.FormatInt(userID, 10)); found && o != nil {
-		if u, ok := o.(web_ext.User); ok && u != nil {
+		if u, ok := o.(toolbox.User); ok && u != nil {
 			if includeDisabled {
 				return u
 			}
@@ -257,7 +258,7 @@ func (um *userManager) ByID(userID int64, opts ...web_ext.UserOption) web_ext.Us
 	return um.load(u)
 }
 
-func (um *userManager) load(u *user) web_ext.User {
+func (um *userManager) load(u *user) toolbox.User {
 	condRoles := "exists (select * from " + um.db.UsersAndRoles().Name() + " as users_roles " +
 		" where users_roles.role_id = " + um.db.Roles().Name() + ".id and users_roles.user_id = ?)"
 	err := um.db.Roles().Where(condRoles, u.ID()).All(&u.roles)
@@ -287,7 +288,7 @@ func (um *userManager) load(u *user) web_ext.User {
 			}
 		}
 
-		if u.u.Name == web_ext.UserAdmin {
+		if u.u.Name == toolbox.UserAdmin {
 			u.roles = append(u.roles, um.adminRole)
 
 			u.roleNames = nil
@@ -445,7 +446,7 @@ func (u *user) Data(key string) interface{} {
 }
 
 func (u *user) HasPermission(permissionID, op string) bool {
-	if u.Name() == web_ext.UserAdmin {
+	if u.Name() == toolbox.UserAdmin {
 		return true
 	}
 
@@ -464,7 +465,7 @@ func (u *user) HasPermission(permissionID, op string) bool {
 			}
 		}
 	}
-	if u.um.visitorRole.ID != 0 && web_ext.QUERY == op {
+	if u.um.visitorRole.ID != 0 && toolbox.QUERY == op {
 		for _, role := range u.roles {
 			if role.ID == u.um.visitorRole.ID {
 				return true
@@ -475,13 +476,13 @@ func (u *user) HasPermission(permissionID, op string) bool {
 	for _, pr := range u.permissionsAndRoles {
 		enableOperation := false
 		switch op {
-		case web_ext.CREATE:
+		case toolbox.CREATE:
 			enableOperation = pr.CreateOperation
-		case web_ext.DELETE:
+		case toolbox.DELETE:
 			enableOperation = pr.DeleteOperation
-		case web_ext.UPDATE:
+		case toolbox.UPDATE:
 			enableOperation = pr.UpdateOperation
-		case web_ext.QUERY:
+		case toolbox.QUERY:
 			enableOperation = pr.QueryOperation
 			if pr.CreateOperation ||
 				pr.DeleteOperation ||

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/revel/revel"
-	"github.com/three-plus-three/modules/web_ext"
+	"github.com/three-plus-three/modules/toolbox"
 )
 
 type Role struct {
@@ -16,10 +16,10 @@ type Role struct {
 }
 
 func (role *Role) IsBuiltin() bool {
-	return role.Name == web_ext.RoleSuper ||
-		role.Name == web_ext.RoleAdministrator ||
-		role.Name == web_ext.RoleVisitor ||
-		role.Name == web_ext.RoleGuest
+	return role.Name == toolbox.RoleSuper ||
+		role.Name == toolbox.RoleAdministrator ||
+		role.Name == toolbox.RoleVisitor ||
+		role.Name == toolbox.RoleGuest
 }
 
 func (role *Role) TableName() string {

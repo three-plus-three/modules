@@ -10,7 +10,7 @@ import (
 
 	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/netutil"
-	"github.com/three-plus-three/modules/web_ext"
+	"github.com/three-plus-three/modules/toolbox"
 )
 
 type OnlineUser struct {
@@ -71,13 +71,13 @@ func (user *User) TableName() string {
 }
 
 func (user *User) IsBuiltin() bool {
-	return user.Name == web_ext.UserAdmin ||
-		user.Name == web_ext.UserGuest ||
-		user.Name == web_ext.UserTPTNetwork
+	return user.Name == toolbox.UserAdmin ||
+		user.Name == toolbox.UserGuest ||
+		user.Name == toolbox.UserTPTNetwork
 }
 
 func (user *User) IsHidden() bool {
-	return user.Name == web_ext.UserTPTNetwork // || user.Type == ItsmReporter
+	return user.Name == toolbox.UserTPTNetwork // || user.Type == ItsmReporter
 }
 
 func (user *User) Validate(validation *revel.Validation) bool {
