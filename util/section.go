@@ -2,6 +2,10 @@ package util
 
 import "bytes"
 
+func NewSectionParser(parser *LineParser) *SectionParser {
+	return &SectionParser{parser: parser}
+}
+
 type SectionParser struct {
 	parser *LineParser
 }

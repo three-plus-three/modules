@@ -109,7 +109,7 @@ type LineParser struct {
 	lineNumber int
 }
 
-func NewLineParser(scanner *bufio.Scanner, value map[string]interface{}) *LineParser {
+func NewLineParser(scanner *bufio.Scanner) *LineParser {
 	return &LineParser{scanner: UndoScanner{Scanner: scanner}}
 }
 
@@ -515,7 +515,7 @@ func (e *ErrExcept) Error() string {
 		return "want read '" + string(e.Excepted) + "' at " + strconv.Itoa(e.LineNumber) + ":" + strconv.Itoa(e.Offset) + ", got '" + string(e.Actual) + "'," + e.Err.Error()
 	}
 	if 0 == len(e.Actual) {
-		return "want read '" + string(e.Excepted) + "' at " + strconv.Itoa(e.LineNumber) + ":" + strconv.Itoa(e.Offset) + ", but fail."
+		return "want read '" + string(e.Excepted) + "' at " + strconv.Itoa(e.LineNumber) + ":" + strconv.Itoa(e.Offset) + ", but fail"
 	}
-	return "want read '" + string(e.Excepted) + "' at " + strconv.Itoa(e.LineNumber) + ":" + strconv.Itoa(e.Offset) + ", got '" + string(e.Actual) + "'."
+	return "want read '" + string(e.Excepted) + "' at " + strconv.Itoa(e.LineNumber) + ":" + strconv.Itoa(e.Offset) + ", got '" + string(e.Actual) + "'"
 }
