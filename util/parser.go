@@ -169,6 +169,7 @@ type Parser struct {
 }
 
 func NewParser(scanner *bufio.Scanner, value map[string]interface{}) *Parser {
+	scanner.Split(bufio.ScanWords)
 	return &Parser{Scanner: UndoScanner{Scanner: scanner},
 		value: value}
 }
@@ -190,8 +191,9 @@ func (s *Parser) Except(word []byte) *Parser {
 		}
 		return s
 	}
-	if !bytes.Equal(word, bytes.ToLower(s.Scanner.Bytes())) {
-		s.Scanner.Error = &ErrExcept{LineNumber: s.LineNumber, Offset: s.Scanner.Offset, Excepted: word, Actual: s.Scanner.Bytes()}
+	actual := bytes.ToLower(s.Scanner.Bytes())
+	if !bytes.Equal(word, actual) {
+		s.Scanner.Error = &ErrExcept{LineNumber: s.LineNumber, Offset: s.Scanner.Offset, Excepted: word, Actual: actual}
 	}
 	return s
 }
@@ -204,8 +206,9 @@ func (s *Parser) ExceptAll(words ...[]byte) *Parser {
 			}
 			return s
 		}
-		if !bytes.Equal(word, bytes.ToLower(s.Scanner.Bytes())) {
-			s.Scanner.Error = &ErrExcept{LineNumber: s.LineNumber, Offset: s.Scanner.Offset, Excepted: word, Actual: s.Scanner.Bytes()}
+		actual := bytes.ToLower(s.Scanner.Bytes())
+		if !bytes.Equal(word, actual) {
+			s.Scanner.Error = &ErrExcept{LineNumber: s.LineNumber, Offset: s.Scanner.Offset, Excepted: word, Actual: actual}
 		}
 	}
 	return s
@@ -311,8 +314,62 @@ func (s *Parser) ExceptDate(nm string, layout string, layouts ...string) *Parser
 		return s
 	}
 	str := s.Scanner.Text()
+	str2 := str
+	has2 := false
 
-	t, e := time.Parse(layout, str)
+	if strings.IndexAny(layout, " \t") > 0 {
+		if s.Scanner.Scan() {
+			str2 = str + " " + s.Scanner.Text()
+			has2 = true
+
+			if strings.HasSuffix(str2, ")") {
+				str2 = strings.TrimSuffix(str2, ")")
+			}
+		}
+	}
+
+	if has2 {
+		if strings.HasSuffix(str2, ")") {
+			str2 = strings.TrimSuffix(str2, ")")
+		}
+
+		start := strings.LastIndex(str2, ".")
+		if start > 0 {
+
+			end := strings.IndexAny(str2[start:], " +-")
+			if end < 0 {
+				end = len(str2)
+			} else {
+				end = start + end
+			}
+			if c := 3 - (end-start-1)%3; c > 0 {
+				str2 = str2[:end] + strings.Repeat("0", c) + str2[end:]
+			}
+			fmt.Println("==============", str2)
+		}
+	} else {
+		if strings.HasSuffix(str, ")") {
+			str = strings.TrimSuffix(str, ")")
+		}
+
+		start := strings.LastIndex(str, ".")
+		if start > 0 {
+
+			end := strings.IndexAny(str[start:], " +-")
+			if end < 0 {
+				end = len(str)
+			} else {
+				end = start + end
+			}
+
+			if c := 3 - (end-start-1)%3; c > 0 {
+				str = str[:end] + strings.Repeat("0", c) + str[end:]
+			}
+			fmt.Println("==============", str)
+		}
+	}
+
+	t, e := time.Parse(layout, str2)
 	if e == nil {
 		s.value[nm] = t
 		return s
@@ -322,7 +379,16 @@ func (s *Parser) ExceptDate(nm string, layout string, layouts ...string) *Parser
 		t, err := time.Parse(layout, str)
 		if err == nil {
 			s.value[nm] = t
+			s.Scanner.Undo()
 			return s
+		}
+
+		if has2 {
+			t, err := time.Parse(layout, str2)
+			if err == nil {
+				s.value[nm] = t
+				return s
+			}
 		}
 	}
 
@@ -352,6 +418,38 @@ func (s *Parser) ExceptInt(nm string) *Parser {
 		s.value[nm] = i
 	}
 
+	return s
+}
+
+func (s *Parser) ExceptString(nm string) *Parser {
+	if !s.Scanner.Scan() {
+		if err := s.Scanner.Err(); err == nil || err == io.EOF {
+			s.Scanner.Error = &ErrExcept{LineNumber: s.LineNumber,
+				Offset:   s.Scanner.Offset,
+				Excepted: []byte("field[" + nm + "] "),
+				Err:      io.EOF}
+		}
+		return s
+	}
+
+	s.value[nm] = s.Scanner.Text()
+
+	return s
+}
+
+func (s *Parser) ExceptToEnd(nm string) *Parser {
+	var sb strings.Builder
+	for s.Scanner.Scan() {
+		if sb.Len() > 0 {
+			sb.WriteString(" ")
+		}
+		sb.Write(s.Scanner.Bytes())
+	}
+
+	if err := s.Scanner.Err(); err == nil || err == io.EOF {
+		s.value[nm] = sb.String()
+		s.Scanner.Error = nil
+	}
 	return s
 }
 

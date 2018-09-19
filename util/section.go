@@ -17,7 +17,7 @@ func (p *SectionParser) Scan() bool {
 		}
 		bs := p.parser.Bytes()
 		if len(bs) == 0 {
-			return false
+			continue
 		}
 
 		bs = bytes.TrimSpace(bs)
