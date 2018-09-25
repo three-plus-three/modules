@@ -3,6 +3,7 @@ package errors
 
 import (
 	"bytes"
+	"database/sql"
 	native "errors"
 	"fmt"
 	"net/http"
@@ -43,15 +44,7 @@ type PGError interface {
 
 //  Wrap 为 error 增加上下文信息
 func Wrap(e error, s string, args ...interface{}) error {
-	if "" == s {
-		return e
-	}
-
-	msg := fmt.Sprintf(s, args...) + ": " + e.Error()
-	if re, ok := e.(RuntimeError); ok {
-		return &ApplicationError{Parent: e, ErrCode: re.Code(), ErrMessage: msg}
-	}
-	return &ApplicationError{Parent: e, ErrCode: http.StatusInternalServerError, ErrMessage: msg}
+	return RuntimeWrap(e, s, args...)
 }
 
 //  RuntimeWrap 为 error 增加上下文信息
@@ -64,6 +57,11 @@ func RuntimeWrap(e error, s string, args ...interface{}) RuntimeError {
 	if re, ok := e.(RuntimeError); ok {
 		return &ApplicationError{Parent: e, ErrCode: re.Code(), ErrMessage: msg}
 	}
+
+	if e == sql.ErrNoRows {
+		return &ApplicationError{Parent: e, ErrCode: http.StatusNotFound, ErrMessage: msg}
+	}
+
 	return &ApplicationError{Parent: e, ErrCode: http.StatusInternalServerError, ErrMessage: msg}
 }
 
