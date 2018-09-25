@@ -184,6 +184,17 @@ func (s *Parser) To(value map[string]interface{}) *Parser {
 	return s
 }
 
+func (s *Parser) ExceptPrefix(word []byte) *Parser {
+	if !s.Scanner.Scan() {
+		return s
+	}
+	actual := bytes.ToLower(s.Scanner.Bytes())
+	if !bytes.HasPrefix(actual, word) {
+		s.Scanner.Error = &ErrExcept{LineNumber: s.LineNumber, Offset: s.Scanner.Offset, Excepted: word, Err: io.EOF}
+	}
+	return s
+}
+
 func (s *Parser) Except(word []byte) *Parser {
 	if !s.Scanner.Scan() {
 		if err := s.Scanner.Err(); err == nil || err == io.EOF {
