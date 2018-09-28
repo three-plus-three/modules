@@ -18,10 +18,11 @@ import (
 
 // 菜单的分类
 const (
-	categoryNull     = "null"
-	categoryLocation = "location"
-	categoryRemove   = "remove"
-	categoryWatch    = "watch"
+	categoryNull             = "null"
+	categoryLocation         = "location"
+	categoryRemove           = "remove"
+	categoryWatch            = "watch"
+	categoryRemoveIfURLEmpty = "removeIfUrlEmpty"
 
 	locationAfter   = "after"
 	locationBefore  = "before"
@@ -201,6 +202,7 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		remains = local
 	}
 
+	var removeIfURLEmptyList []string
 	var removeList []*container
 	var watchList []*container
 	var allList []*container
@@ -215,6 +217,11 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			switch c.layout.Category {
 			case categoryRemove:
 				removeList = append(removeList, c)
+
+			case categoryRemoveIfURLEmpty:
+				if c.layout.Target != "" {
+					removeIfURLEmptyList = append(removeIfURLEmptyList, c.layout.Target)
+				}
 			case categoryWatch:
 				watchList = append(watchList, c)
 			case categoryLocation:
@@ -311,6 +318,10 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 					results = removeInTree(results, menu.Target)
 				}
 			})
+		} else if item.Category == categoryRemoveIfURLEmpty {
+			if item.Target != "" {
+				removeIfURLEmptyList = append(removeIfURLEmptyList, item.Target)
+			}
 		}
 	}
 
@@ -351,6 +362,20 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		}
 	}
 
+	for _, uid := range removeIfURLEmptyList {
+		found := SearchMenuInTree(results, uid)
+		if found == nil {
+			continue
+		}
+		if len(found.Children) != 0 {
+			continue
+		}
+
+		if isEmptyURL(found.URL) {
+			results = removeInTree(results, uid)
+		}
+	}
+
 	return ClearDividerFromList(results), nil
 }
 
@@ -369,7 +394,8 @@ func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolb
 			if layout.Title == "divider" {
 				continue
 			}
-			if layout.Category == categoryRemove {
+			if layout.Category == categoryRemove ||
+				layout.Category == categoryRemoveIfURLEmpty {
 				continue
 			}
 			panic(errors.New("layout with target = '" + layout.Target + "' and category = '" + layout.Category + "' is invalid, uid is empty"))
