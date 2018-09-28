@@ -145,8 +145,6 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		GlobalSessionFilter = sessions.SessionFilter(sso.DefaultSessionKey,
 			cookiesPath, sha1.New, secretKey)
 
-		initTemplateFuncs(lifecycle)
-
 		lifecycle.UserManager = InitUser(lifecycle)
 		lifecycle.GetUser = lifecycle.UserManager.ByName
 		lifecycle.CurrentUser = func(c *revel.Controller) toolbox.User {
@@ -158,6 +156,8 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			return lifecycle.UserManager.ByName(username)
 		}
 		lifecycle.CheckUser = initSSO(env)
+
+		initTemplateFuncs(lifecycle)
 
 		applicationEnabled := revel.Config.StringDefault("hengwei.menu.products", "enabled")
 		if applicationEnabled == "enabled" {

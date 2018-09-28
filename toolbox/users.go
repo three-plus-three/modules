@@ -115,6 +115,10 @@ func CurrentUserHasPermission(currentUser CurrentUserFunc, ctx map[string]interf
 }
 
 func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string]interface{}) {
+	if um == nil {
+		panic("argument userManager is nil")
+	}
+
 	if currentUser == nil {
 		currentUser = CurrentUserFunc(func(ctx map[string]interface{}) (User, error) {
 			o := ctx["currentUser"]

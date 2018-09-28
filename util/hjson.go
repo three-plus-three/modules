@@ -43,8 +43,15 @@ func FromHjsonFile(filename string, target interface{}) error {
 	return json.Unmarshal(bs, target)
 }
 
-func WriteToFile(filename string, value interface{}) error {
-	out, err := json.Marshal(value)
+func WriteToFile(filename string, value interface{}, indent ...bool) error {
+	var out []byte
+	var err error
+
+	if len(indent) > 0 && indent[0] {
+		out, err = json.MarshalIndent(value, "", "  ")
+	} else {
+		out, err = json.Marshal(value)
+	}
 	if err != nil {
 		return err
 	}
