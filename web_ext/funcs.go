@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/revel/revel"
+	gobatis "github.com/runner-mei/GoBatis"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/forms"
 	"github.com/three-plus-three/modules/functions"
@@ -188,7 +189,28 @@ func ErrorToFlash(c *revel.Controller, err error, notFoundKey ...string) {
 					Key(validation.Key)
 			}
 			c.Validation.Keep()
-		} else {
+		} else if oerr, ok := err.(*gobatis.Error); ok && len(oerr.Validations) > 0 {
+			for _, validation := range oerr.Validations {
+				localeMessage := validation.Message
+				if key, found := localeMessages[validation.Code]; found {
+					if key == "" {
+						localeMessage = revel.Message(c.Request.Locale, validation.Code)
+					} else {
+						localeMessage = revel.Message(c.Request.Locale, key)
+					}
+				} else {
+					localeMessage = revel.Message(c.Request.Locale, validation.Code)
+				}
+
+				if len(validation.Columns) > 0 {
+					for _, column := range validation.Columns {
+						c.Validation.Error(localeMessage).Key(column)
+					}
+				} else {
+					c.Validation.Error(localeMessage)
+				}
+			}
+			c.Validation.Keep()
 			c.Flash.Error(err.Error())
 		}
 	}
