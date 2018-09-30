@@ -299,6 +299,7 @@ var genericMap = map[string]interface{}{
 	"hello": func() string { return "Hello!" },
 
 	// Date functions
+	"duration":       duration,
 	"date":           date,
 	"date_in_zone":   dateInZone,
 	"date_modify":    dateModify,
@@ -500,6 +501,30 @@ func substring(start, length int, s string) string {
 		return s[start:]
 	}
 	return s[start:length]
+}
+
+func duration(seconds int64) string {
+	label := "";
+	vl := seconds
+
+	if vl < 0 {
+		label = fmt.Sprint(vl);
+	} else {
+		if vl > (3600 * 24) {
+			label =  fmt.Sprintf("%v天", vl / (3600 * 24));
+			vl = vl % (3600 * 24);
+		}
+		if vl > 3600 {
+			label = label + fmt.Sprintf("%v时", vl / 3600);
+			vl = vl % 3600;
+		}
+		if vl > 0 {
+			label = label + fmt.Sprintf("%v分", vl/60);
+			label = label + fmt.Sprintf("%v秒", vl % 60);
+		}
+	}
+
+	return label;
 }
 
 // Given a format and a date, format the date string.
