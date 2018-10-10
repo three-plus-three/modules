@@ -308,6 +308,7 @@ var genericMap = map[string]interface{}{
 	"htmlDateInZone": htmlDateInZone,
 	"dateInZone":     dateInZone,
 	"dateModify":     dateModify,
+	"dateAdd":     dateAdd,
 
 	// Strings
 	"abbrev":     abbrev,
@@ -573,6 +574,10 @@ func dateModify(fmt string, date time.Time) time.Time {
 		return date
 	}
 	return date.Add(d)
+}
+
+func dateAdd(date time.Time, years int64, months int64, days int64) time.Time {
+	return date.AddDate(int(years), int(months), int(days))
 }
 
 func max(a interface{}, i ...interface{}) int64 {
