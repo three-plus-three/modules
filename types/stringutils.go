@@ -44,6 +44,9 @@ func CamelCase(name string) string {
 		return "HPRack"
 	case "open_vms":
 		return "OpenVMS"
+	case "schneider_ups":
+		return "SchneiderUPS"
+
 	}
 	return inflect.Camelize(name)
 }
@@ -86,6 +89,8 @@ func Underscore(name string) string {
 		return "hp_rack"
 	case "OpenVMS":
 		return "open_vms"
+	case "SchneiderUPS":
+		return "schneider_ups"
 	}
 	uname := inflect.Underscore(name)
 	return strings.Replace(uname, "_i_d", "_id", -1)
@@ -125,6 +130,8 @@ func Pluralize(name string) string {
 		return "mpls_ce"
 	case "open_vms":
 		return "open_vms"
+	case "schneider_ups":
+		return "schneider_ups"
 	}
 
 	return inflect.Pluralize(name)
@@ -168,6 +175,8 @@ func Tableize(className string) string {
 		return "hp_racks"
 	case "OpenVMS":
 		return "open_vms"
+	case "SchneiderUPS":
+		return "schneider_ups"
 	}
 	return Pluralize(Underscore(className))
 }

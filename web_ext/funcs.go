@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -43,6 +44,33 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 			return defvalue
 		}
 		return value
+	}
+
+	revel.TemplateFuncs["toPtr"] = func(value interface{}) interface{} {
+		if value == nil {
+			return nil
+		}
+		rv := reflect.ValueOf(value)
+		if rv.Kind() == reflect.Ptr {
+			return value
+		}
+		if rv.CanAddr() {
+			return rv.Addr().Interface()
+		}
+		return value
+	}
+
+	revel.TemplateFuncs["indexPtr"] = func(value interface{}, idx int) interface{} {
+		if value == nil {
+			return nil
+		}
+		rv := reflect.ValueOf(value)
+		target := rv.Index(idx)
+
+		if target.CanAddr() {
+			return target.Addr().Interface()
+		}
+		return target.Interface()
 	}
 
 	revel.TemplateFuncs["args"] = func() map[string]interface{} {

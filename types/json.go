@@ -31,7 +31,7 @@ type FieldSpec struct {
 	IsRequired   bool                   `json:"required,omitempty" yaml:"required,omitempty"`
 	IsReadOnly   bool                   `json:"readonly,omitempty" yaml:"readonly,omitempty"`
 	IsUniquely   bool                   `json:"unique,omitempty" yaml:"unique,omitempty"`
-	DefaultValue string                 `json:"default,omitempty" yaml:"default,omitempty"`
+	Default      string                 `json:"default,omitempty" yaml:"default,omitempty"`
 	Unit         string                 `json:"unit,omitempty" yaml:"unit,omitempty"`
 	Restrictions *RestrictionSpec       `json:"restrictions,omitempty" yaml:"restrictions,omitempty"`
 	Annotations  map[string]interface{} `json:"annotations,omitempty" yaml:"annotations,omitempty"`
@@ -45,6 +45,16 @@ type RestrictionSpec struct {
 	Length       string   `json:"length,omitempty" yaml:"length,omitempty"`
 	MinLength    string   `json:"minLength,omitempty" yaml:"minLength,omitempty"`
 	MaxLength    string   `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+}
+
+func (p *FieldSpec) DefaultValue() interface{} {
+	if p.Default == "" {
+		if p.IsArray {
+			return []string{}
+		}
+		return nil
+	}
+	return p.Default
 }
 
 func (p *FieldSpec) HasChoices() bool {
@@ -141,7 +151,7 @@ func (p *FieldSpec) ToXML() *XMLPropertyDefinition {
 		ReadOnly:     ReadOnly,
 		Unique:       Unique,
 		Required:     Required,
-		DefaultValue: p.DefaultValue}
+		DefaultValue: p.Default}
 
 	if p.Restrictions != nil {
 		if len(p.Restrictions.Enumerations) != 0 {
