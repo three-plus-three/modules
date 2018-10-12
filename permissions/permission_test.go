@@ -19,7 +19,7 @@ func TestUser(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	um := InitUser(lifecycle)
+	um := InitUser(lifecycle.ModelEngine)
 
 	if err := DropTables(lifecycle.ModelEngine); err != nil {
 		t.Error(err)
@@ -137,7 +137,7 @@ func TestHasPermission(t *testing.T) {
 			}, nil
 		}))
 
-	um := InitUser(lifecycle)
+	um := InitUser(lifecycle.ModelEngine)
 
 	u := um.ByName("admin")
 	if !u.HasPermission("perm_not_exists_in_db", CREATE) {
@@ -204,6 +204,8 @@ func TestHasPermission(t *testing.T) {
 	if !u.HasPermission("p12", UPDATE) {
 		t.Error("1个用户有1个角色 关联无上下关系两个权限组 操作不相同 其权限相同")
 	}
+
+	// user3 ->r3() ->r4() ->r5()
 	u = um.ByName("t72")
 	//1个用户有2个角色  关联同一个权限组  操作不同
 	if !u.HasPermission("p22", UPDATE) {
