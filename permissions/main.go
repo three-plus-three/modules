@@ -20,9 +20,9 @@ func InitUser(engine *xorm.Engine) toolbox.UserManager {
 		db:                   &DB{DB: orm.DB{Engine: engine}},
 		permissionGroupCache: &GroupCache{},
 
-		cacheByName: cache.New(5*time.Minute, 10*time.Minute),
-		cacheByID:   cache.New(5*time.Minute, 10*time.Minute),
-		groupByID:   cache.New(5*time.Minute, 10*time.Minute),
+		userByName: cache.New(5*time.Minute, 10*time.Minute),
+		userByID:   cache.New(5*time.Minute, 10*time.Minute),
+		groupByID:  cache.New(5*time.Minute, 10*time.Minute),
 	}
 	um.refresh()
 
@@ -49,11 +49,25 @@ func InitUser(engine *xorm.Engine) toolbox.UserManager {
 	return um
 }
 
+type userGroup struct {
+	um *userManager
+	ug UserGroup
+}
+
+func (ug *userGroup) ID() int64 {
+	return ug.ug.ID
+}
+
+func (ug *userGroup) Name() string {
+	return ug.ug.Name
+}
+
 type userManager struct {
 	db                   *DB
 	permissionGroupCache *GroupCache
-	cacheByName          *cache.Cache
-	cacheByID            *cache.Cache
+	userByName           *cache.Cache
+	userByID             *cache.Cache
+	groupByName          *cache.Cache
 	groupByID            *cache.Cache
 	lastErr              concurrency.ErrorValue
 
@@ -70,83 +84,82 @@ func (um *userManager) refresh() {
 	um.permissionGroupCache.Init(5*time.Minute, refresh)
 }
 
-func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) toolbox.UserGroup {
+func (um *userManager) groupcacheIt(ug toolbox.UserGroup) {
+	um.groupByName.SetDefault(ug.Name(), ug)
+	um.groupByID.SetDefault(strconv.FormatInt(ug.ID(), 10), ug)
+}
+
+func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
-		panic(e)
+		return nil, e
+	}
+
+	if o, found := um.groupByName.Get("____all____"); found && o != nil {
+		if ugArray, ok := o.([]toolbox.UserGroup); ok && ugArray != nil {
+			return ugArray, nil
+		}
+	}
+
+	var innerList []UserGroup
+	err := um.db.UserGroups().Where().All(&innerList)
+	if err != nil {
+		return nil, errors.Wrap(err, "query all usergroup fail")
+	}
+
+	var ugList = make([]toolbox.UserGroup, 0, len(innerList))
+	for idx := range innerList {
+		ug := &userGroup{um: um, ug: innerList[idx]}
+		ugList = append(ugList, ug)
+		um.groupcacheIt(ug)
+	}
+
+	um.groupByName.SetDefault("____all____", ugList)
+	return ugList, nil
+}
+
+func (um *userManager) GroupByName(groupname string, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+	if e := um.lastErr.Get(); e != nil {
+		return nil, e
+	}
+
+	if o, found := um.groupByName.Get(groupname); found && o != nil {
+		if ug, ok := o.(toolbox.UserGroup); ok && ug != nil {
+			return ug, nil
+		}
+	}
+
+	var ug = &userGroup{um: um}
+	err := um.db.UserGroups().Where(orm.Cond{"name": groupname}).One(&ug.ug)
+	if err != nil {
+		return nil, errors.Wrap(err, "query usergroup with name is "+groupname+"fail")
+	}
+	um.groupcacheIt(ug)
+	return ug, nil
+}
+
+func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+	if e := um.lastErr.Get(); e != nil {
+		return nil, e
 	}
 
 	if o, found := um.groupByID.Get(strconv.FormatInt(groupID, 10)); found && o != nil {
-		if u, ok := o.(toolbox.UserGroup); ok && u != nil {
-			return u
+		if ug, ok := o.(toolbox.UserGroup); ok && ug != nil {
+			return ug, nil
 		}
 	}
 
 	var ug = &userGroup{um: um}
 	err := um.db.UserGroups().ID(groupID).Get(&ug.ug)
 	if err != nil {
-		err = errors.New("query usergroup with id is " + fmt.Sprint(groupID) + "fail: " + err.Error())
-		log.Println(err)
-		panic(err)
+		return nil, errors.Wrap(err, "query usergroup with id is "+fmt.Sprint(groupID)+"fail")
 	}
-	return ug
+	um.groupcacheIt(ug)
+	return ug, nil
 }
 
-type userGroup struct {
-	um *userManager
-	ug UserGroup
-}
-
-func (ug *userGroup) ID() int64 {
-	return ug.ug.ID
-}
-
-func (ug *userGroup) Name() string {
-	return ug.ug.Name
-}
-
-func (um *userManager) cacheIt(u toolbox.User) {
-	um.cacheByName.SetDefault(u.Name(), u)
-	um.cacheByID.SetDefault(strconv.FormatInt(u.ID(), 10), u)
-}
-
-func (um *userManager) ensureRoles() {
-	if um.superRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleSuper}).One(&um.superRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleSuper, "isnot found -", e)
-		} else {
-			um.cacheByID.Flush()
-			um.cacheByName.Flush()
-		}
-	}
-	if um.adminRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleAdministrator}).One(&um.adminRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleAdministrator, "isnot found -", e)
-		} else {
-			um.cacheByID.Flush()
-			um.cacheByName.Flush()
-		}
-	}
-	if um.visitorRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleVisitor}).One(&um.visitorRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleVisitor, "isnot found -", e)
-		} else {
-			um.cacheByID.Flush()
-			um.cacheByName.Flush()
-		}
-	}
-	if um.guestRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleGuest}).One(&um.guestRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleGuest, "isnot found -", e)
-		} else {
-			um.cacheByID.Flush()
-			um.cacheByName.Flush()
-		}
-	}
-}
-
-func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) toolbox.User {
+func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
 	if e := um.lastErr.Get(); e != nil {
-		panic(e)
+		return nil, e
 	}
 
 	var includeDisabled bool
@@ -157,18 +170,115 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) toolb
 		}
 	}
 
-	if o, found := um.cacheByName.Get(userName); found && o != nil {
+	if includeDisabled {
+		if o, found := um.userByName.Get("____all____"); found && o != nil {
+			if ugArray, ok := o.([]toolbox.User); ok && ugArray != nil {
+				return ugArray, nil
+			}
+		}
+	} else {
+		if o, found := um.userByName.Get("____all_enabled____"); found && o != nil {
+			if ugArray, ok := o.([]toolbox.User); ok && ugArray != nil {
+				return ugArray, nil
+			}
+		}
+	}
+
+	var innerList []User
+	err := um.db.Users().Where().All(&innerList)
+	if err != nil {
+		return nil, errors.Wrap(err, "query all usergroup fail")
+	}
+
+	um.ensureRoles()
+
+	var uList = make([]toolbox.User, 0, len(innerList))
+	var enabledList = make([]toolbox.User, 0, len(innerList))
+
+	for idx := range innerList {
+		u := &user{um: um, u: innerList[idx]}
+		if err := um.load(u); err != nil {
+			return nil, err
+		}
+		uList = append(uList, u)
+		if !u.IsDisabled() {
+			enabledList = append(enabledList, u)
+		}
+		um.usercacheIt(u)
+	}
+
+	um.userByName.SetDefault("____all____", uList)
+	um.userByName.SetDefault("____all_enabled____", enabledList)
+
+	if includeDisabled {
+		return uList, nil
+	}
+	return enabledList, nil
+}
+
+func (um *userManager) usercacheIt(u toolbox.User) {
+	um.userByName.SetDefault(u.Name(), u)
+	um.userByID.SetDefault(strconv.FormatInt(u.ID(), 10), u)
+}
+
+func (um *userManager) ensureRoles() {
+	if um.superRole.ID == 0 {
+		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleSuper}).One(&um.superRole); e != nil {
+			log.Println("[warn] role", toolbox.RoleSuper, "isnot found -", e)
+		} else {
+			um.userByID.Flush()
+			um.userByName.Flush()
+		}
+	}
+	if um.adminRole.ID == 0 {
+		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleAdministrator}).One(&um.adminRole); e != nil {
+			log.Println("[warn] role", toolbox.RoleAdministrator, "isnot found -", e)
+		} else {
+			um.userByID.Flush()
+			um.userByName.Flush()
+		}
+	}
+	if um.visitorRole.ID == 0 {
+		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleVisitor}).One(&um.visitorRole); e != nil {
+			log.Println("[warn] role", toolbox.RoleVisitor, "isnot found -", e)
+		} else {
+			um.userByID.Flush()
+			um.userByName.Flush()
+		}
+	}
+	if um.guestRole.ID == 0 {
+		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleGuest}).One(&um.guestRole); e != nil {
+			log.Println("[warn] role", toolbox.RoleGuest, "isnot found -", e)
+		} else {
+			um.userByID.Flush()
+			um.userByName.Flush()
+		}
+	}
+}
+
+func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (toolbox.User, error) {
+	if e := um.lastErr.Get(); e != nil {
+		return nil, e
+	}
+
+	var includeDisabled bool
+	for _, opt := range opts {
+		switch opt.(type) {
+		case toolbox.UserIncludeDisabled:
+			includeDisabled = true
+		}
+	}
+
+	if o, found := um.userByName.Get(userName); found && o != nil {
 		if u, ok := o.(toolbox.User); ok && u != nil {
 			if includeDisabled {
-				return u
+				return u, nil
 			}
 
 			if u.(*user).IsDisabled() {
-				err := errors.New("user with name is " + userName + " is disabled")
-				log.Println(err)
-				panic(err)
+				return nil, errors.New("user with name is " + userName + " is disabled")
 			}
-			return u
+			return u, nil
 		}
 	}
 
@@ -183,35 +293,36 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) toolb
 			u.roleNames = []string{toolbox.RoleAdministrator}
 			u.roles = []Role{um.adminRole}
 
-			um.cacheIt(u)
-			return u
+			um.usercacheIt(u)
+			return u, nil
 		case toolbox.UserGuest:
 			u.u.Name = userName
 			u.roleNames = []string{toolbox.RoleGuest}
 			u.roles = []Role{um.guestRole}
-			um.cacheIt(u)
-			return u
+			um.usercacheIt(u)
+			return u, nil
 		default:
-			err = errors.New("query user with name is " + userName + "fail: " + err.Error())
-			log.Println(err)
-			panic(err)
+			return nil, errors.Wrap(err, "query user with name is "+userName+"fail")
 		}
 	}
 
 	if !includeDisabled {
 		if u.IsDisabled() {
-			err = errors.New("user with name is " + userName + " is disabled")
-			log.Println(err)
-			panic(err)
+			return nil, errors.New("user with name is " + userName + " is disabled")
 		}
 	}
 
-	return um.load(u)
+	err = um.load(u)
+	if err != nil {
+		return nil, err
+	}
+	um.usercacheIt(u)
+	return u, nil
 }
 
-func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) toolbox.User {
+func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) (toolbox.User, error) {
 	if e := um.lastErr.Get(); e != nil {
-		panic(e)
+		return nil, e
 	}
 
 	var includeDisabled bool
@@ -222,18 +333,16 @@ func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) toolbox.Us
 		}
 	}
 
-	if o, found := um.cacheByID.Get(strconv.FormatInt(userID, 10)); found && o != nil {
+	if o, found := um.userByID.Get(strconv.FormatInt(userID, 10)); found && o != nil {
 		if u, ok := o.(toolbox.User); ok && u != nil {
 			if includeDisabled {
-				return u
+				return u, nil
 			}
 
 			if u.(*user).IsDisabled() {
-				err := errors.New("user with name is " + u.Name() + " is disabled")
-				log.Println(err)
-				panic(err)
+				return nil, errors.New("user with name is " + u.Name() + " is disabled")
 			}
-			return u
+			return u, nil
 		}
 	}
 
@@ -242,30 +351,29 @@ func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) toolbox.Us
 	var u = &user{um: um}
 	err := um.db.Users().ID(userID).Omit("profiles").Get(&u.u)
 	if err != nil {
-		err = errors.New("query user with id is " + fmt.Sprint(userID) + "fail: " + err.Error())
-		log.Println(err)
-		panic(err)
+		return nil, errors.Wrap(err, "query user with id is "+fmt.Sprint(userID)+"fail")
 	}
 
 	if !includeDisabled {
 		if u.IsDisabled() {
-			err = errors.New("query user with id is " + fmt.Sprint(userID) + "fail: " + err.Error())
-			log.Println(err)
-			panic(err)
+			return nil, errors.New("user with name is " + u.Name() + " is disabled")
 		}
 	}
 
-	return um.load(u)
+	err = um.load(u)
+	if err != nil {
+		return nil, err
+	}
+	um.usercacheIt(u)
+	return u, nil
 }
 
-func (um *userManager) load(u *user) toolbox.User {
+func (um *userManager) load(u *user) error {
 	condRoles := "exists (select * from " + um.db.UsersAndRoles().Name() + " as users_roles " +
 		" where users_roles.role_id = " + um.db.Roles().Name() + ".id and users_roles.user_id = ?)"
 	err := um.db.Roles().Where(condRoles, u.ID()).All(&u.roles)
 	if err != nil {
-		err = errors.New("query permissions and roles with user is " + u.Name() + " fail: " + err.Error())
-		log.Println("[permission] ", err)
-		panic(err)
+		return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
 	}
 
 	u.roleNames = nil
@@ -274,8 +382,7 @@ func (um *userManager) load(u *user) toolbox.User {
 	if um.superRole.ID != 0 {
 		for _, role := range u.roles {
 			if role.ID == um.superRole.ID {
-				um.cacheIt(u)
-				return u
+				return nil
 			}
 		}
 	}
@@ -283,8 +390,7 @@ func (um *userManager) load(u *user) toolbox.User {
 	if um.adminRole.ID != 0 {
 		for _, role := range u.roles {
 			if role.ID == um.adminRole.ID {
-				um.cacheIt(u)
-				return u
+				return nil
 			}
 		}
 
@@ -294,8 +400,7 @@ func (um *userManager) load(u *user) toolbox.User {
 			u.roleNames = nil
 			u.Roles() // 缓存 roleNames
 
-			um.cacheIt(u)
-			return u
+			return nil
 		}
 	}
 
@@ -306,13 +411,9 @@ func (um *userManager) load(u *user) toolbox.User {
 
 	err = um.db.PermissionGroupsAndRoles().Where(orm.Cond{"role_id IN": roleIDs}).All(&u.permissionsAndRoles)
 	if err != nil {
-		err := errors.New("query permissions and roles with user is " + u.Name() + " fail: " + err.Error())
-		log.Println("[permission] ", err)
-		panic(err)
+		return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
 	}
-
-	um.cacheIt(u)
-	return u
+	return nil
 }
 
 type user struct {

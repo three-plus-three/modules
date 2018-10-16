@@ -6,38 +6,44 @@ import (
 	"testing"
 
 	fixtures "github.com/AreaHQ/go-fixtures"
+	"github.com/go-xorm/xorm"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/environment/env_tests"
-	"github.com/three-plus-three/modules/web_ext"
 )
 
 func TestUser(t *testing.T) {
 	env := env_tests.Clone(nil)
 
-	lifecycle, err := web_ext.NewLifecycle(env, 0)
+	dbDrv, dbURL := env.Db.Models.Url()
+	modelEngine, err := xorm.NewEngine(dbDrv, dbURL)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	um := InitUser(lifecycle.ModelEngine)
 
-	if err := DropTables(lifecycle.ModelEngine); err != nil {
+	um := InitUser(modelEngine)
+
+	if err := DropTables(modelEngine); err != nil {
 		t.Error(err)
 	}
 
-	if err := InitTables(lifecycle.ModelEngine); err != nil {
+	if err := InitTables(modelEngine); err != nil {
 		t.Error(err)
 	}
 
-	lifecycle.ModelEngine.ShowSQL()
-	db := DB{DB: orm.DB{Engine: lifecycle.ModelEngine}}
+	modelEngine.ShowSQL()
+	db := DB{DB: orm.DB{Engine: modelEngine}}
 	_, err = db.Users().Insert(&User{Name: "abc", Nickname: "abc"})
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	u := um.ByName("abc")
+	u, err := um.ByName("abc")
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
 	err = u.WriteProfile("a", "b")
 	if err != nil {
@@ -100,17 +106,18 @@ func TestUser(t *testing.T) {
 func TestHasPermission(t *testing.T) {
 	env := env_tests.Clone(nil)
 
-	lifecycle, err := web_ext.NewLifecycle(env, 0)
+	dbDrv, dbURL := env.Db.Models.Url()
+	modelEngine, err := xorm.NewEngine(dbDrv, dbURL)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	if err := DropTables(lifecycle.ModelEngine); err != nil {
+	if err := DropTables(modelEngine); err != nil {
 		t.Error(err)
 	}
 
-	if err := InitTables(lifecycle.ModelEngine); err != nil {
+	if err := InitTables(modelEngine); err != nil {
 		t.Error(err)
 	}
 
@@ -120,7 +127,7 @@ func TestHasPermission(t *testing.T) {
 		"fixtures/permission_groups.yaml",
 		"fixtures/permissions_and_roles.yaml",
 		"fixtures/users_and_roles.yaml",
-	}, lifecycle.ModelEngine.DB().DB, "postgres"); err != nil {
+	}, modelEngine.DB().DB, "postgres"); err != nil {
 		t.Error(err)
 		return
 	}
@@ -137,14 +144,24 @@ func TestHasPermission(t *testing.T) {
 			}, nil
 		}))
 
-	um := InitUser(lifecycle.ModelEngine)
+	um := InitUser(modelEngine)
 
-	u := um.ByName("admin")
+	u, err := um.ByName("admin")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	if !u.HasPermission("perm_not_exists_in_db", CREATE) {
 		t.Error("admin 有任何权限")
 	}
 
-	u = um.ByName("adm")
+	u, err = um.ByName("adm")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	if !u.HasPermission("perm_not_exists_in_db", CREATE) {
 		t.Error("有 administrator 角色的用户有任何权限")
 	}
@@ -153,7 +170,11 @@ func TestHasPermission(t *testing.T) {
 		t.Error("有 administrator 角色的用户有任何权限")
 	}
 
-	u = um.ByName("viewer")
+	u, err = um.ByName("viewer")
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	if !u.HasPermission("perm_not_exists_in_db", QUERY) {
 		t.Error("有 visitor 角色的用户有任何读权限")
 	}
@@ -170,7 +191,12 @@ func TestHasPermission(t *testing.T) {
 		t.Error("有 visitor 角色的用户没有任何写权限")
 	}
 
-	u = um.ByName("t70")
+	u, err = um.ByName("t70")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	if !u.HasPermission("p12", CREATE) {
 		t.Log(u.Roles())
 		t.Log(u.(*user).permissionsAndRoles)
@@ -199,14 +225,24 @@ func TestHasPermission(t *testing.T) {
 	if !u.HasPermission("p32", UPDATE) {
 		t.Error("1个用户有1个角色 关联父子关系的两个权限组 操作不相同 其权限不相同 查子组权限")
 	}
-	u = um.ByName("t71")
+	u, err = um.ByName("t71")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	//1个用户有1个角色 关联无上下关系两个权限组 操作不相同 其权限相同
 	if !u.HasPermission("p12", UPDATE) {
 		t.Error("1个用户有1个角色 关联无上下关系两个权限组 操作不相同 其权限相同")
 	}
 
 	// user3 ->r3() ->r4() ->r5()
-	u = um.ByName("t72")
+	u, err = um.ByName("t72")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	//1个用户有2个角色  关联同一个权限组  操作不同
 	if !u.HasPermission("p22", UPDATE) {
 		t.Error("1个用户有2个角色  关联同一个权限组  操作不同")
@@ -220,7 +256,11 @@ func TestHasPermission(t *testing.T) {
 		t.Error("1个用户有2个角色  关联有父子关系权限组  操作不相同   两组权限相同")
 	}
 
-	u = um.ByName("t73")
+	u, err = um.ByName("t73")
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	//1个用户有2个角色  角色1关联父子组  角色2关联父组     操作全不相同   父子组权限不相同 	查询的是父组权限
 	if !u.HasPermission("p13", UPDATE) {
 		t.Error("1个用户有2个角色  角色1关联父子组  角色2关联父组 操作全不相同   父子组权限不相同 	查询的是父组权限")
@@ -236,7 +276,11 @@ func TestHasPermission(t *testing.T) {
 		t.Error("1个用户有2个角色  角色1关联父子组  角色2关联父组 操作全不相同   父子组权限不相同 	查询的是父组权限")
 	}
 
-	u = um.ByName("A1")
+	u, err = um.ByName("A1")
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	//用户关联1个角色
 	if !u.HasPermission("um_1", CREATE) {
 		t.Error("权限组与权限的Tags关联")
@@ -288,15 +332,16 @@ func TestHasPermission(t *testing.T) {
 
 func TestSaveDefaultPermissionGroups(t *testing.T) {
 	env := env_tests.Clone(nil)
-	lifecycle, err := web_ext.NewLifecycle(env, 0)
+	dbDrv, dbURL := env.Db.Models.Url()
+	modelEngine, err := xorm.NewEngine(dbDrv, dbURL)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var db = DB{DB: orm.DB{Engine: lifecycle.ModelEngine}}
-	DropTables(lifecycle.ModelEngine)
-	InitTables(lifecycle.ModelEngine)
+	var db = DB{DB: orm.DB{Engine: modelEngine}}
+	DropTables(modelEngine)
+	InitTables(modelEngine)
 
 	var allPermissions = []Permission{Permission{"um_1", "1", "2", []string{"um"}},
 		Permission{"um_2", "2", "2", []string{"um"}},

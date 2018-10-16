@@ -8,9 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/three-plus-three/modules/environment"
-
 	"github.com/revel/revel"
+	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/urlutil"
 	"github.com/three-plus-three/modules/web_ext"

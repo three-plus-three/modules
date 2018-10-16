@@ -13,6 +13,7 @@ import (
 	"github.com/revel/revel"
 	_ "github.com/three-plus-three/modules/bind"
 	"github.com/three-plus-three/modules/environment"
+	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/menus"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/modules/urlutil"
@@ -146,14 +147,22 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			cookiesPath, sha1.New, secretKey)
 
 		lifecycle.UserManager = InitUser(lifecycle)
-		lifecycle.GetUser = lifecycle.UserManager.ByName
+		lifecycle.GetUser = func(username string, opts ...toolbox.UserOption) toolbox.User {
+			u, err := lifecycle.UserManager.ByName(username, opts...)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					return nil
+				}
+				panic(err)
+			}
+			return u
+		}
 		lifecycle.CurrentUser = func(c *revel.Controller) toolbox.User {
 			username := c.Session[sso.SESSION_USER_KEY]
 			if username == "" {
 				return nil
 			}
-
-			return lifecycle.UserManager.ByName(username)
+			return lifecycle.GetUser(username)
 		}
 		lifecycle.CheckUser = initSSO(env)
 

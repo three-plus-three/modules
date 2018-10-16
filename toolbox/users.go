@@ -53,9 +53,14 @@ func (u UserIncludeDisabled) apply() {}
 
 // UserManager 用户管理
 type UserManager interface {
-	ByName(username string, opts ...UserOption) User
-	ByID(userID int64, opts ...UserOption) User
-	GroupByID(groupID int64, opts ...UserOption) UserGroup
+	Users(opts ...UserOption) ([]User, error)
+	Groups(opts ...UserOption) ([]UserGroup, error)
+
+	ByName(username string, opts ...UserOption) (User, error)
+	ByID(userID int64, opts ...UserOption) (User, error)
+
+	GroupByName(username string, opts ...UserOption) (UserGroup, error)
+	GroupByID(groupID int64, opts ...UserOption) (UserGroup, error)
 }
 
 // UserGroup 用户组信息
@@ -183,7 +188,13 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 	}
 
 	funcs["user_has_permission"] = func(ctx map[string]interface{}, user, permissionName, op string) bool {
-		u := um.ByName(user)
+		u, err := um.ByName(user)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return false
+			}
+			panic(errors.Wrap(err, "load user with name is '"+user+"' fail"))
+		}
 		if u == nil {
 			return false
 		}
@@ -203,7 +214,14 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			return ""
 		}
 
-		u := um.ByID(uid, UserIncludeDisabled{})
+		u, err := um.ByID(uid, UserIncludeDisabled{})
+		if err != nil {
+			if errors.IsNotFound(err) {
+				panic(errors.New("user id '" + fmt.Sprint(userID) + "' isnot found"))
+			} else {
+				panic(errors.Wrap(err, "load user with id is '"+fmt.Sprint(userID)+"' fail"))
+			}
+		}
 		if u == nil {
 			if len(defaultValue) > 0 {
 				return defaultValue[0]
@@ -212,6 +230,23 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 		}
 
 		return u.Nickname()
+	}
+
+	funcs["usernames"] = func(includeDisabled ...bool) map[int64]string {
+		var opts = []UserOption{}
+		if len(includeDisabled) > 0 && includeDisabled[0] {
+			opts = []UserOption{UserIncludeDisabled{}}
+		}
+		uList, err := um.Users(opts...)
+		if err != nil {
+			panic(errors.Wrap(err, "load all users fail"))
+		}
+
+		results := map[int64]string{}
+		for _, u := range uList {
+			results[u.ID()] = u.Nickname()
+		}
+		return results
 	}
 
 	funcs["usergroupname"] = func(groupID interface{}, defaultValue ...string) string {
@@ -227,15 +262,40 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			return ""
 		}
 
-		u := um.GroupByID(uid)
+		u, err := um.GroupByID(uid)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				panic(errors.New("usergroup id '" + fmt.Sprint(groupID) + "' isnot found"))
+			} else {
+				panic(errors.Wrap(err, "load usergroup with id is '"+fmt.Sprint(groupID)+"' fail"))
+			}
+		}
+
 		if u == nil {
 			if len(defaultValue) > 0 {
 				return defaultValue[0]
 			}
-			panic(errors.New("user id '" + fmt.Sprint(groupID) + "' isnot found"))
+			panic(errors.New("usergroup id '" + fmt.Sprint(groupID) + "' isnot found"))
 		}
 
 		return u.Name()
+	}
+
+	funcs["usergroupnames"] = func(includeDisabled ...bool) map[int64]string {
+		var opts = []UserOption{}
+		if len(includeDisabled) > 0 && includeDisabled[0] {
+			opts = []UserOption{UserIncludeDisabled{}}
+		}
+		ugList, err := um.Groups(opts...)
+		if err != nil {
+			panic(errors.Wrap(err, "load all users fail"))
+		}
+
+		results := map[int64]string{}
+		for _, ug := range ugList {
+			results[ug.ID()] = ug.Name()
+		}
+		return results
 	}
 }
 

@@ -75,16 +75,44 @@ type userManager struct {
 	lifecycle *Lifecycle
 }
 
-func (um *userManager) ByName(username string, opts ...toolbox.UserOption) toolbox.User {
-	return &user{lifecycle: um.lifecycle, name: username}
+func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, error) {
+	return []toolbox.UserGroup{}, nil
 }
 
-func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) toolbox.User {
-	return nil
+func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
+	return []toolbox.User{}, nil
 }
 
-func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) toolbox.UserGroup {
-	return nil
+func (um *userManager) ByName(username string, opts ...toolbox.UserOption) (toolbox.User, error) {
+	return &user{lifecycle: um.lifecycle, name: username}, nil
+}
+
+func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) (toolbox.User, error) {
+	return nil, errors.NotFound(userID, "user")
+}
+
+func (um *userManager) GroupByName(groupname string, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+	return &usergroup{lifecycle: um.lifecycle, name: groupname}, nil
+}
+
+func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+	return nil, errors.NotFound(groupID, "usergroup")
+}
+
+type usergroup struct {
+	lifecycle *Lifecycle
+	name      string
+}
+
+func (ug *usergroup) ID() int64 {
+	return 1
+}
+
+func (ug *usergroup) Name() string {
+	if ug.name == "" {
+		return "admin"
+	}
+	return ug.name
 }
 
 type user struct {
