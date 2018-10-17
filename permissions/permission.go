@@ -12,7 +12,6 @@ import (
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/urlutil"
-	"github.com/three-plus-three/modules/web_ext"
 )
 
 // 常用的错误
@@ -336,19 +335,19 @@ func (f PermissionProviderFunc) Read() (*PermissionData, error) {
 }
 
 // Register 注册本 App 的权限信息
-func Register(serviceID environment.ENV_PROXY_TYPE, lifecycleData *web_ext.Lifecycle, privoder PermissionProvider) {
-	srvOpt := lifecycleData.Env.GetServiceConfig(serviceID)
-	client := Connect(lifecycleData.Env,
+func Register(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, privoder PermissionProvider) Client {
+	srvOpt := env.GetServiceConfig(serviceID)
+	client := Connect(env,
 		serviceID,
 		Callback(func() (*PermissionData, error) {
 			return privoder.Read()
 		}),
 		revel.Config.StringDefault("hengwei.perm.mode", "apart"),
 		PermissionEventName,
-		urlutil.Join(lifecycleData.Env.DaemonUrlPath, "/perm/"),
+		urlutil.Join(env.DaemonUrlPath, "/perm/"),
 		log.New(os.Stderr, "[perm-client]", log.LstdFlags))
 
-	lifecycleData.OnClosing(client)
+	// lifecycleData.OnClosing(client)
 
 	client.WhenChanged(func() {
 		permissionsCache.load()
@@ -356,4 +355,5 @@ func Register(serviceID environment.ENV_PROXY_TYPE, lifecycleData *web_ext.Lifec
 	})
 
 	permissionsCache.register(srvOpt.Name, client)
+	return client
 }
