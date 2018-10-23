@@ -240,6 +240,8 @@ func ErrorToFlash(c *revel.Controller, err error, notFoundKey ...string) {
 			}
 			c.Validation.Keep()
 			c.Flash.Error(err.Error())
+		} else {
+			c.Flash.Error(err.Error())
 		}
 	}
 }
