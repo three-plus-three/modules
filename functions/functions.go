@@ -308,7 +308,7 @@ var genericMap = map[string]interface{}{
 	"htmlDateInZone": htmlDateInZone,
 	"dateInZone":     dateInZone,
 	"dateModify":     dateModify,
-	"dateAdd":     dateAdd,
+	"dateAdd":        dateAdd,
 
 	// Strings
 	"abbrev":     abbrev,
@@ -439,7 +439,9 @@ var genericMap = map[string]interface{}{
 		}
 	},
 
-	"toString": strval,
+	"toString":  strval,
+	"toBool":    toBool,
+	"toBoolean": toBool,
 
 	// Defaults
 	"default": dfault,
@@ -478,6 +480,22 @@ var genericMap = map[string]interface{}{
 	"isNotEmpty": isNotEmpty,
 }
 
+func toBool(value interface{}) bool {
+	if value == nil {
+		return false
+	}
+
+	switch v := value.(type) {
+	case bool:
+		return v
+	case string:
+		return v == "true" || v == "True" || v == "TRUE"
+	case int:
+		return v != 0
+	}
+	panic(fmt.Errorf("want bool got %T - %v", value, value))
+}
+
 func split(sep, orig string) map[string]string {
 	parts := strings.Split(orig, sep)
 	res := make(map[string]string, len(parts))
@@ -505,27 +523,27 @@ func substring(start, length int, s string) string {
 }
 
 func duration(seconds int64) string {
-	label := "";
+	label := ""
 	vl := seconds
 
 	if vl < 0 {
-		label = fmt.Sprint(vl);
+		label = fmt.Sprint(vl)
 	} else {
 		if vl > (3600 * 24) {
-			label =  fmt.Sprintf("%v天", vl / (3600 * 24));
-			vl = vl % (3600 * 24);
+			label = fmt.Sprintf("%v天", vl/(3600*24))
+			vl = vl % (3600 * 24)
 		}
 		if vl > 3600 {
-			label = label + fmt.Sprintf("%v时", vl / 3600);
-			vl = vl % 3600;
+			label = label + fmt.Sprintf("%v时", vl/3600)
+			vl = vl % 3600
 		}
 		if vl > 0 {
-			label = label + fmt.Sprintf("%v分", vl/60);
-			label = label + fmt.Sprintf("%v秒", vl % 60);
+			label = label + fmt.Sprintf("%v分", vl/60)
+			label = label + fmt.Sprintf("%v秒", vl%60)
 		}
 	}
 
-	return label;
+	return label
 }
 
 // Given a format and a date, format the date string.
