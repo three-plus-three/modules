@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"reflect"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -29,11 +30,20 @@ func ToJSON(a interface{}) string {
 	return string(bs)
 }
 
+func decodeHook(from reflect.Kind, to reflect.Kind, v interface{}) (interface{}, error) {
+	if from == reflect.String && to == reflect.Bool {
+		return v.(string) == "on", nil
+	}
+	return v, nil
+}
+
 func ToStruct(rawVal interface{}, row map[string]interface{}) (err error) {
 	config := &mapstructure.DecoderConfig{
-		Metadata: nil,
-		Result:   rawVal,
-		TagName:  "json",
+		DecodeHook:       decodeHook,
+		Metadata:         nil,
+		Result:           rawVal,
+		TagName:          "json",
+		WeaklyTypedInput: true,
 	}
 
 	decoder, err := mapstructure.NewDecoder(config)
