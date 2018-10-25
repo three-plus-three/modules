@@ -3,6 +3,7 @@ package hub
 import (
 	"net/url"
 	"strings"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -78,6 +79,7 @@ func (builder *ClientBuilder) connect(uri string) (*websocket.Conn, error) {
 		return nil, err
 	}
 	//config.Protocol = []string{protocol}
+	config.Dialer.KeepAlive = 30 * time.Second
 	return websocket.DialConfig(config)
 }
 
