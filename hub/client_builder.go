@@ -72,7 +72,13 @@ func (builder *ClientBuilder) connect(uri string) (*websocket.Conn, error) {
 	} else if strings.HasPrefix(uri, "https://") {
 		uri = "wss://" + strings.TrimPrefix(uri, "https://")
 	}
-	return websocket.Dial(uri, "", origin)
+
+	config, err := websocket.NewConfig(uri, origin)
+	if err != nil {
+		return nil, err
+	}
+	//config.Protocol = []string{protocol}
+	return websocket.DialConfig(config)
 }
 
 func (builder *ClientBuilder) SubscribeQueue(name string) (*Subscription, error) {
