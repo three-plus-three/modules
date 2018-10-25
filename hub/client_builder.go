@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"net"
 	"net/url"
 	"strings"
 	"time"
@@ -79,6 +80,10 @@ func (builder *ClientBuilder) connect(uri string) (*websocket.Conn, error) {
 		return nil, err
 	}
 	//config.Protocol = []string{protocol}
+
+	if config.Dialer == nil {
+		config.Dialer = &net.Dialer{}
+	}
 	config.Dialer.KeepAlive = 30 * time.Second
 	return websocket.DialConfig(config)
 }
