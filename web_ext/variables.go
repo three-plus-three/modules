@@ -18,6 +18,9 @@ func ReadVariables(env *environment.Environment, title string) map[string]interf
 
 	variables := map[string]interface{}{
 		"application_catalog": env.Config.StringWithDefault("application.catalog", "all"),
+		"version_text": ReadFileWithDefault([]string{
+			env.Fs.FromInstallRoot("VERSION")}, "3.3"),
+
 		"head_title_text": ReadFileWithDefault([]string{
 			env.Fs.FromDataConfig("resources/profiles/header.txt"),
 			env.Fs.FromData("resources/profiles/header.txt"),
