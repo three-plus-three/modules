@@ -69,6 +69,9 @@ type UserGroup interface {
 
 	// 用户登录名
 	Name() string
+
+	// 用户成员
+	Users(opts ...UserOption) ([]User, error)
 }
 
 // User 用户信息

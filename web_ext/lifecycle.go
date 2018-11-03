@@ -115,6 +115,10 @@ func (ug *usergroup) Name() string {
 	return ug.name
 }
 
+func (ug *usergroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
+	return nil, nil
+}
+
 type user struct {
 	lifecycle *Lifecycle
 	name      string

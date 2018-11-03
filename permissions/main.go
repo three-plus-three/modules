@@ -50,8 +50,9 @@ func InitUser(engine *xorm.Engine) toolbox.UserManager {
 }
 
 type userGroup struct {
-	um *userManager
-	ug UserGroup
+	um       *userManager
+	ug       UserGroup
+	children []toolbox.User
 }
 
 func (ug *userGroup) ID() int64 {
@@ -60,6 +61,53 @@ func (ug *userGroup) ID() int64 {
 
 func (ug *userGroup) Name() string {
 	return ug.ug.Name
+}
+
+func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
+	var includeDisabled bool
+	for _, opt := range opts {
+		switch opt.(type) {
+		case toolbox.UserIncludeDisabled:
+			includeDisabled = true
+		}
+	}
+
+	if ug.children == nil {
+
+		var innerList []User
+		err := ug.um.db.Users().Where(orm.Cond{}).All(innerList)
+		if err != nil {
+			return nil, errors.Wrap(err, "query all usergroup fail")
+		}
+
+		ug.um.ensureRoles()
+
+		var uList = make([]toolbox.User, 0, len(innerList))
+
+		for idx := range innerList {
+			u := &user{um: ug.um, u: innerList[idx]}
+			if err := ug.um.load(u); err != nil {
+				return nil, err
+			}
+			uList = append(uList, u)
+			ug.um.usercacheIt(u)
+		}
+
+		ug.children = uList
+	}
+
+	if includeDisabled {
+		return ug.children, nil
+	}
+
+	var enabledList = make([]toolbox.User, 0, len(ug.children))
+	for idx := range ug.children {
+		if !ug.children[idx].(*user).IsDisabled() {
+			enabledList = append(enabledList, ug.children[idx])
+		}
+	}
+
+	return enabledList, nil
 }
 
 type userManager struct {
