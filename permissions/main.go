@@ -19,10 +19,10 @@ func InitUser(engine *xorm.Engine) toolbox.UserManager {
 	um := &userManager{
 		db:                   &DB{DB: orm.DB{Engine: engine}},
 		permissionGroupCache: &GroupCache{},
-
-		userByName: cache.New(5*time.Minute, 10*time.Minute),
-		userByID:   cache.New(5*time.Minute, 10*time.Minute),
-		groupByID:  cache.New(5*time.Minute, 10*time.Minute),
+		userByName:           cache.New(5*time.Minute, 10*time.Minute),
+		userByID:             cache.New(5*time.Minute, 10*time.Minute),
+		groupByID:            cache.New(5*time.Minute, 10*time.Minute),
+		groupByName:          cache.New(5*time.Minute, 10*time.Minute),
 	}
 	um.refresh()
 
@@ -461,6 +461,15 @@ func (um *userManager) load(u *user) error {
 	if err != nil {
 		return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
 	}
+
+	var u2g []UserAndUserGroup
+	err = um.db.UsersAndUserGroups().Where(orm.Cond{"user_id IN": u.ID()}).All(&u2g)
+	if err != nil {
+		return errors.Wrap(err, "query user and usergroup with user is "+u.Name()+" fail")
+	}
+	for idx := range u2g {
+		u.groups = append(u.groups, u2g[idx].GroupID)
+	}
 	return nil
 }
 
@@ -470,6 +479,7 @@ type user struct {
 	u                   User
 	roles               []Role
 	roleNames           []string
+	groups              []int64
 }
 
 func (u *user) IsDisabled() bool {
@@ -486,6 +496,24 @@ func (u *user) Name() string {
 
 func (u *user) Nickname() string {
 	return u.u.Nickname
+}
+
+func (u *user) HasRole(role string) bool {
+	for _, name := range u.roleNames {
+		if name == role {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *user) IsMemberOf(group int64) bool {
+	for _, id := range u.groups {
+		if id == group {
+			return true
+		}
+	}
+	return false
 }
 
 func (u *user) WriteProfile(key, value string) error {

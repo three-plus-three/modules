@@ -110,7 +110,7 @@ func (ug *usergroup) ID() int64 {
 
 func (ug *usergroup) Name() string {
 	if ug.name == "" {
-		return "admin"
+		return toolbox.UserAdmin
 	}
 	return ug.name
 }
@@ -130,7 +130,7 @@ func (u *user) ID() int64 {
 
 func (u *user) Name() string {
 	if u.name == "" {
-		return "admin"
+		return toolbox.UserAdmin
 	}
 
 	return u.name
@@ -138,10 +138,21 @@ func (u *user) Name() string {
 
 func (u *user) Nickname() string {
 	if u.name == "" {
-		return "admin"
+		return toolbox.UserAdmin
 	}
 
 	return u.name
+}
+
+func (u *user) HasRole(role string) bool {
+	if role == toolbox.RoleAdministrator {
+		return true
+	}
+	return false
+}
+
+func (u *user) IsMemberOf(group int64) bool {
+	return false
 }
 
 func (u *user) WriteProfile(key, value string) error {
@@ -157,7 +168,7 @@ func (u *user) Data(key string) interface{} {
 }
 
 func (u *user) Roles() []string {
-	return []string{"administrator"}
+	return []string{toolbox.RoleAdministrator}
 }
 
 func (u *user) HasPermission(permissionName, op string) bool {

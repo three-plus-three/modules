@@ -2,6 +2,8 @@ package toolbox
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/three-plus-three/modules/as"
 	"github.com/three-plus-three/modules/errors"
@@ -100,6 +102,12 @@ type User interface {
 
 	// 用户是否有指定的权限
 	HasPermission(permissionName, op string) bool
+
+	// 是不是有一个指定的角色
+	HasRole(string) bool
+
+	// 本用户是不是指定的用户组的成员
+	IsMemberOf(int64) bool
 }
 
 type CurrentUserFunc func(ctx map[string]interface{}) (User, error)
@@ -140,6 +148,21 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			}
 			return u, nil
 		})
+	}
+
+	readUserattr := func(u User, attr string, defaultValue ...string) string {
+		value := u.Data(attr)
+		if value == nil {
+			if len(defaultValue) > 0 {
+				return defaultValue[0]
+			}
+			return ""
+		}
+
+		if len(defaultValue) > 0 {
+			return as.StringWithDefault(value, "")
+		}
+		return as.StringWithDefault(value, defaultValue[0])
 	}
 
 	funcs["current_user_has_permission"] = func(ctx map[string]interface{}, permissionName string, op ...string) bool {
@@ -207,6 +230,11 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 	funcs["username"] = func(userID interface{}, defaultValue ...string) string {
 		uid, err := as.Int64(userID)
 		if err != nil {
+			u, ok := userID.(User)
+			if ok {
+				return u.Nickname()
+			}
+
 			if len(defaultValue) > 0 {
 				return defaultValue[0]
 			}
@@ -214,17 +242,18 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 		}
 
 		if userID == 0 {
+			if len(defaultValue) > 0 {
+				return defaultValue[0]
+			}
+
 			return ""
 		}
 
 		u, err := um.ByID(uid, UserIncludeDisabled{})
-		if err != nil {
-			if errors.IsNotFound(err) {
-				panic(errors.New("user id '" + fmt.Sprint(userID) + "' isnot found"))
-			} else {
-				panic(errors.Wrap(err, "load user with id is '"+fmt.Sprint(userID)+"' fail"))
-			}
+		if err != nil && !errors.IsNotFound(err) {
+			panic(errors.Wrap(err, "load user with id is '"+fmt.Sprint(userID)+"' fail"))
 		}
+
 		if u == nil {
 			if len(defaultValue) > 0 {
 				return defaultValue[0]
@@ -235,18 +264,113 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 		return u.Nickname()
 	}
 
-	funcs["usernames"] = func(includeDisabled ...bool) map[int64]string {
-		var opts = []UserOption{}
-		if len(includeDisabled) > 0 && includeDisabled[0] {
-			opts = []UserOption{UserIncludeDisabled{}}
-		}
-		uList, err := um.Users(opts...)
+	funcs["userattr"] = func(userID interface{}, attr string, defaultValue ...string) string {
+		uid, err := as.Int64(userID)
 		if err != nil {
-			panic(errors.Wrap(err, "load all users fail"))
+			u, ok := userID.(User)
+			if ok {
+				return readUserattr(u, attr, defaultValue...)
+			}
+
+			if len(defaultValue) > 0 {
+				return defaultValue[0]
+			}
+			panic(errors.New("user id '" + fmt.Sprint(userID) + "' is invalid user identifier"))
+		}
+
+		if userID == 0 {
+			if len(defaultValue) > 0 {
+				return defaultValue[0]
+			}
+			return ""
+		}
+
+		u, err := um.ByID(uid, UserIncludeDisabled{})
+		if err != nil && !errors.IsNotFound(err) {
+			panic(errors.Wrap(err, "load user with id is '"+fmt.Sprint(userID)+"' fail"))
+		}
+
+		if u == nil {
+			if len(defaultValue) > 0 {
+				return defaultValue[0]
+			}
+			panic(errors.New("user id '" + fmt.Sprint(userID) + "' isnot found"))
+		}
+
+		return readUserattr(u, attr, defaultValue...)
+	}
+
+	funcs["usernames"] = func(args ...interface{}) map[int64]string {
+		if len(args) > 2 {
+			panic(errors.New("bad usernames arguments - " + fmt.Sprint(args)))
+		}
+
+		var usergroup UserGroup
+		var group int64
+		var opts = []UserOption{}
+		for idx, arg := range args {
+			switch v := arg.(type) {
+			case bool:
+				opts = []UserOption{UserIncludeDisabled{}}
+			case int:
+				group = int64(v)
+			case int32:
+				group = int64(v)
+			case int64:
+				group = v
+			case uint:
+				group = int64(v)
+			case uint32:
+				group = int64(v)
+			case uint64:
+				group = int64(v)
+			case string:
+				if s := strings.ToLower(v); s == "true" {
+					opts = []UserOption{UserIncludeDisabled{}}
+					break
+				} else if s == "false" {
+					break
+				}
+
+				i64, err := strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					panic(fmt.Errorf("bad usernames argument(%d) - %s", idx, arg))
+				}
+				group = i64
+			case UserGroup:
+				usergroup = v
+			default:
+				panic(fmt.Errorf("bad usernames argument(%d) - %s", idx, arg))
+			}
+		}
+
+		var userlist []User
+		if usergroup != nil {
+			uList, err := usergroup.Users(opts...)
+			if err != nil {
+				panic(errors.Wrap(err, "load users of group("+usergroup.Name()+") fail"))
+			}
+			userlist = uList
+		} else if group != 0 {
+			var err error
+			usergroup, err = um.GroupByID(group, opts...)
+			if err != nil {
+				panic(errors.Wrap(err, "load users of group("+strconv.FormatInt(group, 10)+") fail"))
+			}
+			userlist, err = usergroup.Users(opts...)
+			if err != nil {
+				panic(errors.Wrap(err, "load users of group("+usergroup.Name()+") fail"))
+			}
+		} else {
+			uList, err := um.Users(opts...)
+			if err != nil {
+				panic(errors.Wrap(err, "load all users fail"))
+			}
+			userlist = uList
 		}
 
 		results := map[int64]string{}
-		for _, u := range uList {
+		for _, u := range userlist {
 			results[u.ID()] = u.Nickname()
 		}
 		return results
