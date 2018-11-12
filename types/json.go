@@ -8,8 +8,6 @@ import (
 	"strings"
 	"sync"
 	"text/template"
-
-	"github.com/three-plus-three/modules/as"
 )
 
 type ClassSpec struct {
@@ -58,41 +56,43 @@ func (p *FieldSpec) DefaultValue() interface{} {
 }
 
 func (p *FieldSpec) HasChoices() bool {
-	if p.Restrictions == nil {
-		if p.Annotations == nil {
-			return false
-		}
-		source := as.StringWithDefault(p.Annotations["enumerationSource"], "")
-		return source != ""
+	if p.Restrictions != nil && len(p.Restrictions.Enumerations) > 0 {
+		return true
 	}
-	return len(p.Restrictions.Enumerations) > 0
+
+	if p.Annotations == nil {
+		return false
+	}
+
+	enumerationSource := p.Annotations["enumerationSource"]
+	return enumerationSource != nil
 }
 
 func (p *FieldSpec) ToChoices() interface{} {
-	if p.Annotations != nil {
-		source := as.StringWithDefault(p.Annotations["enumerationSource"], "")
-		if source != "" {
-			ss := strings.SplitN(source, ",", 2)
-			if len(ss) != 2 {
-				panic(errors.New("enumerationSource is invalid value - " + source))
-			}
-			values, err := enumerationProviders.Read(ss[0], ss[1])
-			if err != nil {
-				panic(errors.New("ToChoices: " + err.Error()))
-			}
-			return values
-		}
+	if p.Restrictions != nil && len(p.Restrictions.Enumerations) > 0 {
+		return p.Restrictions.Enumerations
 	}
 
-	if p.Restrictions == nil || len(p.Restrictions.Enumerations) == 0 {
+	if p.Annotations == nil {
 		return [][2]string{}
 	}
 
-	choices := make([][2]string, 0, len(p.Restrictions.Enumerations))
-	for _, value := range p.Restrictions.Enumerations {
-		choices = append(choices, [2]string{value, value})
+	enumerationSource := p.Annotations["enumerationSource"]
+	if enumerationSource == nil {
+		return [][2]string{}
 	}
-	return choices
+	if source, ok := enumerationSource.(string); ok {
+		ss := strings.SplitN(source, ",", 2)
+		if len(ss) != 2 {
+			panic(errors.New("enumerationSource is invalid value - " + source))
+		}
+		values, err := enumerationProviders.Read(ss[0], ss[1])
+		if err != nil {
+			panic(errors.New("ToChoices: " + err.Error()))
+		}
+		return values
+	}
+	return enumerationSource
 }
 
 func (p *FieldSpec) CSSClasses() string {
