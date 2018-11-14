@@ -170,6 +170,7 @@ import (
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/pem"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -358,6 +359,8 @@ var genericMap = map[string]interface{}{
 	// Wrap Atoi to stop errors.
 	"atoi":  func(a string) int { i, _ := strconv.Atoi(a); return i },
 	"int64": toInt64,
+	"toMapArray": toMapArray,
+	"stringify": stringify,
 
 	//"gt": func(a, b int) bool {return a > b},
 	//"gte": func(a, b int) bool {return a >= b},
@@ -880,6 +883,34 @@ func toInt64Value(v interface{}) (int64, error) {
 	default:
 		return 0, fmt.Errorf("value isn't int64 - %T %#v", v, v)
 	}
+}
+
+func toMapArray(jsonStr string) []map[string]interface{} {
+	if jsonStr == "" {
+		return []map[string]interface{}{}
+	}
+
+	var mapArray []map[string]interface{}
+
+	err := json.Unmarshal([]byte(jsonStr), &mapArray)
+	if err != nil {
+		fmt.Println("Failed to parse `", jsonStr, "`")
+		return []map[string]interface{}{}
+	}
+
+	return mapArray
+}
+
+func stringify(o interface{}) string {
+
+	result, err := json.Marshal(o)
+
+	if err == nil {
+		return string(result)
+	} else {
+		fmt.Println("to json width error `", err.Error(), "`")
+	}
+	return "{}"
 }
 
 func generatePrivateKey(typ string) string {
