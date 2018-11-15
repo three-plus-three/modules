@@ -160,9 +160,9 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 		}
 
 		if len(defaultValue) > 0 {
-			return as.StringWithDefault(value, "")
+			return as.StringWithDefault(value, defaultValue[0])
 		}
-		return as.StringWithDefault(value, defaultValue[0])
+		return as.StringWithDefault(value, "")
 	}
 
 	funcs["current_user_has_permission"] = func(ctx map[string]interface{}, permissionName string, op ...string) bool {

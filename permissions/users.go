@@ -138,7 +138,19 @@ func toStrings(o interface{}) []string {
 		if len(bs) == 0 {
 			continue
 		}
-		ipList = append(ipList, string(bs))
+
+		fields := bytes.Split(bs, []byte(","))
+		for _, field := range fields {
+			if len(field) == 0 {
+				continue
+			}
+			field = bytes.TrimSpace(field)
+			if len(field) == 0 {
+				continue
+			}
+
+			ipList = append(ipList, string(field))
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		panic(netutil.ErrInvalidIPRange)
