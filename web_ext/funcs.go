@@ -1,6 +1,7 @@
 package web_ext
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"html/template"
@@ -156,6 +157,25 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		query.Add(key, fmt.Sprint(value))
 		u.RawQuery = query.Encode()
 		return u.String()
+	}
+
+	revel.TemplateFuncs["parseTpl"] = func(tpl string, data interface{}) string {
+		t := template.New("main")
+		t = t.Funcs(functions.HtmlFuncMap())
+		t, err := t.Parse(tpl)
+
+		if err != nil {
+			return fmt.Sprintf("模板`%v`解析失败 => `%v`", tpl, err.Error())
+		}
+
+		var buf bytes.Buffer
+		err = t.Execute(&buf, data)
+
+		if err != nil {
+			return fmt.Sprintf("模板`%v`执行失败 => `%v`", tpl, err.Error())
+		}
+
+		return buf.String()
 	}
 
 	funcs := functions.HtmlFuncMap()

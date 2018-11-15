@@ -445,6 +445,7 @@ var genericMap = map[string]interface{}{
 	"toString":  strval,
 	"toBool":    toBool,
 	"toBoolean": toBool,
+	"toStringSlice": toStringSlice,
 
 	// Defaults
 	"default": dfault,
@@ -497,6 +498,16 @@ func toBool(value interface{}) bool {
 		return v != 0
 	}
 	panic(fmt.Errorf("want bool got %T - %v", value, value))
+}
+
+func toStringSlice(params... interface{})[]string {
+	var strSlice []string
+
+	for _, param := range params {
+		strSlice = append(strSlice, strval(param))
+	}
+
+	return strSlice
 }
 
 func split(sep, orig string) map[string]string {
