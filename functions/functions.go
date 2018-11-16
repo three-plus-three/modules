@@ -806,6 +806,10 @@ func dict(v ...interface{}) map[string]interface{} {
 }
 
 func strval(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+
 	switch v := v.(type) {
 	case string:
 		return v
