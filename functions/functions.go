@@ -169,8 +169,8 @@ import (
 	"encoding/asn1"
 	"encoding/base32"
 	"encoding/base64"
-	"encoding/pem"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"html/template"
@@ -357,10 +357,10 @@ var genericMap = map[string]interface{}{
 	"plural":  plural,
 
 	// Wrap Atoi to stop errors.
-	"atoi":  func(a string) int { i, _ := strconv.Atoi(a); return i },
-	"int64": toInt64,
+	"atoi":       func(a string) int { i, _ := strconv.Atoi(a); return i },
+	"int64":      toInt64,
 	"toMapArray": toMapArray,
-	"stringify": stringify,
+	"stringify":  stringify,
 
 	//"gt": func(a, b int) bool {return a > b},
 	//"gte": func(a, b int) bool {return a >= b},
@@ -442,9 +442,9 @@ var genericMap = map[string]interface{}{
 		}
 	},
 
-	"toString":  strval,
-	"toBool":    toBool,
-	"toBoolean": toBool,
+	"toString":      strval,
+	"toBool":        toBool,
+	"toBoolean":     toBool,
 	"toStringSlice": toStringSlice,
 
 	// Defaults
@@ -493,14 +493,14 @@ func toBool(value interface{}) bool {
 	case bool:
 		return v
 	case string:
-		return v == "true" || v == "True" || v == "TRUE"
+		return v == "true" || v == "True" || v == "TRUE" || v == "on" || v == "On" || v == "ON"
 	case int:
 		return v != 0
 	}
 	panic(fmt.Errorf("want bool got %T - %v", value, value))
 }
 
-func toStringSlice(params... interface{})[]string {
+func toStringSlice(params ...interface{}) []string {
 	var strSlice []string
 
 	for _, param := range params {
