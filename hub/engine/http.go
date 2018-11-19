@@ -306,7 +306,7 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 		name:       params.Get("name"),
 		c:          make(chan struct{}),
 		logger:     se.Logger}
-	var consumer *Consumer
+	// var consumer *Consumer
 
 	stub.srv.Handshake = func(config *websocket.Config, req *http.Request) (err error) {
 		config.Origin, err = websocket.Origin(config, req)
@@ -315,10 +315,6 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 		}
 		if stub.name == "" {
 			return errors.New("queue name is missing")
-		}
-		consumer = cb(stub.name)
-		if consumer == nil {
-			return errors.New("create queue fail")
 		}
 		return nil
 	}
@@ -347,6 +343,12 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 		}()
 		se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, " and peer =", stub.remoteAddr, ") is connected.")
 		defer se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, " and peer =", stub.remoteAddr, ") is disconnected.")
+
+		consumer := cb(stub.name)
+		if consumer == nil {
+			return
+		}
+		defer consumer.Close()
 
 		stub.subscribe(consumer)
 	})

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"strconv"
 	"sync"
 	"time"
 
@@ -25,6 +26,18 @@ func (topic *Topic) Close() error {
 		ch.Close()
 	}
 	return nil
+}
+
+func (topic *Topic) ChannelNames() []string {
+	topic.channels_lock.RLock()
+	defer topic.channels_lock.RUnlock()
+
+	var names = make([]string, len(topic.channels))
+
+	for idx := range topic.channels {
+		names[idx] = strconv.Itoa(topic.channels[idx].id)
+	}
+	return names
 }
 
 func (topic *Topic) Send(msg hub.Message) error {

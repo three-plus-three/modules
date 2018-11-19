@@ -108,12 +108,12 @@ func (core *Core) GetQueues() []string {
 	return results
 }
 
-func (core *Core) GetTopics() []string {
+func (core *Core) GetTopics() map[string][]string {
 	core.topics_lock.RLock()
 	defer core.topics_lock.RUnlock()
-	var results []string
-	for k, _ := range core.topics {
-		results = append(results, k)
+	var results = map[string][]string{}
+	for k, v := range core.topics {
+		results[k] = v.ChannelNames()
 	}
 	return results
 }
