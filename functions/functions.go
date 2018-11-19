@@ -442,9 +442,10 @@ var genericMap = map[string]interface{}{
 		}
 	},
 
-	"toString":      strval,
-	"toBool":        toBool,
-	"toBoolean":     toBool,
+	"indexValue":  indexValue,
+	"toString":  strval,
+	"toBool":    toBool,
+	"toBoolean": toBool,
 	"toStringSlice": toStringSlice,
 
 	// Defaults
@@ -830,6 +831,46 @@ func strval(v interface{}) string {
 	}
 }
 
+func indexValue(valueMap interface{}, key string) interface{} {
+	var fieldName string
+
+	var val interface{} = valueMap
+	var nextKey = key
+	for nextKey != "" {
+		fieldName, nextKey = readNext(nextKey)
+
+		rVal := reflect.ValueOf(val)
+		kind := rVal.Kind()
+		if kind == reflect.Map {
+			rFieldName := reflect.ValueOf(fieldName)
+			rVal = rVal.MapIndex(rFieldName)
+			if !rVal.IsValid() {
+				return nil
+			}
+
+			val = rVal.Interface()
+			if val == nil {
+				return nil
+			}
+			continue
+		}
+
+		if kind == reflect.Ptr {
+			rVal = rVal.Elem()
+		}
+		rVal = rVal.FieldByName(fieldName)
+		if !rVal.IsValid() {
+			return nil
+		}
+		val = rVal.Interface()
+		if val == nil {
+			return nil
+		}
+	}
+
+	return val
+}
+
 // toInt64 converts integer types to 64-bit integers
 func toInt64(v interface{}) int64 {
 
@@ -1084,4 +1125,28 @@ func isFirst(list interface{}, idx int) bool {
 
 func isNotFirst(list interface{}, idx int) bool {
 	return !isFirst(list, idx)
+}
+
+func readNext(nextKey string) (string, string) {
+	switch nextKey[0] {
+	case '[':
+		idx := strings.IndexRune(nextKey, ']')
+		if idx < 0 {
+			return nextKey[1:], ""
+		} else {
+			return nextKey[1:idx], nextKey[idx+1:]
+		}
+	case '.':
+		nextKey = nextKey[1:]
+		fallthrough
+	default:
+		idx := strings.IndexAny(nextKey, ".[")
+		if idx < 0 {
+			return nextKey, ""
+		} else if nextKey[idx] == '.' {
+			return nextKey[:idx], nextKey[idx+1:]
+		} else {
+			return nextKey[:idx], nextKey[idx:]
+		}
+	}
 }
