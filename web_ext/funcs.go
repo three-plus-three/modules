@@ -238,8 +238,10 @@ func ErrorToFlash(c *revel.Controller, err error, notFoundKey ...string) {
 			}
 			c.Validation.Keep()
 		} else if oerr, ok := err.(*gobatis.Error); ok && len(oerr.Validations) > 0 {
+			var localeMessage string
+
 			for _, validation := range oerr.Validations {
-				localeMessage := validation.Message
+				localeMessage = validation.Message
 				if key, found := localeMessages[validation.Code]; found {
 					if key == "" {
 						localeMessage = revel.Message(c.Request.Locale, validation.Code)
@@ -259,7 +261,11 @@ func ErrorToFlash(c *revel.Controller, err error, notFoundKey ...string) {
 				}
 			}
 			c.Validation.Keep()
-			c.Flash.Error(err.Error())
+			if len(oerr.Validations) == 1 && localeMessage != "" {
+				c.Flash.Error(localeMessage)
+			} else {
+				c.Flash.Error(err.Error())
+			}
 		} else {
 			c.Flash.Error(err.Error())
 		}
