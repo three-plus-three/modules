@@ -56,12 +56,14 @@ func NewLifecycle(env *environment.Environment, serviceID environment.ENV_PROXY_
 	if err != nil {
 		return nil, err
 	}
+	modelEngine.ShowSQL(true)
 
 	dataDrv, dataURL := env.Db.Data.Url()
 	dataEngine, err := xorm.NewEngine(dataDrv, dataURL)
 	if err != nil {
 		return nil, err
 	}
+	dataEngine.ShowSQL(true)
 
 	return &Lifecycle{
 		Env:           env,
