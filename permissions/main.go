@@ -75,7 +75,7 @@ func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
 	if ug.children == nil {
 
 		var innerList []User
-		err := ug.um.db.Users().Where(orm.Cond{}).All(innerList)
+		err := ug.um.db.Users().Where(orm.Cond{}).All(&innerList)
 		if err != nil {
 			return nil, errors.Wrap(err, "query all usergroup fail")
 		}
