@@ -5,6 +5,19 @@ import (
 )
 
 var (
+
+	// Binary constructs a field that carries an opaque binary blob.
+	//
+	// Binary data is serialized in an encoding-appropriate format. For example,
+	// zap's JSON encoder base64-encodes binary blobs. To log UTF-8 encoded text,
+	// use ByteString.
+	Binary = zap.Binary
+
+	// ByteString constructs a field that carries UTF-8 encoded text as a []byte.
+	// To log opaque binary blobs (which aren't necessarily valid UTF-8), use
+	// Binary.
+	ByteString = zap.ByteString
+
 	// String adds a string-valued key:value pair to a Span.LogFields() record
 	String = zap.String
 
