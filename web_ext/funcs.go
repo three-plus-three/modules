@@ -130,7 +130,14 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return template.HTMLAttr(s)
 	}
 
-	revel.TemplateFuncs["urlParam"] = func(key string, value, urlObject interface{}) string {
+	revel.TemplateFuncs["urlParam"] = func(key string, value, urlObject interface{}) interface{} {
+		if value == nil {
+			return urlObject
+		}
+		if s, ok := value.(string); ok && s == "" {
+			return urlObject
+		}
+
 		var u *url.URL
 		switch v := urlObject.(type) {
 		case string:
