@@ -74,7 +74,17 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return target.Interface()
 	}
 
-	revel.TemplateFuncs["args"] = func() map[string]interface{} {
+	revel.TemplateFuncs["args"] = func(args ...interface{}) map[string]interface{} {
+		if len(args) > 0 {
+			ctx, ok := args[0].(map[string]interface{})
+			if ok {
+				result := map[string]interface{}{}
+				for key, value := range ctx {
+					result[key] = value
+				}
+				return result
+			}
+		}
 		return map[string]interface{}{}
 	}
 

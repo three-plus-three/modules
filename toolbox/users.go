@@ -241,7 +241,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			panic(errors.New("user id '" + fmt.Sprint(userID) + "' is invalid user identifier"))
 		}
 
-		if userID == 0 {
+		if uid == 0 {
 			if len(defaultValue) > 0 {
 				return defaultValue[0]
 			}
@@ -278,7 +278,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			panic(errors.New("user id '" + fmt.Sprint(userID) + "' is invalid user identifier"))
 		}
 
-		if userID == 0 {
+		if uid == 0 {
 			if len(defaultValue) > 0 {
 				return defaultValue[0]
 			}
