@@ -17,6 +17,7 @@ import (
 	"github.com/three-plus-three/modules/functions"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/modules/urlutil"
+	"github.com/three-plus-three/modules/util"
 )
 
 func ResourcesURLFor(s ...string) string {
@@ -37,14 +38,13 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 	revel.TemplateFuncs["tpt_assets"] = func(value string) string {
 		return urlutil.Join(lifecycle.URLPrefix, "web/tpt_assets", value)
 	}
-	revel.TemplateFuncs["default"] = func(value, defvalue interface{}) interface{} {
-		if nil == value {
-			return defvalue
+	revel.TemplateFuncs["default"] = func(values ...interface{}) interface{} {
+		for _, value := range values[:len(values)-1] {
+			if value != nil && !util.IsZero(reflect.ValueOf(value)) {
+				return value
+			}
 		}
-		if s, ok := value.(string); ok && "" == s {
-			return defvalue
-		}
-		return value
+		return values[len(values)-1]
 	}
 
 	revel.TemplateFuncs["toPtr"] = func(value interface{}) interface{} {
@@ -261,12 +261,12 @@ func ErrorToFlash(c *revel.Controller, err error, notFoundKey ...string) {
 				localeMessage = validation.Message
 				if key, found := localeMessages[validation.Code]; found {
 					if key == "" {
-						localeMessage = revel.Message(c.Request.Locale, validation.Code)
+						localeMessage = revel.Message(c.Request.Locale, validation.Code, validation.Message)
 					} else {
-						localeMessage = revel.Message(c.Request.Locale, key)
+						localeMessage = revel.Message(c.Request.Locale, key, validation.Message)
 					}
 				} else {
-					localeMessage = revel.Message(c.Request.Locale, validation.Code)
+					localeMessage = revel.Message(c.Request.Locale, validation.Code, validation.Message)
 				}
 
 				if len(validation.Columns) > 0 {
