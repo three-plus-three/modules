@@ -31,6 +31,7 @@ type Factory struct {
 
 // NewFactory creates a new Factory.
 func NewFactory(logger *zap.Logger) Factory {
+	logger = logger.WithOptions(zap.AddCallerSkip(1))
 	return Factory{logger: logger}
 }
 
