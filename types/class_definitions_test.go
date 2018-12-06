@@ -9,7 +9,7 @@ import (
 func TestLoadXml(t *testing.T) {
 	definitions, _, err := LoadClassDefinitionsFromFile("test/test1.xml")
 	if nil != err {
-		t.Skip("read file 'test/test1.xml' failed, %s", err.Error())
+		t.Skipf("read file 'test/test1.xml' failed, %s", err.Error())
 		return
 	}
 
@@ -149,7 +149,7 @@ func TestLoadXml(t *testing.T) {
 func TestPropertyOverride(t *testing.T) {
 	definitions, _, err := LoadClassDefinitionsFromFile("test/test_property_override.xml")
 	if nil != err {
-		t.Skip("read file 'test/test_property_override.xml' failed, %s", err.Error())
+		t.Skipf("read file 'test/test_property_override.xml' failed, %s", err.Error())
 		return
 	}
 
