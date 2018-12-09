@@ -1,14 +1,19 @@
 package types
 
 import (
-	"bytes"
-	"errors"
+	"context"
+	"database/sql"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
 	"text/template"
+
+	"github.com/three-plus-three/modules/errors"
 )
+
+var emptyArgs = []interface{}{}
 
 type ClassSpec struct {
 	Super        string                 `json:"super,omitempty" yaml:"super,omitempty"`
@@ -24,6 +29,7 @@ type FieldSpec struct {
 	Label          string                 `json:"label,omitempty" ymal:"label,omitempty"`
 	Description    string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Type           string                 `json:"type" yaml:"type"`
+	Format         string                 `json:"format" yaml:"format"`
 	IsArray        bool                   `json:"is_array,omitempty" yaml:"is_array,omitempty"`
 	IsOriginal     bool                   `json:"is_original,omitempty" yaml:"is_original,omitempty"`
 	IsRequired     bool                   `json:"required,omitempty" yaml:"required,omitempty"`
@@ -93,6 +99,20 @@ func (p *FieldSpec) ToChoices() interface{} {
 		}
 		return values
 	}
+
+	if source, ok := enumerationSource.(map[string]interface{}); ok {
+		typ := source["type"]
+		if typ == nil {
+			panic(errors.New("type of enumerationSource is nil"))
+		}
+
+		values, err := enumerationProviders.Read(fmt.Sprint(typ), source)
+		if err != nil {
+			panic(errors.New("ToChoices: " + err.Error()))
+		}
+		return values
+	}
+
 	return enumerationSource
 }
 
@@ -181,7 +201,7 @@ func RegisterEnumerationProvider(typ string, provider EnumerationProvider) {
 
 // EnumerationProvider 枚举值提供接口
 type EnumerationProvider interface {
-	Read(args string) (interface{}, error)
+	Read(args interface{}) (interface{}, error)
 }
 
 type enumerationProvidersImpl struct {
@@ -198,7 +218,7 @@ func (ep *enumerationProvidersImpl) Register(typ string, provider EnumerationPro
 	ep.providers[typ] = provider
 }
 
-func (ep *enumerationProvidersImpl) Read(typ, args string) (interface{}, error) {
+func (ep *enumerationProvidersImpl) Read(typ string, args interface{}) (interface{}, error) {
 	ep.mu.RLock()
 	defer ep.mu.RUnlock()
 
@@ -231,14 +251,41 @@ type HTTPProvider struct {
 	args map[string]interface{}
 }
 
-func (hp *HTTPProvider) Read(urlStr string) (interface{}, error) {
+func (hp *HTTPProvider) Read(urlObject interface{}) (interface{}, error) {
+	args := hp.args
+	var urlStr string
+	switch v := urlObject.(type) {
+	case string:
+		urlStr = v
+	case map[string]interface{}:
+		for _, name := range []string{"value", "url"} {
+			value := v[name]
+			if value == nil {
+				continue
+			}
+			if s, ok := value.(string); ok {
+				urlStr = s
+				break
+			}
+		}
+
+		if args == nil {
+			args = map[string]interface{}{}
+		}
+		for key, value := range v {
+			args[key] = value
+		}
+	default:
+		return nil, fmt.Errorf("HTTPProvider: args is unknow type - %T %#v", urlObject, urlObject)
+	}
+
 	if strings.Contains(urlStr, "{{") {
 		t, err := template.New("main").Parse(urlStr)
 		if err != nil {
 			return nil, err
 		}
-		var buf bytes.Buffer
-		err = t.Execute(&buf, hp.args)
+		var buf strings.Builder
+		err = t.Execute(&buf, args)
 		if err != nil {
 			return nil, err
 		}
@@ -261,4 +308,86 @@ func (hp *HTTPProvider) Read(urlStr string) (interface{}, error) {
 	// return  choices, err
 
 	return bs, err
+}
+
+// Queryer 数据的查询接口
+type Queryer interface {
+	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
+}
+
+// DbProvider 一个缺省的 db 格式的 枚举值 扩展接口
+type DbProvider struct {
+	DB Queryer
+}
+
+func (dp *DbProvider) Read(a interface{}) (interface{}, error) {
+	var args []interface{}
+	var sqlStr string
+	switch v := a.(type) {
+	case string:
+		sqlStr = v
+	case map[string]interface{}:
+		for _, name := range []string{"value", "sql"} {
+			value := v[name]
+			if value == nil {
+				continue
+			}
+			if s, ok := value.(string); ok {
+				sqlStr = s
+				break
+			}
+		}
+
+		args, _ = v["arguments"].([]interface{})
+	default:
+		return nil, fmt.Errorf("HTTPProvider: args is unknow type - %T %#v", a, a)
+	}
+
+	if args == nil {
+		args = emptyArgs
+	}
+	opts, err := ReadInputChoices(dp.DB, sqlStr, args...)
+	return opts, err
+}
+
+// ReadInputChoices 从数据库中读选项
+func ReadInputChoices(db Queryer, query string, args ...interface{}) ([][2]string, error) {
+	rows, err := db.QueryContext(context.Background(), query, args...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "查询结果失败:sql:"+query)
+	}
+	defer rows.Close()
+
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, errors.Wrap(err, "查询结果失败:sql:"+query)
+	}
+
+	var firstValue = true
+	if strings.ToLower(columns[0]) != "value" {
+		firstValue = false
+	}
+
+	var opts [][2]string
+	for rows.Next() {
+		var id, value sql.NullString
+		err = rows.Scan(&id, &value)
+		if err != nil {
+			return nil, errors.Wrap(err, "查询结果失败:sql:"+query)
+		}
+
+		if firstValue {
+			opts = append(opts, [2]string{id.String, value.String})
+		} else {
+			opts = append(opts, [2]string{value.String, id.String})
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "查询结果失败:sql:"+query)
+	}
+	return opts, nil
 }

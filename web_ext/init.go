@@ -16,6 +16,7 @@ import (
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/menus"
 	"github.com/three-plus-three/modules/toolbox"
+	"github.com/three-plus-three/modules/types"
 	"github.com/three-plus-three/modules/urlutil"
 	"github.com/three-plus-three/sessions"
 	sso "github.com/three-plus-three/sso/client"
@@ -75,6 +76,8 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			os.Exit(-1)
 			return
 		}
+
+		types.RegisterEnumerationProvider("sql", &types.DbProvider{DB: lifecycle.ModelEngine.DB()})
 
 		serviceObject := env.GetServiceConfig(serviceID)
 		//wserviceObject := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
