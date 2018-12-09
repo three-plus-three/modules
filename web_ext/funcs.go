@@ -16,6 +16,7 @@ import (
 	"github.com/three-plus-three/forms"
 	"github.com/three-plus-three/modules/functions"
 	"github.com/three-plus-three/modules/toolbox"
+	"github.com/three-plus-three/modules/types"
 	"github.com/three-plus-three/modules/urlutil"
 	"github.com/three-plus-three/modules/util"
 )
@@ -222,6 +223,116 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 	}
 
 	toolbox.InitUserFuncs(lifecycle.UserManager, nil, revel.TemplateFuncs)
+
+	revel.TemplateFuncs["newfield"] = NewField
+}
+
+func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
+	field, ok := fieldSpec.(*types.FieldSpec)
+	if !ok {
+		fieldValue, ok := fieldSpec.(types.FieldSpec)
+		if !ok {
+			field = &fieldValue
+		} else {
+			rv := reflect.ValueOf(fieldSpec)
+			if rv.Kind() == reflect.Ptr {
+				rv = rv.Elem()
+			}
+			for i := 0; i < rv.NumField(); i++ {
+				f := rv.Field(i)
+				if !f.IsValid() {
+					continue
+				}
+				if f.IsNil() {
+					continue
+				}
+
+				field, ok = f.Interface().(*types.FieldSpec)
+				if ok {
+					break
+				}
+				fieldValue, ok := f.Interface().(types.FieldSpec)
+				if !ok {
+					field = &fieldValue
+					break
+				}
+			}
+
+			if field == nil {
+				panic(errors.New("field is unknown type - " + rv.Type().PkgPath() + "." + rv.Type().Name()))
+			}
+		}
+	}
+
+	fieldLabel := field.Label + ":"
+	if field.HasChoices() {
+		widget := forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
+		if field.IsArray {
+			return widget.MultipleChoice()
+		}
+		return widget
+	}
+	format := field.Type
+	if field.Format != "" {
+		format = field.Format
+	}
+
+	switch strings.ToLower(format) {
+	case "ip", "ipaddress":
+		return forms.IPAddressField(ctx, field.Name, fieldLabel)
+	case "email":
+		return forms.EmailField(ctx, field.Name, fieldLabel)
+	case "string":
+		if field.Restrictions != nil {
+			var isTextArea = false
+
+			for _, value := range [][2]string{
+				{"Length", field.Restrictions.Length},
+				{"MaxLength", field.Restrictions.MaxLength},
+			} {
+				if value[1] != "" {
+					length, err := strconv.ParseInt(value[1], 10, 64)
+					if err != nil {
+						panic(errors.New(value[0] + " of field '" + field.Name + "' is invalid - " + value[1]))
+					}
+					if length > 500 {
+						isTextArea = true
+					}
+				}
+			}
+			if isTextArea {
+				return forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
+			}
+		}
+		return forms.TextField(ctx, field.Name, fieldLabel)
+	case "integer", "number", "biginteger", "int", "int64", "uint", "uint64", "float", "float64":
+		if field.Restrictions.MinValue != "" && field.Restrictions.MaxValue != "" {
+			if format != "float" && format != "float64" {
+				minValue, err := strconv.ParseInt(field.Restrictions.MinValue, 10, 64)
+				if err != nil {
+					panic(errors.New("minValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MinValue))
+				}
+				maxValue, err := strconv.ParseInt(field.Restrictions.MaxValue, 10, 64)
+				if err != nil {
+					panic(errors.New("maxValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MaxValue))
+				}
+				return forms.RangeField(ctx, field.Name, fieldLabel, minValue, maxValue, 1)
+			}
+		}
+		return forms.NumberField(ctx, field.Name, fieldLabel)
+	case "boolean", "bool":
+		return forms.Checkbox(ctx, field.Name, fieldLabel)
+	case "password":
+		return forms.PasswordField(ctx, field.Name, fieldLabel)
+	case "time":
+		return forms.TimeField(ctx, field.Name, fieldLabel)
+	case "date":
+		return forms.DateField(ctx, field.Name, fieldLabel)
+	case "datetime":
+		return forms.DatetimeField(ctx, field.Name, fieldLabel)
+	default:
+		return forms.TextField(ctx, field.Name, fieldLabel)
+	}
 }
 
 var localeMessages = map[string]string{
