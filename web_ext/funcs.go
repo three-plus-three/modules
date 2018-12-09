@@ -277,12 +277,28 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 		format = field.Format
 	}
 
+	if field.Annotations != nil {
+		if inputType := field.Annotations["input_type"]; inputType != nil {
+			if s, ok := inputType.(string); ok && s != "" {
+				format = s
+			}
+		}
+	}
+
 	switch strings.ToLower(format) {
+	case "select":
+		widget := forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
+		if field.IsArray {
+			return widget.MultipleChoice()
+		}
+		return widget
 	case "ip", "ipaddress":
 		return forms.IPAddressField(ctx, field.Name, fieldLabel)
 	case "email":
 		return forms.EmailField(ctx, field.Name, fieldLabel)
-	case "string":
+	case "area":
+		return forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
+	case "string", "text":
 		if field.Restrictions != nil {
 			var isTextArea = false
 
@@ -320,7 +336,7 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 			}
 		}
 		return forms.NumberField(ctx, field.Name, fieldLabel)
-	case "boolean", "bool":
+	case "boolean", "bool", "checkbox":
 		return forms.Checkbox(ctx, field.Name, fieldLabel)
 	case "password":
 		return forms.PasswordField(ctx, field.Name, fieldLabel)
