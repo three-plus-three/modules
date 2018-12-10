@@ -264,100 +264,99 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 		}
 	}
 
+	var widget forms.FieldInterface
 	fieldLabel := field.Label + ":"
 	if field.HasChoices() {
-		widget := forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
-		if field.IsArray {
-			widget = widget.MultipleChoice()
-		}
-		if field.IsReadOnly {
-			widget = widget.AddData("unmodifiable", true)
-		}
-		return widget
-	}
-	format := field.Type
-	if field.Format != "" {
-		format = field.Format
-	}
-
-	if field.Annotations != nil {
-		if inputType := field.Annotations["input_type"]; inputType != nil {
-			if s, ok := inputType.(string); ok && s != "" {
-				format = s
-			}
-		}
-	}
-
-	var widget forms.FieldInterface
-	switch strings.ToLower(format) {
-	case "select":
 		widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
 		if field.IsArray {
 			widget = widget.MultipleChoice()
 		}
-	case "ip", "ipaddress":
-		widget = forms.IPAddressField(ctx, field.Name, fieldLabel)
-	case "email":
-		widget = forms.EmailField(ctx, field.Name, fieldLabel)
-	case "area":
-		widget = forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
-	case "string", "text":
-		if field.Restrictions != nil {
-			var isTextArea = false
+	} else {
+		format := field.Type
+		if field.Format != "" {
+			format = field.Format
+		}
 
-			for _, value := range [][2]string{
-				{"Length", field.Restrictions.Length},
-				{"MaxLength", field.Restrictions.MaxLength},
-			} {
-				if value[1] != "" {
-					length, err := strconv.ParseInt(value[1], 10, 64)
+		if field.Annotations != nil {
+			if inputType := field.Annotations["input_type"]; inputType != nil {
+				if s, ok := inputType.(string); ok && s != "" {
+					format = s
+				}
+			}
+		}
+
+		switch strings.ToLower(format) {
+		case "select":
+			widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
+			if field.IsArray {
+				widget = widget.MultipleChoice()
+			}
+		case "ip", "ipaddress":
+			widget = forms.IPAddressField(ctx, field.Name, fieldLabel)
+		case "email":
+			widget = forms.EmailField(ctx, field.Name, fieldLabel)
+		case "area":
+			widget = forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
+		case "string", "text":
+			if field.Restrictions != nil {
+				var isTextArea = false
+
+				for _, value := range [][2]string{
+					{"Length", field.Restrictions.Length},
+					{"MaxLength", field.Restrictions.MaxLength},
+				} {
+					if value[1] != "" {
+						length, err := strconv.ParseInt(value[1], 10, 64)
+						if err != nil {
+							panic(errors.New(value[0] + " of field '" + field.Name + "' is invalid - " + value[1]))
+						}
+						if length > 500 {
+							isTextArea = true
+						}
+					}
+				}
+				if isTextArea {
+					widget = forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
+					break
+				}
+			}
+			widget = forms.TextField(ctx, field.Name, fieldLabel)
+		case "integer", "number", "biginteger", "int", "int64", "uint", "uint64", "float", "float64":
+			if field.Restrictions.MinValue != "" && field.Restrictions.MaxValue != "" {
+				if format != "float" && format != "float64" {
+					minValue, err := strconv.ParseInt(field.Restrictions.MinValue, 10, 64)
 					if err != nil {
-						panic(errors.New(value[0] + " of field '" + field.Name + "' is invalid - " + value[1]))
+						panic(errors.New("minValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MinValue))
 					}
-					if length > 500 {
-						isTextArea = true
+					maxValue, err := strconv.ParseInt(field.Restrictions.MaxValue, 10, 64)
+					if err != nil {
+						panic(errors.New("maxValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MaxValue))
 					}
+					widget = forms.RangeField(ctx, field.Name, fieldLabel, minValue, maxValue, 1)
+					break
 				}
 			}
-			if isTextArea {
-				widget = forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
-				break
-			}
+			widget = forms.NumberField(ctx, field.Name, fieldLabel)
+		case "boolean", "bool", "checkbox":
+			widget = forms.Checkbox(ctx, field.Name, fieldLabel)
+		case "password":
+			widget = forms.PasswordField(ctx, field.Name, fieldLabel)
+		case "time":
+			widget = forms.TimeField(ctx, field.Name, fieldLabel)
+		case "date":
+			widget = forms.DateField(ctx, field.Name, fieldLabel)
+		case "datetime":
+			widget = forms.DatetimeField(ctx, field.Name, fieldLabel)
+		default:
+			widget = forms.TextField(ctx, field.Name, fieldLabel)
 		}
-		widget = forms.TextField(ctx, field.Name, fieldLabel)
-	case "integer", "number", "biginteger", "int", "int64", "uint", "uint64", "float", "float64":
-		if field.Restrictions.MinValue != "" && field.Restrictions.MaxValue != "" {
-			if format != "float" && format != "float64" {
-				minValue, err := strconv.ParseInt(field.Restrictions.MinValue, 10, 64)
-				if err != nil {
-					panic(errors.New("minValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MinValue))
-				}
-				maxValue, err := strconv.ParseInt(field.Restrictions.MaxValue, 10, 64)
-				if err != nil {
-					panic(errors.New("maxValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MaxValue))
-				}
-				widget = forms.RangeField(ctx, field.Name, fieldLabel, minValue, maxValue, 1)
-				break
-			}
-		}
-		widget = forms.NumberField(ctx, field.Name, fieldLabel)
-	case "boolean", "bool", "checkbox":
-		widget = forms.Checkbox(ctx, field.Name, fieldLabel)
-	case "password":
-		widget = forms.PasswordField(ctx, field.Name, fieldLabel)
-	case "time":
-		widget = forms.TimeField(ctx, field.Name, fieldLabel)
-	case "date":
-		widget = forms.DateField(ctx, field.Name, fieldLabel)
-	case "datetime":
-		widget = forms.DatetimeField(ctx, field.Name, fieldLabel)
-	default:
-		widget = forms.TextField(ctx, field.Name, fieldLabel)
 	}
 
-	if field.IsReadOnly {
+	if field.IsReadonly {
 		widget = widget.AddData("unmodifiable", true)
 	}
+
+	widget = widget.AddClass(field.CSSClasses())
 	return widget
 }
 
