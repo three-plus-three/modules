@@ -228,39 +228,39 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 }
 
 func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
-	field, ok := fieldSpec.(*types.FieldSpec)
-	if !ok {
-		fieldValue, ok := fieldSpec.(types.FieldSpec)
-		if !ok {
-			field = &fieldValue
-		} else {
-			rv := reflect.ValueOf(fieldSpec)
-			if rv.Kind() == reflect.Ptr {
-				rv = rv.Elem()
+	var field *types.FieldSpec
+	switch f := fieldSpec.(type) {
+	case *types.FieldSpec:
+		field = f
+	case types.FieldSpec:
+		field = &f
+	default:
+		rv := reflect.ValueOf(fieldSpec)
+		if rv.Kind() == reflect.Ptr {
+			rv = rv.Elem()
+		}
+		for i := 0; i < rv.NumField(); i++ {
+			f := rv.Field(i)
+			if !f.IsValid() {
+				continue
 			}
-			for i := 0; i < rv.NumField(); i++ {
-				f := rv.Field(i)
-				if !f.IsValid() {
-					continue
-				}
-				if f.IsNil() {
-					continue
-				}
-
-				field, ok = f.Interface().(*types.FieldSpec)
-				if ok {
-					break
-				}
-				fieldValue, ok := f.Interface().(types.FieldSpec)
-				if !ok {
-					field = &fieldValue
-					break
-				}
+			if f.IsNil() {
+				continue
 			}
 
-			if field == nil {
-				panic(errors.New("field is unknown type - " + rv.Type().PkgPath() + "." + rv.Type().Name()))
+			if v, ok := f.Interface().(*types.FieldSpec); ok {
+				field = v
+				break
 			}
+
+			if fieldValue, ok := f.Interface().(types.FieldSpec); !ok {
+				field = &fieldValue
+				break
+			}
+		}
+
+		if field == nil {
+			panic(errors.New("field is unknown type - " + rv.Type().PkgPath() + "." + rv.Type().Name()))
 		}
 	}
 
