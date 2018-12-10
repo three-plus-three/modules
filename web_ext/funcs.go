@@ -228,10 +228,16 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 }
 
 func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
+	if fieldSpec == nil {
+		panic(errors.New("field is nil"))
+	}
 	var field *types.FieldSpec
 	switch f := fieldSpec.(type) {
 	case *types.FieldSpec:
 		field = f
+		if field == nil {
+			panic(errors.New("field is nil"))
+		}
 	case types.FieldSpec:
 		field = &f
 	default:
@@ -244,28 +250,41 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 			if !f.IsValid() {
 				continue
 			}
-			if f.IsNil() {
-				continue
+
+			if f.Kind() != reflect.Ptr && f.CanAddr() {
+				f = f.Addr()
 			}
 
 			if v, ok := f.Interface().(*types.FieldSpec); ok {
-				field = v
-				break
+				if v != nil {
+					field = v
+					break
+				}
+				continue
 			}
 
 			if fieldValue, ok := f.Interface().(types.FieldSpec); !ok {
-				field = &fieldValue
+				field = &types.FieldSpec{}
+				*field = fieldValue
 				break
 			}
 		}
-
 		if field == nil {
 			panic(errors.New("field is unknown type - " + rv.Type().PkgPath() + "." + rv.Type().Name()))
 		}
 	}
 
 	var widget forms.FieldInterface
-	fieldLabel := field.Label + ":"
+	var fieldLabel string
+	if field.Label != "" {
+		fieldLabel = field.Label + ":"
+	} else {
+		fieldLabel = field.Name + ":"
+	}
+	// fmt.Println(field.Label, field.Name, fieldLabel)
+	// fmt.Println(field)
+	// fmt.Printf("%#v\r\n", fieldSpec)
+
 	if field.HasChoices() {
 		widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
 		if field.IsArray {
@@ -322,18 +341,20 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 			}
 			widget = forms.TextField(ctx, field.Name, fieldLabel)
 		case "integer", "number", "biginteger", "int", "int64", "uint", "uint64", "float", "float64":
-			if field.Restrictions.MinValue != "" && field.Restrictions.MaxValue != "" {
-				if format != "float" && format != "float64" {
-					minValue, err := strconv.ParseInt(field.Restrictions.MinValue, 10, 64)
-					if err != nil {
-						panic(errors.New("minValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MinValue))
+			if field.Restrictions != nil {
+				if field.Restrictions.MinValue != "" && field.Restrictions.MaxValue != "" {
+					if format != "float" && format != "float64" {
+						minValue, err := strconv.ParseInt(field.Restrictions.MinValue, 10, 64)
+						if err != nil {
+							panic(errors.New("minValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MinValue))
+						}
+						maxValue, err := strconv.ParseInt(field.Restrictions.MaxValue, 10, 64)
+						if err != nil {
+							panic(errors.New("maxValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MaxValue))
+						}
+						widget = forms.RangeField(ctx, field.Name, fieldLabel, minValue, maxValue, 1)
+						break
 					}
-					maxValue, err := strconv.ParseInt(field.Restrictions.MaxValue, 10, 64)
-					if err != nil {
-						panic(errors.New("maxValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MaxValue))
-					}
-					widget = forms.RangeField(ctx, field.Name, fieldLabel, minValue, maxValue, 1)
-					break
 				}
 			}
 			widget = forms.NumberField(ctx, field.Name, fieldLabel)
