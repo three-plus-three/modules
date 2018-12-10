@@ -340,7 +340,7 @@ func (dp *DbProvider) Read(a interface{}) (interface{}, error) {
 
 		args, _ = v["arguments"].([]interface{})
 	default:
-		return nil, fmt.Errorf("HTTPProvider: args is unknow type - %T %#v", a, a)
+		return nil, fmt.Errorf("DbProvider: args is unknow type - %T %#v", a, a)
 	}
 
 	if args == nil {

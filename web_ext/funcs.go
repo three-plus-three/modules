@@ -268,7 +268,10 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 	if field.HasChoices() {
 		widget := forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
 		if field.IsArray {
-			return widget.MultipleChoice()
+			widget = widget.MultipleChoice()
+		}
+		if field.IsReadOnly {
+			widget = widget.AddData("unmodifiable", true)
 		}
 		return widget
 	}
@@ -285,19 +288,19 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 		}
 	}
 
+	var widget forms.FieldInterface
 	switch strings.ToLower(format) {
 	case "select":
-		widget := forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
+		widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
 		if field.IsArray {
-			return widget.MultipleChoice()
+			widget = widget.MultipleChoice()
 		}
-		return widget
 	case "ip", "ipaddress":
-		return forms.IPAddressField(ctx, field.Name, fieldLabel)
+		widget = forms.IPAddressField(ctx, field.Name, fieldLabel)
 	case "email":
-		return forms.EmailField(ctx, field.Name, fieldLabel)
+		widget = forms.EmailField(ctx, field.Name, fieldLabel)
 	case "area":
-		return forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
+		widget = forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
 	case "string", "text":
 		if field.Restrictions != nil {
 			var isTextArea = false
@@ -317,10 +320,11 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 				}
 			}
 			if isTextArea {
-				return forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
+				widget = forms.TextAreaField(ctx, field.Name, fieldLabel, 3, 0)
+				break
 			}
 		}
-		return forms.TextField(ctx, field.Name, fieldLabel)
+		widget = forms.TextField(ctx, field.Name, fieldLabel)
 	case "integer", "number", "biginteger", "int", "int64", "uint", "uint64", "float", "float64":
 		if field.Restrictions.MinValue != "" && field.Restrictions.MaxValue != "" {
 			if format != "float" && format != "float64" {
@@ -332,23 +336,29 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 				if err != nil {
 					panic(errors.New("maxValue of field '" + field.Name + "' is invalid - " + field.Restrictions.MaxValue))
 				}
-				return forms.RangeField(ctx, field.Name, fieldLabel, minValue, maxValue, 1)
+				widget = forms.RangeField(ctx, field.Name, fieldLabel, minValue, maxValue, 1)
+				break
 			}
 		}
-		return forms.NumberField(ctx, field.Name, fieldLabel)
+		widget = forms.NumberField(ctx, field.Name, fieldLabel)
 	case "boolean", "bool", "checkbox":
-		return forms.Checkbox(ctx, field.Name, fieldLabel)
+		widget = forms.Checkbox(ctx, field.Name, fieldLabel)
 	case "password":
-		return forms.PasswordField(ctx, field.Name, fieldLabel)
+		widget = forms.PasswordField(ctx, field.Name, fieldLabel)
 	case "time":
-		return forms.TimeField(ctx, field.Name, fieldLabel)
+		widget = forms.TimeField(ctx, field.Name, fieldLabel)
 	case "date":
-		return forms.DateField(ctx, field.Name, fieldLabel)
+		widget = forms.DateField(ctx, field.Name, fieldLabel)
 	case "datetime":
-		return forms.DatetimeField(ctx, field.Name, fieldLabel)
+		widget = forms.DatetimeField(ctx, field.Name, fieldLabel)
 	default:
-		return forms.TextField(ctx, field.Name, fieldLabel)
+		widget = forms.TextField(ctx, field.Name, fieldLabel)
 	}
+
+	if field.IsReadOnly {
+		widget = widget.AddData("unmodifiable", true)
+	}
+	return widget
 }
 
 var localeMessages = map[string]string{
