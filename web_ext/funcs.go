@@ -289,6 +289,7 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 		widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
 		if field.IsArray {
 			widget = widget.MultipleChoice()
+			widget = widget.AddClass("chosen")
 		}
 	} else {
 		format := field.Type
@@ -309,6 +310,7 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 			widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
 			if field.IsArray {
 				widget = widget.MultipleChoice()
+				widget = widget.AddClass("chosen")
 			}
 		case "ip", "ipaddress":
 			widget = forms.IPAddressField(ctx, field.Name, fieldLabel)
@@ -377,7 +379,9 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 		widget = widget.AddData("unmodifiable", true)
 	}
 
-	widget = widget.AddClass(field.CSSClasses())
+	for _, css := range field.CSSClasses() {
+		widget = widget.AddClass(css)
+	}
 	return widget
 }
 

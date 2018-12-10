@@ -401,9 +401,12 @@ var genericMap = map[string]interface{}{
 
 	// string slices. Note that we reverse the order b/c that's better
 	// for template processing.
-	"join":          func(sep string, ss ...string) string { return strings.Join(ss, sep) },
+	"join": func(sep string, ss ...interface{}) string {
+		var sb strings.Builder
+		joinWith(&sb, sep, ss)
+		return sb.String()
+	},
 	"joinWithArray": func(sep string, ss []string) string { return strings.Join(ss, sep) },
-
 	"strIn": func(value string, values []string) bool {
 		for _, v := range values {
 			if v == value {
@@ -442,10 +445,10 @@ var genericMap = map[string]interface{}{
 		}
 	},
 
-	"indexValue":  indexValue,
-	"toString":  strval,
-	"toBool":    toBool,
-	"toBoolean": toBool,
+	"indexValue":    indexValue,
+	"toString":      strval,
+	"toBool":        toBool,
+	"toBoolean":     toBool,
 	"toStringSlice": toStringSlice,
 
 	// Defaults
@@ -483,6 +486,49 @@ var genericMap = map[string]interface{}{
 	"isNotFirst": isNotFirst,
 	"isEmpty":    isEmpty,
 	"isNotEmpty": isNotEmpty,
+}
+
+func joinWith(sb *strings.Builder, sep string, values []interface{}) {
+	for idx, v := range values {
+		if idx > 0 {
+			sb.WriteString(sep)
+		}
+
+		switch s := v.(type) {
+		case string:
+			sb.WriteString(s)
+		case *string:
+			sb.WriteString(*s)
+		case []string:
+			for _, a := range s {
+				sb.WriteString(a)
+			}
+		case []*string:
+			for _, a := range s {
+				sb.WriteString(*a)
+			}
+		case []interface{}:
+			joinWith(sb, sep, s)
+		case []int:
+			for _, a := range s {
+				sb.WriteString(strconv.FormatInt(int64(a), 10))
+			}
+		case []int64:
+			for _, a := range s {
+				sb.WriteString(strconv.FormatInt(a, 10))
+			}
+		case []uint:
+			for _, a := range s {
+				sb.WriteString(strconv.FormatUint(uint64(a), 10))
+			}
+		case []uint64:
+			for _, a := range s {
+				sb.WriteString(strconv.FormatUint(a, 10))
+			}
+		default:
+			fmt.Fprint(sb, v)
+		}
+	}
 }
 
 func toBool(value interface{}) bool {

@@ -115,7 +115,7 @@ func (p *FieldSpec) ToChoices() interface{} {
 	return enumerationSource
 }
 
-func (p *FieldSpec) CSSClasses() string {
+func (p *FieldSpec) CSSClasses() []string {
 	classes := []string{}
 
 	if p.IsRequired {
@@ -134,7 +134,7 @@ func (p *FieldSpec) CSSClasses() string {
 		classes = append(classes, "macaddress")
 	}
 
-	return strings.Join(classes, " ")
+	return classes
 }
 
 func (p *FieldSpec) ToXML() *XMLPropertyDefinition {
