@@ -33,9 +33,8 @@ type FieldSpec struct {
 	IsArray        bool                   `json:"is_array,omitempty" yaml:"is_array,omitempty"`
 	IsOriginal     bool                   `json:"is_original,omitempty" yaml:"is_original,omitempty"`
 	IsRequired     bool                   `json:"required,omitempty" yaml:"required,omitempty"`
-	IsReadOnly     bool                   `json:"readonly,omitempty" yaml:"readonly,omitempty"`
+	IsReadonly     bool                   `json:"readonly,omitempty" yaml:"readonly,omitempty"`
 	IsUniquely     bool                   `json:"unique,omitempty" yaml:"unique,omitempty"`
-	IsUnmodifiable bool                   `json:"unmodifiable,omitempty" yaml:"unmodifiable,omitempty"`
 	Default        string                 `json:"default,omitempty" yaml:"default,omitempty"`
 	Unit           string                 `json:"unit,omitempty" yaml:"unit,omitempty"`
 	Restrictions   *RestrictionSpec       `json:"restrictions,omitempty" yaml:"restrictions,omitempty"`
@@ -140,7 +139,7 @@ func (p *FieldSpec) CSSClasses() string {
 
 func (p *FieldSpec) ToXML() *XMLPropertyDefinition {
 	var ReadOnly *XMLReadOnly
-	if p.IsReadOnly {
+	if p.IsReadonly {
 		ReadOnly = &XMLReadOnly{}
 	}
 	var Unique *XMLUnique
