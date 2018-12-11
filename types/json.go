@@ -61,7 +61,7 @@ func (p *FieldSpec) DefaultValue() interface{} {
 	return p.Default
 }
 
-func (p *FieldSpec) HasChoices(ctx interface{}) bool {
+func (p *FieldSpec) HasChoices() bool {
 	if p.Restrictions != nil && len(p.Restrictions.Enumerations) > 0 {
 		return true
 	}
