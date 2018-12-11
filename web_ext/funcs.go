@@ -285,8 +285,8 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 	// fmt.Println(field)
 	// fmt.Printf("%#v\r\n", fieldSpec)
 
-	if field.HasChoices() {
-		widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
+	if field.HasChoices(ctx) {
+		widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices(ctx))
 		if field.IsArray {
 			widget = widget.MultipleChoice()
 			widget = widget.AddClass("chosen")
@@ -307,7 +307,7 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 
 		switch strings.ToLower(format) {
 		case "select":
-			widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices())
+			widget = forms.SelectField(ctx, field.Name, fieldLabel, field.ToChoices(ctx))
 			if field.IsArray {
 				widget = widget.MultipleChoice()
 				widget = widget.AddClass("chosen")
