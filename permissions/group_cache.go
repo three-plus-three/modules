@@ -62,20 +62,18 @@ func (cache *GroupCache) getPermissions() map[int64]*Permissions {
 	return values
 }
 
-func (cache *GroupCache) refresh(db *DB) error {
-	var valueArray []*Permissions
-	err := db.PermissionGroups().Where().All(&valueArray)
+func (cache *GroupCache) refresh(userDao UserDao) error {
+	valueArray, err := userDao.GetPermissions()
 	if err != nil {
 		return errors.New("query permission groups fail: " + err.Error())
 	}
 
 	var values = map[int64]*Permissions{}
-	for _, p := range valueArray {
-		values[p.ID] = p
+	for idx := range valueArray {
+		values[valueArray[idx].ID] = &valueArray[idx]
 	}
 
-	var pagArray []PermissionAndGroup
-	err = db.PermissionsAndGroups().Where().All(&pagArray)
+	pagArray, err := userDao.GetPermissionAndGroups()
 	if err != nil {
 		return errors.New("query permission groups fail: " + err.Error())
 	}

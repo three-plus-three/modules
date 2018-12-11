@@ -1,23 +1,87 @@
+//go:generate gobatis main.go
 package permissions
 
 import (
-	"encoding/json"
+	"database/sql"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
 	cache "github.com/patrickmn/go-cache"
-	"github.com/runner-mei/orm"
+	gobatis "github.com/runner-mei/GoBatis"
+	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/toolbox"
-	"xorm.io/xorm"
 )
 
-func InitUser(engine *xorm.Engine) toolbox.UserManager {
+type UserDao interface {
+	// @record_type Role
+	GetRoleByName(name string) func(*Role) error
+	// @record_type User
+	GetUserByID(id int64) func(*User) error
+	// @record_type User
+	GetUserByName(name string) func(*User) error
+	// @record_type UserGroup
+	GetUsergroupByID(id int64) func(*UserGroup) error
+	// @record_type UserGroup
+	GetUsergroupByName(name string) func(*UserGroup) error
+	// @record_type User
+	GetUsers() ([]User, error)
+	// @record_type UserGroup
+	GetUsergroups() ([]UserGroup, error)
+
+	// @default SELECT * FROM <tablename type="Role" as="roles" /> WHERE
+	//  exists (select * from <tablename type="UserAndRole" /> as users_roles
+	//     where users_roles.role_id = roles.id and users_roles.user_id = #{userID})
+	GetRolesByUser(userID int64) ([]Role, error)
+
+	// @default SELECT * FROM <tablename type="User" as="users" /> WHERE
+	//  exists (select * from <tablename type="UserAndUserGroup" /> as u2g
+	//     where u2g.user_id = users.id and u2g.group_id = #{groupID})
+	GetUserByGroup(groupID int64) ([]User, error)
+
+	// @default SELECT group_id FROM <tablename type="UserAndUserGroup" as="u2g" /> WHERE user_id = #{userID}
+	GetGroupIDsByUser(userID int64) ([]int64, error)
+
+	// @record_type PermissionGroupAndRole
+	GetPermissionAndRoles(roleIDs []int64) ([]PermissionGroupAndRole, error)
+
+	// @default SELECT value FROM <tablename type="UserProfile" /> WHERE id = #{userID} AND name = #{name}
+	ReadProfile(userID int64, name string) (string, error)
+
+	// @type insert
+	// @default INSERT INTO <tablename type="UserProfile" /> (id, name, value) VALUES(#{userID}, #{name}, #{value})
+	//     ON CONFLICT (id, name) DO UPDATE SET value = excluded.value
+	WriteProfile(userID int64, name, value string) error
+
+	// @default DELETE FROM <tablename type="UserProfile" /> WHERE id=#{userID} AND name=#{name}
+	DeleteProfile(userID int64, name string) (int64, error)
+
+	GetPermissions() ([]Permissions, error)
+	GetPermissionAndGroups() ([]PermissionAndGroup, error)
+}
+
+func InitUser(db *sql.DB, driverName string, logger log.Logger) toolbox.UserManager {
+	factory, err := gobatis.New(&gobatis.Config{
+		Tracer:     log.NewSQLTracer(logger),
+		TagPrefix:  "xorm",
+		TagMapper:  gobatis.TagSplitForXORM,
+		DriverName: driverName,
+		DB:         db,
+		XMLPaths: []string{
+			"gobatis",
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
+	reference := factory.Reference()
+	userDao := NewUserDao(&reference)
+
 	um := &userManager{
-		db:                   &DB{DB: orm.DB{Engine: engine}},
+		logger:               logger,
+		userDao:              userDao,
 		permissionGroupCache: &GroupCache{},
 		userByName:           cache.New(5*time.Minute, 10*time.Minute),
 		userByID:             cache.New(5*time.Minute, 10*time.Minute),
@@ -26,92 +90,14 @@ func InitUser(engine *xorm.Engine) toolbox.UserManager {
 	}
 	um.refresh()
 
-	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleSuper}).One(&um.superRole); e != nil {
-		um.superRole.Name = toolbox.RoleSuper
-		log.Println("[warn] role", toolbox.RoleSuper, "isnot found -", e)
-	}
-
-	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleAdministrator}).One(&um.adminRole); e != nil {
-		um.adminRole.Name = toolbox.RoleAdministrator
-		log.Println("[warn] role", toolbox.RoleAdministrator, "isnot found -", e)
-	}
-
-	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleVisitor}).One(&um.visitorRole); e != nil {
-		um.visitorRole.Name = toolbox.RoleVisitor
-		log.Println("[warn] role", toolbox.RoleVisitor, "isnot found -", e)
-	}
-
-	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleGuest}).One(&um.guestRole); e != nil {
-		um.guestRole.Name = toolbox.RoleGuest
-		log.Println("[warn] role", toolbox.RoleGuest, "isnot found -", e)
-	}
+	um.ensureRoles()
 
 	return um
 }
 
-type userGroup struct {
-	um       *userManager
-	ug       UserGroup
-	children []toolbox.User
-}
-
-func (ug *userGroup) ID() int64 {
-	return ug.ug.ID
-}
-
-func (ug *userGroup) Name() string {
-	return ug.ug.Name
-}
-
-func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
-	var includeDisabled bool
-	for _, opt := range opts {
-		switch opt.(type) {
-		case toolbox.UserIncludeDisabled:
-			includeDisabled = true
-		}
-	}
-
-	if ug.children == nil {
-
-		var innerList []User
-		err := ug.um.db.Users().Where(orm.Cond{"EXISTS(SELECT * FROM " + ug.um.db.UsersAndUserGroups().Name() + " as ug WHERE ug.group_id = ? AND ug.user_id = " + ug.um.db.Users().Name() + ".id)": ug.ug.ID}).All(&innerList)
-		if err != nil {
-			return nil, errors.Wrap(err, "query all usergroup fail")
-		}
-
-		ug.um.ensureRoles()
-
-		var uList = make([]toolbox.User, 0, len(innerList))
-
-		for idx := range innerList {
-			u := &user{um: ug.um, u: innerList[idx]}
-			if err := ug.um.load(u); err != nil {
-				return nil, err
-			}
-			uList = append(uList, u)
-			ug.um.usercacheIt(u)
-		}
-
-		ug.children = uList
-	}
-
-	if includeDisabled {
-		return ug.children, nil
-	}
-
-	var enabledList = make([]toolbox.User, 0, len(ug.children))
-	for idx := range ug.children {
-		if !ug.children[idx].(*user).IsDisabled() {
-			enabledList = append(enabledList, ug.children[idx])
-		}
-	}
-
-	return enabledList, nil
-}
-
 type userManager struct {
-	db                   *DB
+	logger               log.Logger
+	userDao              UserDao
 	permissionGroupCache *GroupCache
 	userByName           *cache.Cache
 	userByID             *cache.Cache
@@ -127,7 +113,7 @@ type userManager struct {
 
 func (um *userManager) refresh() {
 	refresh := func() {
-		um.lastErr.Set(um.permissionGroupCache.refresh(um.db))
+		um.lastErr.Set(um.permissionGroupCache.refresh(um.userDao))
 	}
 	um.permissionGroupCache.Init(5*time.Minute, refresh)
 }
@@ -148,8 +134,7 @@ func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, 
 		}
 	}
 
-	var innerList []UserGroup
-	err := um.db.UserGroups().Where().All(&innerList)
+	var innerList, err = um.userDao.GetUsergroups()
 	if err != nil {
 		return nil, errors.Wrap(err, "query all usergroup fail")
 	}
@@ -177,7 +162,7 @@ func (um *userManager) GroupByName(groupname string, opts ...toolbox.UserOption)
 	}
 
 	var ug = &userGroup{um: um}
-	err := um.db.UserGroups().Where(orm.Cond{"name": groupname}).One(&ug.ug)
+	err := um.userDao.GetUsergroupByName(groupname)(&ug.ug)
 	if err != nil {
 		return nil, errors.Wrap(err, "query usergroup with name is "+groupname+"fail")
 	}
@@ -197,7 +182,7 @@ func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) (too
 	}
 
 	var ug = &userGroup{um: um}
-	err := um.db.UserGroups().ID(groupID).Get(&ug.ug)
+	err := um.userDao.GetUsergroupByID(groupID)(&ug.ug)
 	if err != nil {
 		return nil, errors.Wrap(err, "query usergroup with id is "+fmt.Sprint(groupID)+"fail")
 	}
@@ -232,8 +217,7 @@ func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error)
 		}
 	}
 
-	var innerList []User
-	err := um.db.Users().Where().All(&innerList)
+	innerList, err := um.userDao.GetUsers()
 	if err != nil {
 		return nil, errors.Wrap(err, "query all usergroup fail")
 	}
@@ -270,33 +254,23 @@ func (um *userManager) usercacheIt(u toolbox.User) {
 }
 
 func (um *userManager) ensureRoles() {
-	if um.superRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleSuper}).One(&um.superRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleSuper, "isnot found -", e)
-		} else {
-			um.userByID.Flush()
-			um.userByName.Flush()
+	for _, data := range []struct {
+		role *Role
+		name string
+	}{
+		{role: &um.superRole, name: toolbox.RoleSuper},
+		{role: &um.adminRole, name: toolbox.RoleAdministrator},
+		{role: &um.visitorRole, name: toolbox.RoleVisitor},
+		{role: &um.guestRole, name: toolbox.RoleGuest},
+	} {
+		if data.role.ID != 0 {
+			continue
 		}
-	}
-	if um.adminRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleAdministrator}).One(&um.adminRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleAdministrator, "isnot found -", e)
-		} else {
-			um.userByID.Flush()
-			um.userByName.Flush()
-		}
-	}
-	if um.visitorRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleVisitor}).One(&um.visitorRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleVisitor, "isnot found -", e)
-		} else {
-			um.userByID.Flush()
-			um.userByName.Flush()
-		}
-	}
-	if um.guestRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleGuest}).One(&um.guestRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleGuest, "isnot found -", e)
+
+		err := um.userDao.GetRoleByName(data.name)(data.role)
+		if err != nil {
+			data.role.Name = data.name
+			um.logger.Warn("role isnot found", log.String("role", data.name), log.Error(err))
 		} else {
 			um.userByID.Flush()
 			um.userByName.Flush()
@@ -333,7 +307,7 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (tool
 	um.ensureRoles()
 
 	var u = &user{um: um}
-	err := um.db.Users().Where(orm.Cond{"name": userName}).Omit("profiles").One(&u.u)
+	err := um.userDao.GetUserByName(userName)(&u.u)
 	if err != nil {
 		switch userName {
 		case toolbox.UserAdmin:
@@ -397,7 +371,7 @@ func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) (toolbox.U
 	um.ensureRoles()
 
 	var u = &user{um: um}
-	err := um.db.Users().ID(userID).Omit("profiles").Get(&u.u)
+	err := um.userDao.GetUserByID(userID)(&u.u)
 	if err != nil {
 		return nil, errors.Wrap(err, "query user with id is "+fmt.Sprint(userID)+"fail")
 	}
@@ -417,18 +391,8 @@ func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) (toolbox.U
 }
 
 func (um *userManager) load(u *user) error {
-	var u2g []UserAndUserGroup
-	err := um.db.UsersAndUserGroups().Where(orm.Cond{"user_id": u.ID()}).All(&u2g)
-	if err != nil {
-		return errors.Wrap(err, "query user and usergroup with user is "+u.Name()+" fail")
-	}
-	for idx := range u2g {
-		u.groups = append(u.groups, u2g[idx].GroupID)
-	}
-
-	condRoles := "exists (select * from " + um.db.UsersAndRoles().Name() + " as users_roles " +
-		" where users_roles.role_id = " + um.db.Roles().Name() + ".id and users_roles.user_id = ?)"
-	err = um.db.Roles().Where(condRoles, u.ID()).All(&u.roles)
+	var err error
+	u.roles, err = um.userDao.GetRolesByUser(u.ID())
 	if err != nil {
 		return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
 	}
@@ -466,9 +430,17 @@ func (um *userManager) load(u *user) error {
 		roleIDs[idx] = u.roles[idx].ID
 	}
 
-	err = um.db.PermissionGroupsAndRoles().Where(orm.Cond{"role_id IN": roleIDs}).All(&u.permissionsAndRoles)
+	if len(roleIDs) > 0 {
+		u.permissionsAndRoles, err = um.userDao.GetPermissionAndRoles(roleIDs)
+		//err = um.db.PermissionGroupsAndRoles().Where(orm.Cond{"role_id IN": roleIDs}).All(&u.permissionsAndRoles)
+		if err != nil {
+			return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
+		}
+	}
+
+	u.groups, err = um.userDao.GetGroupIDsByUser(u.ID())
 	if err != nil {
-		return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
+		return errors.Wrap(err, "query user and usergroup with user is "+u.Name()+" fail")
 	}
 	return nil
 }
@@ -535,66 +507,48 @@ func (u *user) IsMemberOf(group int64) bool {
 }
 
 func (u *user) WriteProfile(key, value string) error {
-	if err := u.readProfiles(); err != nil {
-		return err
-	}
-
 	if value == "" {
-		if len(u.profiles) == 0 {
-			return nil
-		}
-
-		updateStr := `UPDATE hengwei_users SET profiles = profiles -$1::text WHERE id = $2`
-		_, err := u.um.db.Exec(updateStr, key, u.ID())
+		_, err := u.um.userDao.DeleteProfile(u.ID(), key)
 		if err != nil {
-			return errors.Wrap(err, "WriteProfile")
+			return errors.Wrap(err, "DeleteProfile")
 		}
-		delete(u.profiles, key)
+		if u.profiles != nil {
+			delete(u.profiles, key)
+		}
 		return nil
 	}
 
-	updateStr := `UPDATE hengwei_users SET profiles = profiles || jsonb_build_object($1::text, $2::text) WHERE id = $3`
-	if len(u.profiles) == 0 {
-		updateStr = `UPDATE hengwei_users SET profiles = jsonb_build_object($1::text, $2::text) WHERE id = $3`
-	}
-
-	_, err := u.um.db.Exec(updateStr, key, value, u.ID())
+	err := u.um.userDao.WriteProfile(u.ID(), key, value)
 	if err != nil {
 		return errors.Wrap(err, "WriteProfile")
 	}
-	u.profiles[key] = value
-	return nil
-}
 
-func (u *user) readProfiles() error {
 	if u.profiles != nil {
-		return nil
-	}
-
-	var txt []byte //sql.NullString
-	err := u.um.db.Engine.DB().DB.QueryRow("SELECT profiles FROM hengwei_users WHERE id = $1", u.ID()).Scan(&txt)
-	if err != nil {
-		return errors.Wrap(err, "readProfiles")
-	}
-	if len(txt) != 0 {
-		err = json.Unmarshal(txt, &u.profiles)
-		if err != nil {
-			return errors.Wrap(err, "readProfiles")
-		}
-	}
-
-	if u.profiles == nil {
-		u.profiles = map[string]string{}
+		u.profiles[key] = value
 	}
 	return nil
 }
 
 func (u *user) ReadProfile(key string) (string, error) {
-	if err := u.readProfiles(); err != nil {
-		return "", err
+	if u.profiles != nil {
+		value, ok := u.profiles[key]
+		if ok {
+			return value, nil
+		}
 	}
-
-	return u.profiles[key], nil
+	value, err := u.um.userDao.ReadProfile(u.ID(), key)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", errors.Wrap(err, "ReadProfile")
+	}
+	if u.profiles != nil {
+		u.profiles[key] = value
+	} else {
+		u.profiles = map[string]string{key: value}
+	}
+	return value, nil
 }
 
 func (u *user) Roles() []string {
@@ -701,7 +655,7 @@ func (u *user) HasPermission(permissionID, op string) bool {
 func (u *user) hasPermission(groupID int64, permissionID string) bool {
 	group := u.um.permissionGroupCache.Get(groupID)
 	if group == nil {
-		log.Println("[permissions] permission group with id is", groupID, "isn't found.")
+		u.um.logger.Warn("[permissions] permission group isn't found", log.Int64("groupID", groupID))
 		return false
 	}
 	return u.hasPermissionInGroup(group, permissionID)
@@ -739,4 +693,64 @@ func (u *user) hasPermissionInGroup(group *Permissions, permissionID string) boo
 		}
 	}
 	return false
+}
+
+type userGroup struct {
+	um       *userManager
+	ug       UserGroup
+	children []toolbox.User
+}
+
+func (ug *userGroup) ID() int64 {
+	return ug.ug.ID
+}
+
+func (ug *userGroup) Name() string {
+	return ug.ug.Name
+}
+
+func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
+	var includeDisabled bool
+	for _, opt := range opts {
+		switch opt.(type) {
+		case toolbox.UserIncludeDisabled:
+			includeDisabled = true
+		}
+	}
+
+	if ug.children == nil {
+
+		innerList, err := ug.um.userDao.GetUserByGroup(ug.ID())
+		if err != nil {
+			return nil, errors.Wrap(err, "query all usergroup fail")
+		}
+
+		ug.um.ensureRoles()
+
+		var uList = make([]toolbox.User, 0, len(innerList))
+
+		for idx := range innerList {
+			u := &user{um: ug.um, u: innerList[idx]}
+			if err := ug.um.load(u); err != nil {
+				return nil, err
+			}
+			uList = append(uList, u)
+			ug.um.usercacheIt(u)
+		}
+
+		ug.children = uList
+	}
+
+	if includeDisabled {
+		return ug.children, nil
+	}
+
+	var enabledList = make([]toolbox.User, 0, len(ug.children))
+	for idx := range ug.children {
+		if !ug.children[idx].(*user).IsDisabled() {
+			enabledList = append(enabledList, ug.children[idx])
+		}
+	}
+
+	return enabledList, nil
 }

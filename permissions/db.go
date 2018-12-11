@@ -86,6 +86,7 @@ func InitTables(engine *xorm.Engine) error {
 		&PermissionGroupAndRole{},
 		&UserGroup{},
 		&UserAndUserGroup{},
+		&UserProfile{},
 	}
 
 	if err := engine.CreateTables(beans...); err != nil {
@@ -119,6 +120,7 @@ func DropTables(engine *xorm.Engine) error {
 		&OnlineUser{},
 		&User{},
 		&Role{},
+		&UserProfile{},
 	}
 
 	for _, bean := range beans {

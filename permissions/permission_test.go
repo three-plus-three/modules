@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	fixtures "github.com/AreaHQ/go-fixtures"
+	"github.com/runner-mei/log"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/environment/env_tests"
 	"xorm.io/xorm"
@@ -21,7 +22,7 @@ func TestUser(t *testing.T) {
 		return
 	}
 
-	um := InitUser(modelEngine)
+	um := InitUser(modelEngine.DB().DB, modelEngine.DriverName(), log.Empty())
 
 	if err := DropTables(modelEngine); err != nil {
 		t.Error(err)
@@ -144,7 +145,7 @@ func TestHasPermission(t *testing.T) {
 			}, nil
 		}))
 
-	um := InitUser(modelEngine)
+	um := InitUser(modelEngine.DB().DB, modelEngine.DriverName(), log.Empty())
 
 	u, err := um.ByName("admin")
 	if err != nil {
