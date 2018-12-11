@@ -61,7 +61,7 @@ func (p *FieldSpec) DefaultValue() interface{} {
 	return p.Default
 }
 
-func (p *FieldSpec) HasChoices() bool {
+func (p *FieldSpec) HasChoices(ctx interface{}) bool {
 	if p.Restrictions != nil && len(p.Restrictions.Enumerations) > 0 {
 		return true
 	}
@@ -74,7 +74,7 @@ func (p *FieldSpec) HasChoices() bool {
 	return enumerationSource != nil
 }
 
-func (p *FieldSpec) ToChoices() interface{} {
+func (p *FieldSpec) ToChoices(ctx interface{}) interface{} {
 	if p.Restrictions != nil && len(p.Restrictions.Enumerations) > 0 {
 		return p.Restrictions.Enumerations
 	}
@@ -92,7 +92,7 @@ func (p *FieldSpec) ToChoices() interface{} {
 		if len(ss) != 2 {
 			panic(errors.New("enumerationSource is invalid value - " + source))
 		}
-		values, err := enumerationProviders.Read(ss[0], ss[1])
+		values, err := enumerationProviders.Read(ss[0], ctx, ss[1])
 		if err != nil {
 			panic(errors.New("ToChoices: " + err.Error()))
 		}
@@ -105,7 +105,7 @@ func (p *FieldSpec) ToChoices() interface{} {
 			panic(errors.New("type of enumerationSource is nil"))
 		}
 
-		values, err := enumerationProviders.Read(fmt.Sprint(typ), source)
+		values, err := enumerationProviders.Read(fmt.Sprint(typ), ctx, source)
 		if err != nil {
 			panic(errors.New("ToChoices: " + err.Error()))
 		}
@@ -200,7 +200,7 @@ func RegisterEnumerationProvider(typ string, provider EnumerationProvider) {
 
 // EnumerationProvider 枚举值提供接口
 type EnumerationProvider interface {
-	Read(args interface{}) (interface{}, error)
+	Read(ctx, args interface{}) (interface{}, error)
 }
 
 type enumerationProvidersImpl struct {
@@ -217,7 +217,7 @@ func (ep *enumerationProvidersImpl) Register(typ string, provider EnumerationPro
 	ep.providers[typ] = provider
 }
 
-func (ep *enumerationProvidersImpl) Read(typ string, args interface{}) (interface{}, error) {
+func (ep *enumerationProvidersImpl) Read(typ string, ctx, args interface{}) (interface{}, error) {
 	ep.mu.RLock()
 	defer ep.mu.RUnlock()
 
@@ -225,7 +225,7 @@ func (ep *enumerationProvidersImpl) Read(typ string, args interface{}) (interfac
 	if provider == nil {
 		return nil, errors.New("enumerationSource '" + typ + "' is unsupported")
 	}
-	return provider.Read(args)
+	return provider.Read(ctx, args)
 }
 
 // 一个简单的 枚举值 扩展如下
@@ -250,7 +250,7 @@ type HTTPProvider struct {
 	args map[string]interface{}
 }
 
-func (hp *HTTPProvider) Read(urlObject interface{}) (interface{}, error) {
+func (hp *HTTPProvider) Read(ctx, urlObject interface{}) (interface{}, error) {
 	args := hp.args
 	var urlStr string
 	switch v := urlObject.(type) {
@@ -319,7 +319,7 @@ type DbProvider struct {
 	DB Queryer
 }
 
-func (dp *DbProvider) Read(a interface{}) (interface{}, error) {
+func (dp *DbProvider) Read(ctx, a interface{}) (interface{}, error) {
 	var args []interface{}
 	var sqlStr string
 	switch v := a.(type) {
@@ -389,4 +389,39 @@ func ReadInputChoices(db Queryer, query string, args ...interface{}) ([][2]strin
 		return nil, errors.Wrap(err, "查询结果失败:sql:"+query)
 	}
 	return opts, nil
+}
+
+// ContextProvider 一个从上下文中读 枚举值 的扩展接口
+type ContextProvider struct{}
+
+func (dp *ContextProvider) Read(ctx, a interface{}) (interface{}, error) {
+	var dict, ok = ctx.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("ContextProvider: ctx is unknow type - %T %#v", ctx, ctx)
+	}
+
+	var action string
+	switch v := a.(type) {
+	case string:
+		action = v
+	case map[string]interface{}:
+		for _, name := range []string{"value", "name"} {
+			value := v[name]
+			if value == nil {
+				continue
+			}
+			if s, ok := value.(string); ok {
+				action = s
+				break
+			}
+		}
+	default:
+		return nil, fmt.Errorf("DbProvider: args is unknow type - %T %#v", a, a)
+	}
+
+	return dict[action], nil
+}
+
+func init() {
+	RegisterEnumerationProvider("context", &ContextProvider{})
 }
