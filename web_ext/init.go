@@ -77,8 +77,6 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			return
 		}
 
-		types.RegisterEnumerationProvider("sql", &types.DbProvider{DB: lifecycle.ModelEngine.DB()})
-
 		serviceObject := env.GetServiceConfig(serviceID)
 		//wserviceObject := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
 		if !revel.DevMode {
@@ -187,6 +185,10 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 				return
 			}
 		}
+
+		types.RegisterEnumerationProvider("sql", &types.DbProvider{DB: lifecycle.ModelEngine.DB()})
+		types.RegisterEnumerationProvider("usernames", &toolbox.UserProvider{UM: lifecycle.UserManager})
+		types.RegisterEnumerationProvider("usergroups", &toolbox.UsergroupProvider{UM: lifecycle.UserManager})
 
 		if err := cb(lifecycle); err != nil {
 			log.Println(err)

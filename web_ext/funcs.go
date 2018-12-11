@@ -290,6 +290,7 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 		if field.IsArray {
 			widget = widget.MultipleChoice()
 			widget = widget.AddClass("chosen")
+			widget = widget.SetParam("data-placeholder", "请选择")
 		}
 	} else {
 		format := field.Type
@@ -311,6 +312,7 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 			if field.IsArray {
 				widget = widget.MultipleChoice()
 				widget = widget.AddClass("chosen")
+				widget = widget.SetParam("data-placeholder", "请选择")
 			}
 		case "ip", "ipaddress":
 			widget = forms.IPAddressField(ctx, field.Name, fieldLabel)

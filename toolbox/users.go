@@ -443,3 +443,39 @@ func hasMenu(ctx map[string]interface{}, u User, item *Menu) bool {
 	}
 	return false
 }
+
+// UserProvider 一个读用户的扩展接口
+type UserProvider struct {
+	UM UserManager
+}
+
+func (up *UserProvider) Read(ctx, a interface{}) (interface{}, error) {
+	users, err := up.UM.Users()
+	if err != nil {
+		return nil, err
+	}
+
+	var names = make([][2]string, 0, len(users))
+	for _, u := range users {
+		names = append(names, [2]string{strconv.FormatInt(u.ID(), 10), u.Nickname()})
+	}
+	return names, nil
+}
+
+// UsergroupProvider 一个读用户的扩展接口
+type UsergroupProvider struct {
+	UM UserManager
+}
+
+func (up *UsergroupProvider) Read(ctx, a interface{}) (interface{}, error) {
+	usergroups, err := up.UM.Groups()
+	if err != nil {
+		return nil, err
+	}
+
+	var names = make([][2]string, 0, len(usergroups))
+	for _, u := range usergroups {
+		names = append(names, [2]string{strconv.FormatInt(u.ID(), 10), u.Name()})
+	}
+	return names, nil
+}
