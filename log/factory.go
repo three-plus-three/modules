@@ -66,6 +66,12 @@ func (b Factory) Span(span opentracing.Span) Factory {
 // echo-ed into the span.
 func (b Factory) OutputToStrings(target *[]string) Factory {
 	return Factory{logger: b.logger, appenders: append(b.appenders, Callback(func(level zapcore.Level, msg string, fields ...zapcore.Field) {
+		switch level {
+		case zapcore.WarnLevel:
+			msg = "警告：" + msg
+		case zapcore.ErrorLevel:
+			msg = "错误：" + msg
+		}
 		*target = append(*target, msg)
 	}))}
 }

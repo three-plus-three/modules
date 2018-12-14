@@ -71,6 +71,18 @@ func (p *FieldSpec) HasChoices() bool {
 	}
 
 	enumerationSource := p.Annotations["enumerationSource"]
+	switch source := enumerationSource.(type) {
+	case string:
+		if source == "" {
+			return false
+		}
+		return true
+	case map[string]interface{}:
+		if len(source) == 0 {
+			return false
+		}
+		return true
+	}
 	return enumerationSource != nil
 }
 
@@ -87,10 +99,14 @@ func (p *FieldSpec) ToChoices(ctx interface{}) interface{} {
 	if enumerationSource == nil {
 		return [][2]string{}
 	}
+
 	if source, ok := enumerationSource.(string); ok {
+		if source == "" {
+			return [][2]string{}
+		}
 		ss := strings.SplitN(source, ",", 2)
 		if len(ss) != 2 {
-			panic(errors.New("enumerationSource is invalid value - " + source))
+			panic(errors.New("enumerationSource of '" + p.Name + "' is invalid value - " + source))
 		}
 		values, err := enumerationProviders.Read(ss[0], ctx, ss[1])
 		if err != nil {
@@ -102,7 +118,7 @@ func (p *FieldSpec) ToChoices(ctx interface{}) interface{} {
 	if source, ok := enumerationSource.(map[string]interface{}); ok {
 		typ := source["type"]
 		if typ == nil {
-			panic(errors.New("type of enumerationSource is nil"))
+			panic(errors.New("type of enumerationSource of '" + p.Name + "' is nil"))
 		}
 
 		values, err := enumerationProviders.Read(fmt.Sprint(typ), ctx, source)
