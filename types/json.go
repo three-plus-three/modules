@@ -29,7 +29,7 @@ type FieldSpec struct {
 	Label        string                 `json:"label,omitempty" ymal:"label,omitempty"`
 	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Type         string                 `json:"type" yaml:"type"`
-	Format       string                 `json:"format" yaml:"format"`
+	Format       string                 `json:"format,omitempty" yaml:"format,omitempty"`
 	IsArray      bool                   `json:"is_array,omitempty" yaml:"is_array,omitempty"`
 	IsOriginal   bool                   `json:"is_original,omitempty" yaml:"is_original,omitempty"`
 	IsRequired   bool                   `json:"required,omitempty" yaml:"required,omitempty"`
