@@ -95,6 +95,14 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		return args
 	}
 
+	revel.TemplateFuncs["argAll"] = func(source map[string]interface{}, args map[string]interface{}) map[string]interface{} {
+		for key, value := range source {
+			args[key] = value
+		}
+
+		return args
+	}
+
 	revel.TemplateFuncs["list"] = func(args ...interface{}) []interface{} {
 		return args
 	}
