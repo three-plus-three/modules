@@ -63,40 +63,48 @@ var (
 	ErrInvalidIPRange = errors.New("invalid ip range")
 )
 
-func ToCheckers(ipList []string) ([]IPChecker, error) {
-	var ingressIPList []IPChecker
-	for _, s := range ipList {
-		s = strings.TrimSpace(s)
-		if s == "" {
-			continue
+func ToChecker(s string) (IPChecker, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil, nil
+	}
+	if strings.Contains(s, "-") {
+		ss := strings.Split(s, "-")
+		if len(ss) != 2 {
+			return nil, ErrInvalidIPRange
 		}
-		if strings.Contains(s, "-") {
-			ss := strings.Split(s, "-")
-			if len(ss) != 2 {
-				return nil, ErrInvalidIPRange
-			}
-			checker, err := IPRangeWith(ss[0], ss[1])
-			if err != nil {
-				return nil, ErrInvalidIPRange
-			}
-			ingressIPList = append(ingressIPList, checker)
-			continue
-		}
-
-		if strings.Contains(s, "/") {
-			_, cidr, err := net.ParseCIDR(s)
-			if err != nil {
-				return nil, ErrInvalidIPRange
-			}
-			ingressIPList = append(ingressIPList, cidr)
-			continue
-		}
-
-		checker, err := IPRangeWith(s, s)
+		checker, err := IPRangeWith(ss[0], ss[1])
 		if err != nil {
 			return nil, ErrInvalidIPRange
 		}
-		ingressIPList = append(ingressIPList, checker)
+		return checker, nil
+	}
+
+	if strings.Contains(s, "/") {
+		_, cidr, err := net.ParseCIDR(s)
+		if err != nil {
+			return nil, ErrInvalidIPRange
+		}
+		return cidr, nil
+	}
+
+	checker, err := IPRangeWith(s, s)
+	if err != nil {
+		return nil, ErrInvalidIPRange
+	}
+	return checker, nil
+}
+
+func ToCheckers(ipList []string) ([]IPChecker, error) {
+	var ingressIPList []IPChecker
+	for _, s := range ipList {
+		checker, err := ToChecker(s)
+		if err != nil {
+			return nil, err
+		}
+		if checker != nil {
+			ingressIPList = append(ingressIPList, checker)
+		}
 	}
 	return ingressIPList, nil
 }

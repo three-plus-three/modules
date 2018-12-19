@@ -179,6 +179,20 @@ func Int64Array(value interface{}) ([]int64, error) {
 	return nil, errType(value, "int64Array")
 }
 
+func Int64ArrayWithDefault(value interface{}, defValue []int64) []int64 {
+	if value == nil {
+		return defValue
+	}
+	ints, err := Int64Array(value)
+	if err != nil {
+		return defValue
+	}
+	if ints == nil {
+		return defValue
+	}
+	return ints
+}
+
 func Uint64Array(value interface{}) ([]uint64, error) {
 	switch a := value.(type) {
 	case []interface{}:
@@ -264,6 +278,20 @@ func Uint64Array(value interface{}) ([]uint64, error) {
 	return nil, errType(value, "uint64Array")
 }
 
+func Uint64ArrayWithDefault(value interface{}, defValue []uint64) []uint64 {
+	if value == nil {
+		return defValue
+	}
+	uints, err := Uint64Array(value)
+	if err != nil {
+		return defValue
+	}
+	if uints == nil {
+		return defValue
+	}
+	return uints
+}
+
 func Array(value interface{}) ([]interface{}, error) {
 	if a, ok := value.([]interface{}); ok {
 		return a, nil
@@ -285,6 +313,28 @@ func Array(value interface{}) ([]interface{}, error) {
 	return nil, errType(value, "array")
 }
 
+func IntsWithDefault(value interface{}, defValue []int) []int {
+	if value == nil {
+		return defValue
+	}
+	switch vv := value.(type) {
+	case []int:
+		return vv
+	default:
+		ints, err := Int64Array(value)
+		if err != nil {
+			return defValue
+		}
+		if ints == nil {
+			return defValue
+		}
+		var values = make([]int, 0, len(ints))
+		for _, v := range ints {
+			values = append(values, int(v))
+		}
+		return values
+	}
+}
 func Strings(value interface{}) ([]string, error) {
 	if value == nil {
 		return nil, ErrValueNull
@@ -305,42 +355,6 @@ func Strings(value interface{}) ([]string, error) {
 	}
 
 	return nil, errType(value, "string array")
-}
-
-func IntsWithDefault(value interface{}, defValue []int) []int {
-	if value == nil {
-		return defValue
-	}
-	switch vv := value.(type) {
-	case []int:
-		return vv
-	case []interface{}:
-		results := make([]int, 0, len(vv))
-		for _, v := range vv {
-			s, e := Int(v)
-			if e != nil {
-				return defValue
-			}
-			results = append(results, s)
-		}
-		return results
-	default:
-		rValue := reflect.ValueOf(value)
-
-		if rValue.Kind() == reflect.Slice {
-			results := make([]int, 0, rValue.Len())
-			for idx := 0; idx < rValue.Len(); idx++ {
-				s, e := Int(rValue.Index(idx).Interface())
-				if e != nil {
-					return defValue
-				}
-				results = append(results, s)
-			}
-			return results
-		}
-	}
-
-	return defValue
 }
 
 func StringsWithDefault(value interface{}, defValue []string) []string {
@@ -1274,4 +1288,11 @@ func HardwareAddresses(value interface{}) ([]net.HardwareAddr, error) {
 		return results, nil
 	}
 	return nil, errType(value, "MacArray")
+}
+
+func Get(values map[string]interface{}, name string) interface{} {
+	if values == nil {
+		return nil
+	}
+	return values[name]
 }
