@@ -176,7 +176,7 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 				panic(errors.New("url '" + string(v) + "' is invalid url: " + err.Error()))
 			}
 		default:
-			panic(fmt.Errorf("url '[%T] %s' is invalid url", urlObject, urlObject))
+			panic(fmt.Errorf("url '[%T] %s' is invalid url with key is %s and value is %v", urlObject, urlObject, key, value))
 		}
 
 		query := u.Query()
