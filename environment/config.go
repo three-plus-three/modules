@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/three-plus-three/modules/as"
@@ -33,6 +34,17 @@ func (self *Config) PasswordWithDefault(key, defValue string) string {
 func (self *Config) StringWithDefault(key, defValue string) string {
 	if s, ok := self.settings[key]; ok {
 		return as.StringWithDefault(s, defValue)
+	}
+	return defValue
+}
+
+// StringsWithDefault 读配置
+func (self *Config) StringsWithDefault(key string, defValue []string) []string {
+	if o, ok := self.settings[key]; ok {
+		if s, ok := o.(string); ok {
+			return strings.Split(s, ",")
+		}
+		return as.StringsWithDefault(o, defValue)
 	}
 	return defValue
 }
