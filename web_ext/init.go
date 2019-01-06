@@ -3,6 +3,7 @@ package web_ext
 import (
 	"crypto/sha1"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -116,6 +117,19 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		lifecycle.Variables["backgroud_tasks_url"] = urlutil.Join(env.DaemonUrlPath, "mc")
 		//lifecycle.Variables["alert_stat_new_url"] = urlutil.Join(env.DaemonUrlPath, "web/notifications")
 		lifecycle.Variables["alert_stat_new_url"] = urlutil.Join(env.DaemonUrlPath, "web/alert_events/stat_new")
+
+		var constants map[string]interface{}
+		if o := lifecycle.Variables["constants"]; o == nil {
+			constants = map[string]interface{}{}
+			lifecycle.Variables["constants"] = constants
+		} else if constants, _ = o.(map[string]interface{}); constants == nil {
+			log.Fatalln(fmt.Errorf("lifecycle.Variables[constants] isnot map[string]interface{}, got %T", o))
+			os.Exit(-1)
+			return
+		}
+		constants["user_admin"] = toolbox.UserAdmin
+		constants["user_guest"] = toolbox.UserGuest
+		constants["user_tpt_nm"] = toolbox.UserTPTNetwork
 
 		if revel.DevMode {
 			lifecycle.ModelEngine.ShowSQL()

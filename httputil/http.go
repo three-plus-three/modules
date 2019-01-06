@@ -137,7 +137,8 @@ func InvokeHttpWithContext(ctx context.Context, action, url string, body interfa
 		}
 
 		//bs, _ := ioutil.ReadAll(resp.Body)
-		//cachedBuffer = bytes.NewBuffer(make([]byte, 0, 1024))
+		//cachedBuffer = bytes.NewBuffer(bs)
+		//decoder := json.NewDecoder(cachedBuffer)
 		decoder := json.NewDecoder(resp.Body)
 		decoder.UseNumber()
 		e = decoder.Decode(result)

@@ -146,7 +146,11 @@ func (u *user) Nickname() string {
 	return u.name
 }
 
-func (u *user) IsAdminRole() bool {
+func (u *user) HasAdminRole() bool {
+	return true
+}
+
+func (u *user) HasGuestRole() bool {
 	return true
 }
 

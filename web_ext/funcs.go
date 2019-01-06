@@ -41,7 +41,14 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 	}
 	revel.TemplateFuncs["default"] = func(values ...interface{}) interface{} {
 		for _, value := range values[:len(values)-1] {
-			if value != nil && !util.IsZero(reflect.ValueOf(value)) {
+			if value == nil {
+				continue
+			}
+
+			if b, ok := value.(bool); ok {
+				return b
+			}
+			if !util.IsZero(reflect.ValueOf(value)) {
 				return value
 			}
 		}

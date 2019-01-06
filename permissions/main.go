@@ -498,8 +498,15 @@ func (u *user) Nickname() string {
 	return u.u.Nickname
 }
 
-func (u *user) IsAdminRole() bool {
-	role := u.um.adminRole.ID
+func (u *user) HasAdminRole() bool {
+	return u.hasRoleID(u.um.adminRole.ID)
+}
+
+func (u *user) HasGuestRole() bool {
+	return u.hasRoleID(u.um.guestRole.ID)
+}
+
+func (u *user) hasRoleID(id int64) bool {
 	for idx := range u.roles {
 		if u.roles[idx].ID == role {
 			return true
