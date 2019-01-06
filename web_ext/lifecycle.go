@@ -146,6 +146,10 @@ func (u *user) Nickname() string {
 	return u.name
 }
 
+func (u *user) IsAdminRole() bool {
+	return true
+}
+
 func (u *user) HasRole(role string) bool {
 	if role == toolbox.RoleAdministrator {
 		return true

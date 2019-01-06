@@ -83,6 +83,9 @@ type User interface {
 	// 用户登录名
 	Name() string
 
+	// 是不是一个管理员
+	IsAdminRole() bool
+
 	// 呢称
 	Nickname() string
 
