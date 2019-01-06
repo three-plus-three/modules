@@ -26,6 +26,38 @@ func ResourcesURLFor(s ...string) string {
 }
 
 func initTemplateFuncs(lifecycle *Lifecycle) {
+	revel.TemplateFuncs["unique"] = func(renderArgs map[string]interface{}, key string) template.JS {
+		o := renderArgs[key]
+		if o == nil {
+			return template.JS("")
+		}
+		values, ok := o.([]interface{})
+		if !ok || len(values) <= 1 {
+			return template.JS("")
+		}
+		newValues := make([]interface{}, 0, len(values))
+		for idx, value := range values {
+			if idx == 0 {
+				newValues = append(newValues, value)
+				continue
+			}
+
+			found := false
+			for _, pre := range values[:idx] {
+				if pre == value {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				newValues = append(newValues, value)
+			}
+		}
+		renderArgs[key] = newValues
+		return template.JS("")
+	}
+
 	revel.TemplateFuncs["assets"] = func(value string) string {
 		return urlutil.Join(lifecycle.URLPrefix, "web/assets", value)
 	}

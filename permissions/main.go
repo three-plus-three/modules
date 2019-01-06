@@ -508,7 +508,7 @@ func (u *user) HasGuestRole() bool {
 
 func (u *user) hasRoleID(id int64) bool {
 	for idx := range u.roles {
-		if u.roles[idx].ID == role {
+		if u.roles[idx].ID == id {
 			return true
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"reflect"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -39,7 +40,12 @@ func decodeHook(from reflect.Kind, to reflect.Kind, v interface{}) (interface{},
 
 func ToStruct(rawVal interface{}, row map[string]interface{}) (err error) {
 	config := &mapstructure.DecoderConfig{
-		DecodeHook:       decodeHook,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(decodeHook,
+			stringToTimeHookFunc(time.RFC3339,
+				time.RFC3339Nano,
+				"2006-01-02 15:04:05Z07:00",
+				"2006-01-02 15:04:05",
+				"2006-01-02")),
 		Metadata:         nil,
 		Result:           rawVal,
 		TagName:          "json",
@@ -52,6 +58,32 @@ func ToStruct(rawVal interface{}, row map[string]interface{}) (err error) {
 	}
 
 	return decoder.Decode(row)
+}
+
+func stringToTimeHookFunc(layouts ...string) mapstructure.DecodeHookFunc {
+	return func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String {
+			return data, nil
+		}
+		if t != reflect.TypeOf(time.Time{}) {
+			return data, nil
+		}
+		s := data.(string)
+		if s == "" {
+			return time.Time{}, nil
+		}
+		for _, layout := range layouts {
+			t, err := time.Parse(layout, s)
+			if err == nil {
+				return t, nil
+			}
+		}
+		// Convert it by parsing
+		return data, nil
+	}
 }
 
 func IsZero(v reflect.Value) bool {
