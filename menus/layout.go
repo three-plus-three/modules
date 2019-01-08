@@ -499,7 +499,11 @@ func ReadLayout(filename string, args map[string]interface{}) (Layout, error) {
 		return nil, errors.Wrap(err, "generate layout in '"+filename+"' fail")
 	}
 
-	return readLayout(buf.Bytes())
+	layout, err := readLayout(buf.Bytes())
+	if err != nil {
+		return nil, errors.Wrap(err, "generate layout in '"+filename+"' fail")
+	}
+	return layout, nil
 }
 
 func readLayout(in []byte) (Layout, error) {
