@@ -38,14 +38,14 @@ func TestMenuSimple(t *testing.T) {
 		// }
 
 		logger := log.New(os.Stderr, "[menu] ", log.LstdFlags)
-		weaver, err := NewWeaver(logger, env, core, test.layout, nil, nil)
+		weaver, err := NewWeaver(logger, env, core, nil, test.layout, nil, nil)
 		if err != nil {
 			t.Error(tidx, test.name, err)
 			return
 		}
 		for idx, step := range test.steps {
 			if step.isRestart {
-				weaver, err = NewWeaver(logger, env, core, test.layout, nil, nil)
+				weaver, err = NewWeaver(logger, env, core, nil, test.layout, nil, nil)
 				if err != nil {
 					t.Error(tidx, test.name, err)
 					return

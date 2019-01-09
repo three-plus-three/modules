@@ -23,8 +23,14 @@ import (
 // ErrAlreadyClosed  server is closed
 var ErrAlreadyClosed = errors.New("server is closed")
 
-func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engine.Core, layout Layout, layouts map[string]Layout, hasLicense func(ctx string, menu toolbox.Menu) (bool, error)) (Weaver, error) {
-	weaver := &menuWeaver{Logger: logger, env: env, core: core, layout: layout, layouts: layouts, hasLicense: hasLicense}
+func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engine.Core, disabled []string, layout Layout, layouts map[string]Layout, hasLicense func(ctx string, menu toolbox.Menu) (bool, error)) (Weaver, error) {
+	weaver := &menuWeaver{Logger: logger,
+		env:        env,
+		core:       core,
+		disabled:   disabled,
+		layout:     layout,
+		layouts:    layouts,
+		hasLicense: hasLicense}
 	if err := weaver.Init(); err != nil {
 		return nil, err
 	}
@@ -65,6 +71,7 @@ type menuWeaver struct {
 	layout        Layout
 	layouts       map[string]Layout
 	customEnabled bool
+	disabled      []string
 
 	hasLicense       func(ctx string, menu toolbox.Menu) (bool, error)
 	mu               sync.RWMutex
@@ -145,6 +152,8 @@ func (weaver *menuWeaver) Init() error {
 		weaver.Logger.Println("LoadFromDB:", err)
 	}
 
+	weaver.menuList = weaver.deleteByDisabled(weaver.menuList)
+
 	weaver.menuList = ClearDividerFromList(weaver.menuList)
 	return nil
 }
@@ -179,6 +188,7 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 	if err != nil {
 		return errors.New("Generate: " + err.Error())
 	}
+	weaver.menuList = weaver.deleteByDisabled(weaver.menuList)
 	weaver.menuList = ClearDividerFromList(weaver.menuList)
 
 	weaver.core.CreateTopicIfNotExists("menus.changed").
@@ -225,6 +235,10 @@ func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
 				weaver.Logger.Println(err)
 			} else {
 				menuList, err = weaver.deleteByLicense(ctx, menuList)
+				if err != nil {
+					return menuList, err
+				}
+				menuList = weaver.deleteByDisabled(menuList)
 				return ClearDividerFromList(menuList), err
 			}
 		}
@@ -248,6 +262,7 @@ func (weaver *menuWeaver) read(ctx string, args ...interface{}) ([]toolbox.Menu,
 		} else if menuList, err = weaver.deleteByLicense(ctx, menuList); err != nil {
 			weaver.Logger.Println("generate:", err)
 		} else {
+			menuList = weaver.deleteByDisabled(menuList)
 			weaver.menuList = ClearDividerFromList(menuList)
 		}
 		return weaver.menuList, err
@@ -290,6 +305,9 @@ func (weaver *menuWeaver) read(ctx string, args ...interface{}) ([]toolbox.Menu,
 			menuList, err := layout.Generate(weaver.byApplications)
 			if err == nil {
 				menuList, err = weaver.deleteByLicense(ctx, menuList)
+				weaver.Logger.Println("generate:", err)
+
+				menuList = weaver.deleteByDisabled(menuList)
 				menuList = ClearDividerFromList(menuList)
 				if err == nil {
 					if weaver.menuListByLayout == nil {
@@ -347,6 +365,17 @@ func (weaver *menuWeaver) deleteByLicense(ctx string, menuList []toolbox.Menu) (
 		offset++
 	}
 	return menuList[:offset], nil
+}
+
+func (weaver *menuWeaver) deleteByDisabled(menuList []toolbox.Menu) []toolbox.Menu {
+	if len(menuList) == 0 || weaver.hasLicense == nil {
+		return menuList
+	}
+
+	for _, id := range weaver.disabled {
+		menuList = removeInTree(menuList, id)
+	}
+	return menuList
 }
 
 func isSame(allItems, subset []toolbox.Menu) bool {
