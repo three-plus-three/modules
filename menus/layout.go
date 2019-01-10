@@ -167,7 +167,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			}
 
 			if foundIdx >= 0 {
-
 				if inChildren(results, remains[idx], foundIdx) {
 					mergeMenuNonrecursive(&results[foundIdx], &remains[idx])
 					if len(remains[idx].Children) > 0 {
@@ -217,7 +216,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			switch c.layout.Category {
 			case categoryRemove:
 				removeList = append(removeList, c)
-
 			case categoryRemoveIfURLEmpty:
 				if c.layout.Target != "" {
 					removeIfURLEmptyList = append(removeIfURLEmptyList, c.layout.Target)
@@ -225,7 +223,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 			case categoryWatch:
 				watchList = append(watchList, c)
 			case categoryLocation:
-
 				var found bool
 				switch strings.ToLower(strings.TrimSpace(c.layout.Location)) {
 				case locationAfter:
@@ -287,6 +284,39 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		allList = local
 	}
 
+	if len(remains) > 0 {
+		var local = mergeByID(results, remains, nil)
+		if len(local) > 0 {
+			found := SearchMenuInTree(results, "nm.orphan")
+			if found == nil {
+				results = append(results, toolbox.Menu{
+					UID:   "nm.orphan",
+					Title: "其它",
+				})
+
+				found = &results[len(results)-1]
+			}
+
+			for idx := range local {
+				if isEmptyURL(local[idx].URL) {
+					continue
+				}
+
+				found.Children = append(found.Children, local[idx])
+			}
+			// var buf bytes.Buffer
+			// buf.WriteString("下列菜单不能处理:")
+			// for _, menu := range local {
+			// 	buf.WriteString(menu.UID)
+			// 	buf.WriteString("(")
+			// 	buf.WriteString(menu.Title)
+			// 	buf.WriteString("),")
+			// }
+			// buf.Truncate(buf.Len() - 1)
+			// return nil, errors.New(buf.String())
+		}
+	}
+
 	for _, c := range removeList {
 		if c.layout.Category == categoryLocation && c.layout.Location == locationReplace {
 			results = removeInTree(results, c.layout.Target)
@@ -327,39 +357,6 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 
 	for _, c := range watchList {
 		results = watchInTree(results, c, c.layout.Target)
-	}
-
-	if len(remains) > 0 {
-		var local = mergeByID(results, remains, nil)
-		if len(local) > 0 {
-			found := SearchMenuInTree(results, "nm.orphan")
-			if found == nil {
-				results = append(results, toolbox.Menu{
-					UID:   "nm.orphan",
-					Title: "其它",
-				})
-
-				found = &results[len(results)-1]
-			}
-
-			for idx := range local {
-				if isEmptyURL(local[idx].URL) {
-					continue
-				}
-
-				found.Children = append(found.Children, local[idx])
-			}
-			// var buf bytes.Buffer
-			// buf.WriteString("下列菜单不能处理:")
-			// for _, menu := range local {
-			// 	buf.WriteString(menu.UID)
-			// 	buf.WriteString("(")
-			// 	buf.WriteString(menu.Title)
-			// 	buf.WriteString("),")
-			// }
-			// buf.Truncate(buf.Len() - 1)
-			// return nil, errors.New(buf.String())
-		}
 	}
 
 	for _, uid := range removeIfURLEmptyList {
