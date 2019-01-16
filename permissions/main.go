@@ -417,9 +417,18 @@ func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) (toolbox.U
 }
 
 func (um *userManager) load(u *user) error {
+	var u2g []UserAndUserGroup
+	err := um.db.UsersAndUserGroups().Where(orm.Cond{"user_id": u.ID()}).All(&u2g)
+	if err != nil {
+		return errors.Wrap(err, "query user and usergroup with user is "+u.Name()+" fail")
+	}
+	for idx := range u2g {
+		u.groups = append(u.groups, u2g[idx].GroupID)
+	}
+
 	condRoles := "exists (select * from " + um.db.UsersAndRoles().Name() + " as users_roles " +
 		" where users_roles.role_id = " + um.db.Roles().Name() + ".id and users_roles.user_id = ?)"
-	err := um.db.Roles().Where(condRoles, u.ID()).All(&u.roles)
+	err = um.db.Roles().Where(condRoles, u.ID()).All(&u.roles)
 	if err != nil {
 		return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
 	}
@@ -460,15 +469,6 @@ func (um *userManager) load(u *user) error {
 	err = um.db.PermissionGroupsAndRoles().Where(orm.Cond{"role_id IN": roleIDs}).All(&u.permissionsAndRoles)
 	if err != nil {
 		return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
-	}
-
-	var u2g []UserAndUserGroup
-	err = um.db.UsersAndUserGroups().Where(orm.Cond{"user_id IN": u.ID()}).All(&u2g)
-	if err != nil {
-		return errors.Wrap(err, "query user and usergroup with user is "+u.Name()+" fail")
-	}
-	for idx := range u2g {
-		u.groups = append(u.groups, u2g[idx].GroupID)
 	}
 	return nil
 }
