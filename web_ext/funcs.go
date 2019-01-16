@@ -223,6 +223,48 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 		u.RawQuery = query.Encode()
 		return u.String()
 	}
+	revel.TemplateFuncs["urlParams"] = func(values, urlObject interface{}) interface{} {
+		if values == nil {
+			return urlObject
+		}
+
+		var u *url.URL
+		switch v := urlObject.(type) {
+		case string:
+			var err error
+			u, err = url.Parse(v)
+			if err != nil {
+				panic(errors.New("url '" + v + "' is invalid url: " + err.Error()))
+			}
+		case url.URL:
+			u = &v
+		case *url.URL:
+			u = v
+		case template.URL:
+			var err error
+			u, err = url.Parse(string(v))
+			if err != nil {
+				panic(errors.New("url '" + string(v) + "' is invalid url: " + err.Error()))
+			}
+		default:
+			panic(fmt.Errorf("url '[%T] %s' is invalid url with params is %s", urlObject, urlObject, values))
+		}
+		query := u.Query()
+		switch params := values.(type) {
+		case map[string]interface{}:
+			for key, value := range params {
+				query.Add(key, fmt.Sprint(value))
+			}
+		case map[string]string:
+			for key, value := range params {
+				query.Add(key, value)
+			}
+		default:
+			panic(fmt.Errorf("params is invalid type '%T' for urlParams", params))
+		}
+		u.RawQuery = query.Encode()
+		return u.String()
+	}
 
 	revel.TemplateFuncs["parseTpl"] = func(tpl string, data interface{}) string {
 		t := template.New("main")

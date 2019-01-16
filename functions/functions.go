@@ -486,6 +486,9 @@ var genericMap = map[string]interface{}{
 	"isNotFirst": isNotFirst,
 	"isEmpty":    isEmpty,
 	"isNotEmpty": isNotEmpty,
+
+	"isNil":    isNil,
+	"isNotNil": isNotNil,
 }
 
 func joinWith(sb *strings.Builder, sep string, values []interface{}) {
@@ -1123,6 +1126,21 @@ func untilStep(start, stop, step int) []int {
 		v = append(v, i)
 	}
 	return v
+}
+
+func isNil(value interface{}) bool {
+	if value == nil {
+		return true
+	}
+	rValue := reflect.ValueOf(value)
+	if rValue.Kind() == reflect.Interface || rValue.Kind() == reflect.Ptr {
+		return rValue.IsNil()
+	}
+	return false
+}
+
+func isNotNil(value interface{}) bool {
+	return !isNil(value)
 }
 
 func isEmpty(list interface{}) bool {
