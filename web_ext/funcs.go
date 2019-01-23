@@ -260,6 +260,24 @@ func initTemplateFuncs(lifecycle *Lifecycle) {
 				query.Add(key, value)
 			}
 		default:
+			if a, ok := values.(interface {
+				WithURLParams() map[string]string
+			}); ok {
+				for key, value := range a.WithURLParams() {
+					query.Add(key, value)
+				}
+				break
+			}
+
+			if a, ok := values.(interface {
+				WithURLParams(...map[string]string) map[string]string
+			}); ok {
+				for key, value := range a.WithURLParams() {
+					query.Add(key, value)
+				}
+				break
+			}
+
 			panic(fmt.Errorf("params is invalid type '%T' for urlParams", params))
 		}
 		u.RawQuery = query.Encode()
