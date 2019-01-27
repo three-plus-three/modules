@@ -3,7 +3,6 @@ package environment
 import (
 	"errors"
 	"flag"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -260,18 +259,23 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		env.Config.Set("minio_config", minioConfig)
 	}
 
-	for _, nm := range []string{env.Fs.FromWebConfig("application.conf"),
+	exists := false
+	filenames := []string{env.Fs.FromWebConfig("application.conf"),
 		env.Fs.FromDataConfig("web/application.conf"),
-		env.Fs.FromInstallRoot("web/conf/application.conf")} {
+		env.Fs.FromInstallRoot("web/conf/application.conf")}
+	for _, nm := range filenames {
 		if props, _ := commons_cfg.ReadProperties(nm); nil != props {
-			if secret := props["application.secret"]; "" != secret {
+			if secret := props["application.secret"]; "" != secret && "\"\"" != secret {
 				secret = strings.TrimPrefix(strings.TrimSuffix(secret, "\""), "\"")
 				env.Config.Set("app.secret", secret)
-				if opt.PrintIfFilesNotFound {
-					log.Println("[warn] load app.secret from", nm, secret)
-				}
+				exists = true
+				break
 			}
 		}
+	}
+
+	if !exists && opt.PrintIfFilesNotFound {
+		env.Logger.Warn("no load app.secret from '" + strings.Join(filenames, ",") + "'")
 	}
 
 	return env, callHooks(env)
