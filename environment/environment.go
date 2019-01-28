@@ -229,8 +229,8 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		env.DaemonUrlPath = env.DaemonUrlPath + "/"
 	}
 
-	env.Db.Models = ReadDbConfig("models.", cfg, db_defaults)
-	env.Db.Data = ReadDbConfig("data.", cfg, db_defaults)
+	env.Db.Models = ReadDbConfig("models.", cfg, dbDefaults)
+	env.Db.Data = ReadDbConfig("data.", cfg, dbDefaults)
 	env.Engine = loadEngineRegistry(&env.Config)
 	env.serviceOptions = make([]ServiceConfig, len(ServiceOptions))
 	for idx, so := range ServiceOptions {
