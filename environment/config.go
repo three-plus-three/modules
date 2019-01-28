@@ -254,15 +254,11 @@ func ReadConfigs(fs FileSystem, files []string, nm string, dumpFilesIfNotFound b
 // 	return InitConfig(flagSet, ReadConfigs(fs, nm, dumpFilesIfNotFound), dumpFilesIfNotFound)
 // }
 
-var db_defaults = map[string]string{"redis.host": "127.0.0.1",
-	"redis.port":       "36379",
-	"db.type":          "postgresql",
-	"db.address":       "127.0.0.1",
-	"db.port":          "35432",
-	"data.db.schema":   "tpt_data",
-	"models.db.schema": "tpt",
-	"db.username":      "tpt",
-	"db.password":      "extreme"}
+var dbDefaults = map[string]string{}
+
+func SetDefaults(defaults map[string]string) {
+	dbDefaults = defaults
+}
 
 func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFound bool) error {
 	if nil == flagSet {
@@ -292,11 +288,11 @@ func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFoun
 			daemon_port := stringWith(cfg, "daemon.port", "37072")
 			flagSet.Set("daemon", "http://"+daemon_address+":"+daemon_port) // nolint
 		case "redis_address", "redis":
-			redis_address := stringWith(cfg, "redis.host", db_defaults["redis.host"])
-			redis_port := stringWith(cfg, "redis.port", db_defaults["redis.port"]) // nolint
+			redis_address := stringWith(cfg, "redis.host", dbDefaults["redis.host"])
+			redis_port := stringWith(cfg, "redis.port", dbDefaults["redis.port"]) // nolint
 			flagSet.Set(k, redis_address+":"+redis_port)
 		case "data_db.url", "db_url": // for tsdb
-			drv, url, e := CreateDBUrl("data.", cfg, db_defaults)
+			drv, url, e := CreateDBUrl("data.", cfg, dbDefaults)
 			if nil != e {
 				return e
 			}
@@ -311,7 +307,7 @@ func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFoun
 			flagSet.Set(url_name, url) // nolint
 			flagSet.Set(drv_name, drv) // nolint
 		case "db.url": // for ds
-			drv, url, e := CreateDBUrl("models.", cfg, db_defaults)
+			drv, url, e := CreateDBUrl("models.", cfg, dbDefaults)
 			if nil != e {
 				return e
 			}
