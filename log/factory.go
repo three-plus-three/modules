@@ -17,7 +17,7 @@ package log
 import (
 	"context"
 
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

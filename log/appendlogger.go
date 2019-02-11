@@ -27,6 +27,11 @@ type appendLogger struct {
 	target Target
 }
 
+func (sl appendLogger) Debug(msg string, fields ...zapcore.Field) {
+	sl.target.LogFields(zap.DebugLevel, msg, fields...)
+	sl.logger.Debug(msg, fields...)
+}
+
 func (sl appendLogger) Info(msg string, fields ...zapcore.Field) {
 	sl.target.LogFields(zap.InfoLevel, msg, fields...)
 	sl.logger.Info(msg, fields...)
@@ -45,6 +50,12 @@ func (sl appendLogger) Error(msg string, fields ...zapcore.Field) {
 func (sl appendLogger) Fatal(msg string, fields ...zapcore.Field) {
 	sl.target.LogFields(zap.FatalLevel, msg, fields...)
 	sl.logger.Fatal(msg, fields...)
+}
+
+// Debugw logs an debug msg with fields
+func (l appendLogger) Debugw(msg string, keyAndValues ...interface{}) {
+	fields := sweetenFields(l.logger, keyAndValues)
+	l.Debug(msg, fields...)
 }
 
 // Infow logs an info msg with fields
@@ -69,6 +80,11 @@ func (l appendLogger) Errorw(msg string, keyAndValues ...interface{}) {
 func (l appendLogger) Fatalw(msg string, keyAndValues ...interface{}) {
 	fields := sweetenFields(l.logger, keyAndValues)
 	l.Fatal(msg, fields...)
+}
+
+// Debugf logs an info msg with fields
+func (l appendLogger) Debugf(msg string, values ...interface{}) {
+	l.Debug(fmt.Sprintf(msg, values))
 }
 
 // Infof logs an info msg with fields
