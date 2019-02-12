@@ -1,8 +1,8 @@
-package opentracing
+package echo_opentracing
 
 import (
 	"github.com/labstack/echo"
-	"github.com/opentracing/opentracing-go"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	//jaegercfg "github.com/uber/jaeger-client-go/config"
 	//"github.com/uber/jaeger-lib/metrics"
