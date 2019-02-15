@@ -38,6 +38,7 @@ const (
 	ENV_AM_RECORD_MGR_ID
 	ENV_VPN_PROXY_ID
 	ENV_HP_PROXY_ID
+	ENV_RM_PROXY_ID
 	ENV_MODELS_PROXY_ID        // Deprecated
 	ENV_SAMPLING_STUB_PROXY_ID // Deprecated
 	ENV_TSDB_PROXY_ID          // Deprecated
@@ -100,6 +101,7 @@ var (
 		{ID: ENV_AM_RECORD_MGR_ID, Name: "record_mgr", Host: "127.0.0.1", Port: "37098"},
 		{ID: ENV_NFLOW2_PROXY_ID, Name: "nflow2", Host: "127.0.0.1", Port: "37099"},
 		{ID: ENV_HP_PROXY_ID, Name: "hp", Host: "127.0.0.1", Port: "37100"},
+		{ID: ENV_RM_PROXY_ID, Name: "rm", Host: "127.0.0.1", Port: "37101"},
 	}
 )
 
