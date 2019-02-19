@@ -1457,6 +1457,10 @@ func (self *mutiValuesType) ToInternal(v interface{}) (interface{}, error) {
 		}
 		e := json.Unmarshal(*value, &values)
 		return values, e
+	case map[string]interface{}:
+		return value, nil
+	case map[string]string:
+		return value, nil
 	}
 
 	return nil, errors.New("syntex error, it is not a values")
