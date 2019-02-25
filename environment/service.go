@@ -177,6 +177,7 @@ func (cfg *ServiceConfig) Url() string {
 		}
 	}
 
+	isSSL := cfg.IsSSL
 	host := cfg.Host
 	port := cfg.Port
 
@@ -184,12 +185,13 @@ func (cfg *ServiceConfig) Url() string {
 		host = engine.RemoteHost
 
 		if remotePort := engine.RemotePort; "" != remotePort && "0" != remotePort {
+			isSSL = engine.IsSSL
 			port = remotePort
 		}
 	}
 
 	var s string
-	if cfg.IsSSL || ENV_LCN_PROXY_ID == cfg.Id {
+	if isSSL || ENV_LCN_PROXY_ID == cfg.Id {
 		if "" == cfg.Path {
 			s = "https://" + net.JoinHostPort(host, port)
 		} else {

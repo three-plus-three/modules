@@ -105,6 +105,16 @@ func (self *Environment) RemoveAllListener() {
 	}
 }
 
+func (self *Environment) GetMasterConfig() *ServiceConfig {
+	if engineCfg := self.GetEngineConfig(); engineCfg.IsEnabled && !engineCfg.IsMasterHost {
+		if engineCfg.RemotePort != "" && engineCfg.RemotePort != "0" {
+			return self.GetServiceConfig(ENV_WSERVER_SSL_PROXY_ID)
+		}
+	}
+
+	return self.GetServiceConfig(ENV_WSERVER_PROXY_ID)
+}
+
 func (self *Environment) GetServiceConfig(id ENV_PROXY_TYPE) *ServiceConfig {
 	for idx := range self.serviceOptions {
 		if self.serviceOptions[idx].Id == id {

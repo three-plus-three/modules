@@ -147,10 +147,10 @@ func Read(r io.Reader) (map[string]string, error) {
 		cfg[key] = value
 	}
 
-	return expandAll(cfg), nil
+	return ExpandAll(cfg), nil
 }
 
-func expandAll(cfg map[string]string) map[string]string {
+func ExpandAll(cfg map[string]string) map[string]string {
 	remain := 0
 	expend := func(key string) string {
 		remain++
