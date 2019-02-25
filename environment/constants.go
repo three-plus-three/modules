@@ -69,14 +69,14 @@ var (
 		{ID: ENV_SAMPLING_PROXY_ID, Name: "sampling", Host: "127.0.0.1", Port: "37072"},
 		{ID: ENV_POLL_PROXY_ID, Name: "poll", Host: "127.0.0.1", Port: "37073"},
 		{ID: ENV_SCHD_PROXY_ID, Name: "schd", Host: "127.0.0.1", Port: "37075"},
-		{ID: ENV_LCN_PROXY_ID, Name: "lcn", Host: "127.0.0.1", Port: "37076"},
+		{ID: ENV_LCN_PROXY_ID, Name: "lcn", IsSSL: true, Host: "127.0.0.1", Port: "37076"},
 		{ID: ENV_IP_MGR_PROXY_ID, Name: "ip_mgr", Host: "127.0.0.1", Port: "37077"},
 		{ID: ENV_DELAYED_JOB_PROXY_ID, Name: "delayed_jobs", Host: "127.0.0.1", Port: "37078"},
 		{ID: ENV_TERMINAL_PROXY_ID, Name: "terminal", Host: "127.0.0.1", Port: "37079"},
 		{ID: ENV_JBRIDGE_PROXY_ID, Name: "jbridge", Host: "127.0.0.1", Port: "37080"},
 		{ID: ENV_REST_PROXY_ID, Name: "rest", Host: "127.0.0.1", Port: "39301"},
 		{ID: ENV_WSERVER_PROXY_ID, Name: "wserver", Host: "127.0.0.1", Port: "37070"},
-		{ID: ENV_WSERVER_SSL_PROXY_ID, Name: "daemon_ssl", Host: "127.0.0.1", Port: "37090"},
+		{ID: ENV_WSERVER_SSL_PROXY_ID, Name: "daemon_ssl", IsSSL: true, Host: "127.0.0.1", Port: "37090"},
 		{ID: ENV_LUA_BRIDGE_PROXY_ID, Name: "lua_bridge", Host: "127.0.0.1", Port: "37082"},
 		{ID: ENV_WEB_PROXY_ID, Name: "web", Host: "127.0.0.1", Port: "39000"},
 		{ID: ENV_LOGGING_PROXY_ID, Name: "es", Host: "127.0.0.1", Port: "37083"},
@@ -106,9 +106,10 @@ var (
 )
 
 type ServiceOption struct {
-	ID   ENV_PROXY_TYPE
-	Name string
-	Host string
-	Port string
-	Path string
+	ID    ENV_PROXY_TYPE
+	Name  string
+	IsSSL bool
+	Host  string
+	Port  string
+	Path  string
 }

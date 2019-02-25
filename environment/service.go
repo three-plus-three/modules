@@ -15,12 +15,13 @@ var UnknownServiceConfig = &ServiceConfig{Id: ENV_MAX_PROXY_ID}
 
 // ServiceConfig 服务的配置
 type ServiceConfig struct {
-	env  *Environment
-	Id   ENV_PROXY_TYPE
-	Name string
-	Host string
-	Port string
-	Path string
+	env   *Environment
+	Id    ENV_PROXY_TYPE
+	Name  string
+	IsSSL bool
+	Host  string
+	Port  string
+	Path  string
 
 	surl atomic.Value
 
@@ -188,7 +189,7 @@ func (cfg *ServiceConfig) Url() string {
 	}
 
 	var s string
-	if ENV_LCN_PROXY_ID == cfg.Id {
+	if cfg.IsSSL || ENV_LCN_PROXY_ID == cfg.Id {
 		if "" == cfg.Path {
 			s = "https://" + net.JoinHostPort(host, port)
 		} else {

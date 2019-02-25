@@ -147,6 +147,18 @@ func (self *Config) ForEach(cb func(key string, value interface{})) {
 	}
 }
 
+func boolWith(cfg map[string]string, key string, defaultValue bool) bool {
+	if v, ok := cfg[key]; ok && v != "" {
+		switch strings.ToLower(v) {
+		case "true", "on", "enabled":
+			return true
+		case "false", "off", "disabled":
+			return false
+		}
+	}
+	return defaultValue
+}
+
 func hostWith(cfg map[string]string, key, value string) string {
 	v := stringWith(cfg, key, value)
 	if ip := net.ParseIP(v); nil == ip {

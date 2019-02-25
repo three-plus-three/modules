@@ -28,15 +28,15 @@ type Options struct {
 
 // EngineConfig 多引擎时的配置
 type EngineConfig struct {
-	IsEnabled       bool
-	IsMasterHost    bool
-	Name            string
-	IsRemoteBlocked bool
-	RemoteHost      string
-	RemotePort      string
+	IsEnabled    bool
+	IsMasterHost bool
+	Name         string
+	IsSSL        bool
+	RemoteHost   string
+	RemotePort   string
 }
 
-func (self EngineConfig) IsMaster() bool {
+func (self EngineConfig) isMaster() bool {
 	return strings.ToLower(strings.TrimSpace(self.Name)) == "default"
 }
 
@@ -285,6 +285,7 @@ func loadServiceConfig(cfg map[string]string, so ServiceOption, sc *ServiceConfi
 	sc.Id = so.ID
 	sc.Name = so.Name
 
+	sc.IsSSL = boolWith(cfg, so.Name+".is_ssl", so.IsSSL)
 	if so.ID == ENV_WSERVER_PROXY_ID {
 		sc.Host = hostWith(cfg, so.Name+".host", stringWith(cfg, "daemon.host", so.Host))
 		sc.Port = portWith(cfg, so.Name+".port", stringWith(cfg, "daemon.port", so.Port))
@@ -304,12 +305,12 @@ func loadServiceConfig(cfg map[string]string, so ServiceOption, sc *ServiceConfi
 
 func loadEngineRegistry(cfg *Config) EngineConfig {
 	engine := EngineConfig{IsEnabled: cfg.BoolWithDefault("engine.is_enabled", false),
-		Name:            strings.TrimSpace(cfg.StringWithDefault("engine.name", "default")),
-		IsRemoteBlocked: cfg.BoolWithDefault("engine.remote_blocked", false),
-		RemoteHost:      strings.TrimSpace(cfg.StringWithDefault("engine.remote_host", "127.0.0.1")),
-		RemotePort:      strings.TrimSpace(cfg.StringWithDefault("engine.remote_port", ""))}
+		Name:       strings.TrimSpace(cfg.StringWithDefault("engine.name", "default")),
+		IsSSL:      cfg.BoolWithDefault("engine.is_ssl", false),
+		RemoteHost: strings.TrimSpace(cfg.StringWithDefault("engine.remote_host", "127.0.0.1")),
+		RemotePort: strings.TrimSpace(cfg.StringWithDefault("engine.remote_port", ""))}
 
-	engine.IsMasterHost = engine.IsMaster()
+	engine.IsMasterHost = engine.isMaster()
 	return engine
 }
 
