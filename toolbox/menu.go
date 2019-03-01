@@ -24,15 +24,16 @@ const (
 
 // Menu 表示一个菜单
 type Menu struct {
-	UID        string `json:"uid,omitempty" xorm:"uid notnull"`
-	Title      string `json:"title,omitempty" xorm:"title notnull"`
-	Permission string `json:"permission,omitempty" xorm:"permission"`
-	License    string `json:"license,omitempty" xorm:"license"`
-	URL        string `json:"url,omitempty" xorm:"url"`
-	Icon       string `json:"icon,omitempty" xorm:"icon"`
-	Classes    string `json:"classes,omitempty" xorm:"classes"`
+	UID        					string `json:"uid,omitempty" xorm:"uid notnull"`
+	Title      					string `json:"title,omitempty" xorm:"title notnull"`
+	Permission 					string `json:"permission,omitempty" xorm:"permission"`
+	License    					string `json:"license,omitempty" xorm:"license"`
+	URL        					string `json:"url,omitempty" xorm:"url"`
+	Icon       					string `json:"icon,omitempty" xorm:"icon"`
+	TargetWindow       	string `json:"targetWindow,omitempty" xorm:"target_window"`
+	Classes    					string `json:"classes,omitempty" xorm:"classes"`
 
-	Children []Menu `json:"children,omitempty" xorm:"-"`
+	Children 						[]Menu `json:"children,omitempty" xorm:"-"`
 }
 
 // TableName 用于 xorm 的表名
