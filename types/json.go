@@ -191,7 +191,10 @@ func (p *FieldSpec) ToXML() *XMLPropertyDefinition {
 
 	if p.Restrictions != nil {
 		if len(p.Restrictions.Enumerations) != 0 {
-			xpd.Enumerations = &p.Restrictions.Enumerations
+			xpd.Enumerations = make([]XMLEnumerationType, len(p.Restrictions.Enumerations))
+			for idx := range xpd.Enumerations {
+				xpd.Enumerations[idx].Value = p.Restrictions.Enumerations[idx]
+			}
 		}
 
 		xpd.Pattern = p.Restrictions.Pattern

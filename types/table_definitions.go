@@ -289,14 +289,15 @@ func loadDefinitions(xmlList []XMLClassDefinitions) (*TableDefinitions, []string
 				CollectionName: "tpt_" + Tableize(xmlDefinition.Name)}
 
 			msgs := LoadOwnFields(xmlDefinition.Properties, cls)
-			switch xmlDefinition.Abstract {
-			case "true":
-				cls.IsAbstractly = true
-			case "false", "":
-				cls.IsAbstractly = false
-			default:
-				msgs = append(msgs, "'abstract' value is invalid, it must is 'true' or 'false', actual is '"+xmlDefinition.Abstract+"'")
-			}
+			cls.IsAbstractly = xmlDefinition.Abstract
+			// switch xmlDefinition.Abstract {
+			// case "true":
+			// 	cls.IsAbstractly = true
+			// case "false", "":
+			// 	cls.IsAbstractly = false
+			// default:
+			// 	msgs = append(msgs, "'abstract' value is invalid, it must is 'true' or 'false', actual is '"+xmlDefinition.Abstract+"'")
+			// }
 			if nil != msgs && 0 != len(msgs) {
 				errList = mergeErrors(errList, "", msgs)
 			}

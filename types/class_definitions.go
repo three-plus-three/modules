@@ -211,11 +211,15 @@ func loadOwnField(pr *XMLPropertyDefinition) (cpr *PropertyDefinition, errs []st
 		}
 	}
 
-	if nil != pr.Enumerations && 0 != len(*pr.Enumerations) {
-		validator, err := cpr.Type.CreateEnumerationValidator(*pr.Enumerations)
+	if nil != pr.Enumerations && 0 != len(pr.Enumerations) {
+		var values = make([]string, len(pr.Enumerations))
+		for idx := range pr.Enumerations {
+			values[idx] = pr.Enumerations[idx].Value
+		}
+		validator, err := cpr.Type.CreateEnumerationValidator(values)
 		if nil != err {
 			errs = append(errs, "parse Enumerations '"+
-				strings.Join(*pr.Enumerations, ",")+"' failed, "+err.Error())
+				strings.Join(values, ",")+"' failed, "+err.Error())
 		} else {
 			cpr.Restrictions = append(cpr.Restrictions, validator)
 		}
@@ -495,14 +499,15 @@ func loadClassDefinitionFirstStep(namespace, classNameWithNs string, mixins map[
 		UnderscoreName: Underscore(classNameWithNs)}
 
 	msgs := LoadOwnFields(xmlDefinition.Properties, cls)
-	switch xmlDefinition.Abstract {
-	case "true", "":
-		cls.IsAbstractly = true
-	case "false":
-		cls.IsAbstractly = false
-	default:
-		msgs = append(msgs, "'abstract' value is invalid, it must is 'true' or 'false', actual is '"+xmlDefinition.Abstract+"'")
-	}
+	cls.IsAbstractly = xmlDefinition.Abstract
+	// switch xmlDefinition.Abstract {
+	// case "true", "":
+	// 	cls.IsAbstractly = true
+	// case "false":
+	// 	cls.IsAbstractly = false
+	// default:
+	// 	msgs = append(msgs, "'abstract' value is invalid, it must is 'true' or 'false', actual is '"+xmlDefinition.Abstract+"'")
+	// }
 	if nil != xmlDefinition.Includes && 0 != len(xmlDefinition.Includes) {
 		if nil == mixins || 0 == len(mixins) {
 			for _, include_mixin := range xmlDefinition.Includes {

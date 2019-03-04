@@ -14,7 +14,7 @@ func TestOutXML(t *testing.T) {
 		Definitions:  make([]XMLClassDefinition, 0)}
 
 	cl1_properties := []XMLPropertyDefinition{XMLPropertyDefinition{Name: "Id", Labels: &[]XMLabel{XMLabel{Lang: "zh", Value: "标识符"}}, Type: "integer", DefaultValue: "12"},
-		XMLPropertyDefinition{Name: "Sex", Type: "string", Enumerations: &[]string{"male", "female"}},
+		XMLPropertyDefinition{Name: "Sex", Type: "string", Enumerations: []XMLEnumerationType{{Value: "male"}, {Value: "female"}}},
 		XMLPropertyDefinition{Name: "Name", Type: "string", Pattern: "a.*"},
 		XMLPropertyDefinition{Name: "Age", Type: "integer", MinValue: "1", MaxValue: "130"},
 		XMLPropertyDefinition{Name: "Address", Type: "string", MinLength: "10", MaxLength: "20"}}
@@ -28,7 +28,7 @@ func TestOutXML(t *testing.T) {
 		HasAndBelongsToMany: []XMLHasAndBelongsToMany{XMLHasAndBelongsToMany{Target: "DD"}, XMLHasAndBelongsToMany{Target: "BB"}},
 		Properties: []XMLPropertyDefinition{
 			XMLPropertyDefinition{Name: "Id2", Type: "string", DefaultValue: "12"},
-			XMLPropertyDefinition{Name: "Sex2", Type: "string", Enumerations: &[]string{"male", "female"}},
+			XMLPropertyDefinition{Name: "Sex2", Type: "string", Enumerations: []XMLEnumerationType{{Value: "male"}, {Value: "female"}}},
 			XMLPropertyDefinition{Name: "Name2", Type: "string", Pattern: "a.*"},
 			XMLPropertyDefinition{Name: "Age2", Type: "string", MinValue: "1", MaxValue: "130"},
 			XMLPropertyDefinition{Name: "Address2", Type: "string", MinLength: "10", MaxLength: "20"}}}
@@ -118,20 +118,20 @@ func TestOutXML(t *testing.T) {
 // 	fmt.Printf("Address: %v\n", v.Address)
 // }
 
-func checkArray(s1, s2 *[]string) bool {
-	if nil == s1 || nil == *s1 || 0 == len(*s1) {
-		if nil == s2 || nil == *s2 || 0 == len(*s2) {
-			return true
+func checkArray(s1, s2 []XMLEnumerationType) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+
+	if 0 == len(s1) {
+		return 0 == len(s2)
+	}
+
+	for i, s := range s1 {
+		if s.Name != s2[i].Name {
+			return false
 		}
-		return false
-	}
-
-	if len(*s1) != len(*s2) {
-		return false
-	}
-
-	for i, s := range *s1 {
-		if s != (*s2)[i] {
+		if s.Value != s2[i].Value {
 			return false
 		}
 	}
@@ -222,7 +222,7 @@ func TestXML1(t *testing.T) {
 			a.Commentf("check Restrictions.Required of properties[%d]", comment))
 
 		if !checkArray(p1.Enumerations, p2.Enumerations) {
-			t.Errorf("check Restrictions.Enumerations properties[%d] failed, value is %v", comment, p1.Enumerations)
+			t.Errorf("check Restrictions.Enumerations properties[%d] failed, value1=%v, value2=%v", comment, p1.Enumerations, p2.Enumerations)
 		}
 
 		a.Check(t, p1.Collection, a.Equals, p2.Collection,
@@ -292,7 +292,7 @@ func TestXML1(t *testing.T) {
 	assertProperty(&person.Properties[8], &XMLPropertyDefinition{Name: "Sex",
 		Type:         "string",
 		DefaultValue: "male",
-		Enumerations: &[]string{"male", "female"}}, 8)
+		Enumerations: []XMLEnumerationType{{Value: "male"}, {Value: "female"}}}, 8)
 	assertProperty(&person.Properties[9], &XMLPropertyDefinition{Name: "Password",
 		Type:         "password",
 		DefaultValue: "mfk"}, 9)
