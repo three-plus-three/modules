@@ -13,7 +13,7 @@ func TestOutXML(t *testing.T) {
 		LastModified: "123",
 		Definitions:  make([]XMLClassDefinition, 0)}
 
-	cl1_properties := []XMLPropertyDefinition{XMLPropertyDefinition{Name: "Id", Labels: &[]XMLabel{XMLabel{Lang: "zh", Value: "标识符"}}, Type: "integer", DefaultValue: "12"},
+	cl1_properties := []XMLPropertyDefinition{XMLPropertyDefinition{Name: "Id", Labels: []XMLabel{{Lang: "zh", Content: "标识符"}}, Type: "integer", DefaultValue: "12"},
 		XMLPropertyDefinition{Name: "Sex", Type: "string", Enumerations: []XMLEnumerationType{{Value: "male"}, {Value: "female"}}},
 		XMLPropertyDefinition{Name: "Name", Type: "string", Pattern: "a.*"},
 		XMLPropertyDefinition{Name: "Age", Type: "integer", MinValue: "1", MaxValue: "130"},

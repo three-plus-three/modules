@@ -75,8 +75,8 @@ type XMLPropertyDefinition struct {
 	Embedded   string `xml:"embedded,attr,omitempty"`
 	Collection string `xml:"collection,attr,omitempty"`
 
-	Descriptions   *[]XMLabel           `xml:"description,omitempty"`
-	Labels         *[]XMLabel           `xml:"label,omitempty"`
+	Descriptions   []XMLabel            `xml:"description,omitempty"`
+	Labels         []XMLabel            `xml:"label,omitempty"`
 	Unit           string               `xml:"unit,omitempty"`
 	Key            *XMLIsKey            `xml:",omitempty"`
 	ReadOnly       *XMLReadOnly         `xml:",omitempty"`
@@ -118,7 +118,7 @@ type XMLIsKey struct {
 type XMLabel struct {
 	XMLName xml.Name `xml:"label"`
 	Lang    string   `xml:"lang,attr"`
-	Value   string   `xml:",chardata"`
+	Content string   `xml:",chardata"`
 }
 
 type XMLEnumerationType struct {
