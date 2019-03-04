@@ -176,6 +176,7 @@ import (
 	"html/template"
 	"math"
 	"math/big"
+  "net/url"
 	"os"
 	"reflect"
 	"strconv"
@@ -310,6 +311,8 @@ var genericMap = map[string]interface{}{
 	"dateInZone":     dateInZone,
 	"dateModify":     dateModify,
 	"dateAdd":        dateAdd,
+	"encodePath":     encodePath,
+	"encodeQuery":    encodeQuery,
 
 	// Strings
 	"abbrev":     abbrev,
@@ -660,6 +663,14 @@ func dateModify(fmt string, date time.Time) time.Time {
 
 func dateAdd(date time.Time, years int64, months int64, days int64) time.Time {
 	return date.AddDate(int(years), int(months), int(days))
+}
+
+func encodePath(path string) string {
+	return url.PathEscape(path)
+}
+
+func encodeQuery(query string) string {
+	return url.QueryEscape(query)
 }
 
 func max(a interface{}, i ...interface{}) int64 {
