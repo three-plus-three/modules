@@ -35,30 +35,32 @@ func isMenu(category string) bool {
 
 // LayoutItem 表示一个菜单
 type LayoutItem struct {
-	Category   string `json:"category" xorm:"category"`
-	Location   string `json:"location" xorm:"location"`
-	Target     string `json:"target" xorm:"target"`
-	Inline     bool   `json:"inline" xorm:"inline"`
-	UID        string `json:"uid" xorm:"uid unique notnull"`
-	Title      string `json:"title" xorm:"title notnull"`
-	Classes    string `json:"classes,omitempty" xorm:"classes"`
-	Permission string `json:"permission,omitempty" xorm:"permission"`
-	License    string `json:"-" xorm:"-"`
-	URL        string `json:"url" xorm:"url"`
-	Icon       string `json:"icon,omitempty" xorm:"icon"`
+	Category   				string `json:"category" xorm:"category"`
+	Location   				string `json:"location" xorm:"location"`
+	Target     				string `json:"target" xorm:"target"`
+	TargetWindow     	string `json:"target" xorm:"targetWindow"`
+	Inline     				bool   `json:"inline" xorm:"inline"`
+	UID        				string `json:"uid" xorm:"uid unique notnull"`
+	Title      				string `json:"title" xorm:"title notnull"`
+	Classes    				string `json:"classes,omitempty" xorm:"classes"`
+	Permission 				string `json:"permission,omitempty" xorm:"permission"`
+	License    				string `json:"-" xorm:"-"`
+	URL        				string `json:"url" xorm:"url"`
+	Icon       				string `json:"icon,omitempty" xorm:"icon"`
 
 	Children []LayoutItem `json:"children,omitempty" xorm:"-"`
 }
 
 func (menu *LayoutItem) toMenu() toolbox.Menu {
 	return toolbox.Menu{
-		UID:        menu.UID,
-		Title:      menu.Title,
-		Classes:    menu.Classes,
-		Permission: menu.Permission,
-		License:    menu.License,
-		URL:        menu.URL,
-		Icon:       menu.Icon,
+		UID:        				menu.UID,
+		Title:      				menu.Title,
+		Classes:    				menu.Classes,
+		Permission: 				menu.Permission,
+		License:    				menu.License,
+		URL:        				menu.URL,
+		Icon:       				menu.Icon,
+		TargetWindow:       menu.TargetWindow,
 	}
 }
 
