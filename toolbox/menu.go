@@ -40,6 +40,15 @@ func (menu *Menu) TableName() string {
 	return "tpt_menus"
 }
 
+func (menu Menu) IsNewWindow() bool {
+	for idx := range menu.Classes {
+		if menu.Classes[idx] == "new-window" {
+			return true
+		}
+	}
+	return false
+}
+
 // IsActiveWith 判断这个菜单是否是展开的
 func (menu Menu) IsActiveWith(ctx map[string]interface{}) bool {
 	o := ctx["active"]
