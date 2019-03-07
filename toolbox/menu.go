@@ -41,12 +41,7 @@ func (menu *Menu) TableName() string {
 }
 
 func (menu Menu) IsNewWindow() bool {
-	for idx := range menu.Classes {
-		if menu.Classes[idx] == "new-window" {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(menu.Classes, "new-window")
 }
 
 // IsActiveWith 判断这个菜单是否是展开的
