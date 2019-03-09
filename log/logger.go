@@ -23,6 +23,7 @@ import (
 
 // Logger is a simplified abstraction of the zap.Logger
 type Logger interface {
+	Panic(msg string, fields ...zapcore.Field)
 	Debug(msg string, fields ...zapcore.Field)
 	Info(msg string, fields ...zapcore.Field)
 	Error(msg string, fields ...zapcore.Field)
@@ -46,108 +47,126 @@ type Logger interface {
 	Named(name string) Logger
 }
 
-// logger delegates all calls to the underlying zap.Logger
-type logger struct {
+// zaplogger delegates all calls to the underlying zap.Logger
+type zaplogger struct {
 	logger  *zap.Logger
 	sugared *zap.SugaredLogger
 }
 
+// Panic logs an panic msg with fields and panic
+func (l zaplogger) Panic(msg string, fields ...zapcore.Field) {
+	l.logger.Panic(msg, fields...)
+}
+
 // Debug logs an debug msg with fields
-func (l logger) Debug(msg string, fields ...zapcore.Field) {
+func (l zaplogger) Debug(msg string, fields ...zapcore.Field) {
 	l.logger.Debug(msg, fields...)
 }
 
 // Info logs an info msg with fields
-func (l logger) Info(msg string, fields ...zapcore.Field) {
+func (l zaplogger) Info(msg string, fields ...zapcore.Field) {
 	l.logger.Info(msg, fields...)
 }
 
 // Warn logs an error msg with fields
-func (l logger) Warn(msg string, fields ...zapcore.Field) {
+func (l zaplogger) Warn(msg string, fields ...zapcore.Field) {
 	l.logger.Warn(msg, fields...)
 }
 
 // Error logs an error msg with fields
-func (l logger) Error(msg string, fields ...zapcore.Field) {
+func (l zaplogger) Error(msg string, fields ...zapcore.Field) {
 	l.logger.Error(msg, fields...)
 }
 
 // Fatal logs a fatal error msg with fields
-func (l logger) Fatal(msg string, fields ...zapcore.Field) {
+func (l zaplogger) Fatal(msg string, fields ...zapcore.Field) {
 	l.logger.Fatal(msg, fields...)
 }
 
 // Debugw logs an debug msg with fields
-func (l logger) Debugw(msg string, fields ...interface{}) {
+func (l zaplogger) Debugw(msg string, fields ...interface{}) {
 	l.sugared.Debugw(msg, fields...)
 }
 
 // Infow logs an info msg with fields
-func (l logger) Infow(msg string, fields ...interface{}) {
+func (l zaplogger) Infow(msg string, fields ...interface{}) {
 	l.sugared.Infow(msg, fields...)
 }
 
 // Warnw logs an error msg with fields
-func (l logger) Warnw(msg string, fields ...interface{}) {
+func (l zaplogger) Warnw(msg string, fields ...interface{}) {
 	l.sugared.Warnw(msg, fields...)
 }
 
 // Errorw logs an error msg with fields
-func (l logger) Errorw(msg string, fields ...interface{}) {
+func (l zaplogger) Errorw(msg string, fields ...interface{}) {
 	l.sugared.Errorw(msg, fields...)
 }
 
 // Fatalw logs a fatal error msg with fields
-func (l logger) Fatalw(msg string, fields ...interface{}) {
+func (l zaplogger) Fatalw(msg string, fields ...interface{}) {
 	l.sugared.Fatalw(msg, fields...)
 }
 
 // Debugf logs an debug msg with arguments
-func (l logger) Debugf(msg string, args ...interface{}) {
+func (l zaplogger) Debugf(msg string, args ...interface{}) {
 	l.sugared.Infof(msg, args...)
 }
 
 // Infow logs an info msg with arguments
-func (l logger) Infof(msg string, args ...interface{}) {
+func (l zaplogger) Infof(msg string, args ...interface{}) {
 	l.sugared.Infof(msg, args...)
 }
 
 // Warnw logs an error msg with arguments
-func (l logger) Warnf(msg string, args ...interface{}) {
+func (l zaplogger) Warnf(msg string, args ...interface{}) {
 	l.sugared.Warnf(msg, args...)
 }
 
 // Errorw logs an error msg with arguments
-func (l logger) Errorf(msg string, args ...interface{}) {
+func (l zaplogger) Errorf(msg string, args ...interface{}) {
 	l.sugared.Errorf(msg, args...)
 }
 
 // Fatalw logs a fatal error msg with arguments
-func (l logger) Fatalf(msg string, args ...interface{}) {
+func (l zaplogger) Fatalf(msg string, args ...interface{}) {
 	l.sugared.Fatalf(msg, args...)
 }
 
 // With creates a child logger, and optionally adds some context fields to that logger.
-func (l logger) With(keyAndValues ...interface{}) Logger {
-	newL := l.logger.With(sweetenFields(l.logger, keyAndValues)...)
-	return logger{logger: newL, sugared: newL.Sugar()}
+func (l zaplogger) With(keyAndValues ...interface{}) Logger {
+	newL := l.logger.With(sweetenFields(l, keyAndValues)...)
+	return zaplogger{logger: newL, sugared: newL.Sugar()}
 }
 
 // With creates a child logger, and optionally adds some context fields to that logger.
-func (l logger) WithTargets(targets ...Target) Logger {
-	return appendLogger{logger: l.logger, target: arrayAppender{targets}}
+func (l zaplogger) WithTargets(targets ...Target) Logger {
+	if len(targets) > 0 {
+		return l
+	}
+	newL := l.logger.WithOptions(zap.AddCallerSkip(1))
+	return appendLogger{logger: zaplogger{logger: newL, sugared: newL.Sugar()},
+		target: Tee(targets)}
 }
 
 // Named adds a new path segment to the logger's name. Segments are joined by
 // periods. By default, Loggers are unnamed.
-func (l logger) Named(name string) Logger {
+func (l zaplogger) Named(name string) Logger {
 	newL := l.logger.Named(name)
-	return logger{logger: newL, sugared: newL.Sugar()}
+	return zaplogger{logger: newL, sugared: newL.Sugar()}
+}
+
+func NewLogger(logger *zap.Logger) Logger {
+	logger = logger.WithOptions(zap.AddCallerSkip(1))
+	return zaplogger{logger: logger, sugared: logger.Sugar()}
 }
 
 // Logger is a simplified abstraction of the zap.Logger
 type emptyLogger struct{}
 
+func (empty emptyLogger) Panic(msg string, fields ...zapcore.Field) {
+	panic(msg)
+}
 func (empty emptyLogger) Debug(msg string, fields ...zapcore.Field) {}
 func (empty emptyLogger) Info(msg string, fields ...zapcore.Field)  {}
 func (empty emptyLogger) Error(msg string, fields ...zapcore.Field) {}
@@ -167,8 +186,13 @@ func (empty emptyLogger) Warnf(msg string, values ...interface{})  {}
 func (empty emptyLogger) Fatalf(msg string, values ...interface{}) {}
 
 func (empty emptyLogger) With(keyAndValues ...interface{}) Logger { return empty }
-func (empty emptyLogger) WithTargets(targets ...Target) Logger    { return empty }
 func (empty emptyLogger) Named(name string) Logger                { return empty }
+func (empty emptyLogger) WithTargets(targets ...Target) Logger {
+	if len(targets) > 0 {
+		return empty
+	}
+	return appendLogger{logger: empty, target: Tee(targets)}
+}
 
 // Empty a nil logger
 var Empty Logger = emptyLogger{}

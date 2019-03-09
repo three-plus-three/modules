@@ -12,23 +12,20 @@ type Target interface {
 	LogFields(level zapcore.Level, msg string, fields ...zapcore.Field)
 }
 
-func concatTargets(target Target, targets ...Target) Target {
-	if a, ok := target.(arrayAppender); ok {
-		a.appenders = append(a.appenders, targets...)
-		return a
-	}
+type Tee []Target
 
-	return arrayAppender{appenders: append(targets, target)}
+func (sl Tee) LogFields(level zapcore.Level, msg string, fields ...zapcore.Field) {
+	for idx := range sl {
+		sl[idx].LogFields(level, msg, fields...)
+	}
 }
 
-type arrayAppender struct {
-	appenders []Target
-}
-
-func (sl arrayAppender) LogFields(level zapcore.Level, msg string, fields ...zapcore.Field) {
-	for idx := range sl.appenders {
-		sl.appenders[idx].LogFields(level, msg, fields...)
+func ConcatTargets(target Target, targets ...Target) Target {
+	if a, ok := target.(Tee); ok {
+		return Tee(append(a, targets...))
 	}
+
+	return Tee(append(targets, target))
 }
 
 type Callback func(level zapcore.Level, msg string, fields ...zapcore.Field)
@@ -37,11 +34,11 @@ func (callback Callback) LogFields(level zapcore.Level, msg string, fields ...za
 	callback(level, msg, fields...)
 }
 
-type MessagesAppender struct {
+type Messages struct {
 	Messages []string
 }
 
-func (sl MessagesAppender) LogFields(level zapcore.Level, msg string, fields ...zapcore.Field) {
+func (sl Messages) LogFields(level zapcore.Level, msg string, fields ...zapcore.Field) {
 	sl.Messages = append(sl.Messages, msg)
 }
 

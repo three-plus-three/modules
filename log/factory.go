@@ -25,22 +25,23 @@ import (
 // Factory is the default logging wrapper that can create
 // logger instances either for a given Context or context-less.
 type Factory struct {
-	appenders []Target
-	logger    *zap.Logger
+	targets []Target
+	logger  Logger
 }
 
 // NewFactory creates a new Factory.
 func NewFactory(logger *zap.Logger) Factory {
-	logger = logger.WithOptions(zap.AddCallerSkip(1))
+	return Factory{logger: NewLogger(logger)}
+}
+
+// FactoryFrom creates a new Factory.
+func FactoryFrom(logger Logger) Factory {
 	return Factory{logger: logger}
 }
 
 // Bg creates a context-unaware logger.
 func (b Factory) New() Logger {
-	if len(b.appenders) == 0 {
-		return logger{logger: b.logger, sugared: b.logger.Sugar()}
-	}
-	return appendLogger{target: arrayAppender{b.appenders}, logger: b.logger}
+	return b.logger.WithTargets(b.targets...)
 }
 
 // For returns a context-aware Logger. If the context
@@ -57,7 +58,7 @@ func (b Factory) For(ctx context.Context) Factory {
 // echo-ed into the span.
 func (b Factory) Span(span opentracing.Span) Factory {
 	if span != nil {
-		return Factory{logger: b.logger, appenders: append(b.appenders, spanAppender{span})}
+		return Factory{logger: b.logger, targets: append(b.targets, spanAppender{span})}
 	}
 	return b
 }
@@ -65,7 +66,7 @@ func (b Factory) Span(span opentracing.Span) Factory {
 // Span returns a span Logger, all logging calls are also
 // echo-ed into the span.
 func (b Factory) OutputToStrings(target *[]string) Factory {
-	return Factory{logger: b.logger, appenders: append(b.appenders, Callback(func(level zapcore.Level, msg string, fields ...zapcore.Field) {
+	return Factory{logger: b.logger, targets: append(b.targets, Callback(func(level zapcore.Level, msg string, fields ...zapcore.Field) {
 		switch level {
 		case zapcore.WarnLevel:
 			msg = "警告：" + msg
@@ -78,13 +79,13 @@ func (b Factory) OutputToStrings(target *[]string) Factory {
 
 // With creates a child logger, and optionally adds some context fields to that logger.
 func (b Factory) With(keyAndValues ...interface{}) Factory {
-	return Factory{logger: b.logger.With(sweetenFields(b.logger, keyAndValues)...), appenders: b.appenders}
+	return Factory{logger: b.logger.With(keyAndValues...), targets: b.targets}
 }
 
 // Named adds a new path segment to the logger's name. Segments are joined by
 // periods. By default, Loggers are unnamed.
 func (b Factory) Named(name string) Factory {
-	return Factory{logger: b.logger.Named(name), appenders: b.appenders}
+	return Factory{logger: b.logger.Named(name), targets: b.targets}
 }
 
 type contextKey struct{}

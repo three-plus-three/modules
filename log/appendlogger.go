@@ -23,62 +23,67 @@ import (
 )
 
 type appendLogger struct {
-	logger *zap.Logger
+	logger Logger
 	target Target
 }
 
-func (sl appendLogger) Debug(msg string, fields ...zapcore.Field) {
-	sl.target.LogFields(zap.DebugLevel, msg, fields...)
-	sl.logger.Debug(msg, fields...)
+// Panic logs an panic msg with fields and panic
+func (l appendLogger) Panic(msg string, fields ...zapcore.Field) {
+	l.logger.Panic(msg, fields...)
 }
 
-func (sl appendLogger) Info(msg string, fields ...zapcore.Field) {
-	sl.target.LogFields(zap.InfoLevel, msg, fields...)
-	sl.logger.Info(msg, fields...)
+func (l appendLogger) Debug(msg string, fields ...zapcore.Field) {
+	l.target.LogFields(zap.DebugLevel, msg, fields...)
+	l.logger.Debug(msg, fields...)
 }
 
-func (sl appendLogger) Warn(msg string, fields ...zapcore.Field) {
-	sl.target.LogFields(zap.WarnLevel, msg, fields...)
-	sl.logger.Warn(msg, fields...)
+func (l appendLogger) Info(msg string, fields ...zapcore.Field) {
+	l.target.LogFields(zap.InfoLevel, msg, fields...)
+	l.logger.Info(msg, fields...)
 }
 
-func (sl appendLogger) Error(msg string, fields ...zapcore.Field) {
-	sl.target.LogFields(zap.ErrorLevel, msg, fields...)
-	sl.logger.Error(msg, fields...)
+func (l appendLogger) Warn(msg string, fields ...zapcore.Field) {
+	l.target.LogFields(zap.WarnLevel, msg, fields...)
+	l.logger.Warn(msg, fields...)
 }
 
-func (sl appendLogger) Fatal(msg string, fields ...zapcore.Field) {
-	sl.target.LogFields(zap.FatalLevel, msg, fields...)
-	sl.logger.Fatal(msg, fields...)
+func (l appendLogger) Error(msg string, fields ...zapcore.Field) {
+	l.target.LogFields(zap.ErrorLevel, msg, fields...)
+	l.logger.Error(msg, fields...)
+}
+
+func (l appendLogger) Fatal(msg string, fields ...zapcore.Field) {
+	l.target.LogFields(zap.FatalLevel, msg, fields...)
+	l.logger.Fatal(msg, fields...)
 }
 
 // Debugw logs an debug msg with fields
 func (l appendLogger) Debugw(msg string, keyAndValues ...interface{}) {
-	fields := sweetenFields(l.logger, keyAndValues)
+	fields := sweetenFields(l, keyAndValues)
 	l.Debug(msg, fields...)
 }
 
 // Infow logs an info msg with fields
 func (l appendLogger) Infow(msg string, keyAndValues ...interface{}) {
-	fields := sweetenFields(l.logger, keyAndValues)
+	fields := sweetenFields(l, keyAndValues)
 	l.Info(msg, fields...)
 }
 
 // Warnw logs an error msg with fields
 func (l appendLogger) Warnw(msg string, keyAndValues ...interface{}) {
-	fields := sweetenFields(l.logger, keyAndValues)
+	fields := sweetenFields(l, keyAndValues)
 	l.Warn(msg, fields...)
 }
 
 // Errorw logs an error msg with fields
 func (l appendLogger) Errorw(msg string, keyAndValues ...interface{}) {
-	fields := sweetenFields(l.logger, keyAndValues)
+	fields := sweetenFields(l, keyAndValues)
 	l.Error(msg, fields...)
 }
 
 // Fatalw logs a fatal error msg with fields
 func (l appendLogger) Fatalw(msg string, keyAndValues ...interface{}) {
-	fields := sweetenFields(l.logger, keyAndValues)
+	fields := sweetenFields(l, keyAndValues)
 	l.Fatal(msg, fields...)
 }
 
@@ -114,12 +119,15 @@ func (l appendLogger) Fatalf(msg string, values ...interface{}) {
 
 // With creates a child logger, and optionally adds some context fields to that logger.
 func (l appendLogger) With(keyAndValues ...interface{}) Logger {
-	return appendLogger{logger: l.logger.With(sweetenFields(l.logger, keyAndValues)...), target: l.target}
+	return appendLogger{logger: l.logger.With(keyAndValues...), target: l.target}
 }
 
 // With creates a child logger, and optionally adds some context fields to that logger.
 func (l appendLogger) WithTargets(targets ...Target) Logger {
-	return appendLogger{logger: l.logger, target: concatTargets(l.target, targets...)}
+	if len(targets) > 0 {
+		return l
+	}
+	return appendLogger{logger: l.logger, target: ConcatTargets(l.target, targets...)}
 }
 
 func (l appendLogger) Named(name string) Logger {
@@ -131,7 +139,7 @@ const (
 	_nonStringKeyErrMsg = "Ignored key-value pairs with non-string keys."
 )
 
-func sweetenFields(base *zap.Logger, args []interface{}) []zapcore.Field {
+func sweetenFields(base Logger, args []interface{}) []zapcore.Field {
 	if len(args) == 0 {
 		return nil
 	}
@@ -151,7 +159,7 @@ func sweetenFields(base *zap.Logger, args []interface{}) []zapcore.Field {
 
 		// Make sure this element isn't a dangling key.
 		if i == len(args)-1 {
-			base.DPanic(_oddNumberErrMsg, Any("ignored", args[i]))
+			base.Panic(_oddNumberErrMsg, Any("ignored", args[i]))
 			break
 		}
 
@@ -172,7 +180,7 @@ func sweetenFields(base *zap.Logger, args []interface{}) []zapcore.Field {
 
 	// If we encountered any invalid key-value pairs, log an error.
 	if len(invalid) > 0 {
-		base.DPanic(_nonStringKeyErrMsg, zap.Array("invalid", invalid))
+		base.Panic(_nonStringKeyErrMsg, zap.Array("invalid", invalid))
 	}
 	return fields
 }
