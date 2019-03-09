@@ -29,6 +29,7 @@ type appendLogger struct {
 
 // Panic logs an panic msg with fields and panic
 func (l appendLogger) Panic(msg string, fields ...zapcore.Field) {
+	l.target.LogFields(zap.PanicLevel, msg, fields...)
 	l.logger.Panic(msg, fields...)
 }
 
