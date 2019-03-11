@@ -88,14 +88,15 @@ func Tracing(comp string) echo.MiddlewareFunc {
 			ext.HTTPUrl.Set(span, c.Request().Host+c.Request().RequestURI)
 			ext.HTTPMethod.Set(span, c.Request().Method)
 
-			if err := next(c); err != nil {
+			err = next(c)
+			if err != nil {
 				ext.Error.Set(span, true)
 			} else {
 				ext.Error.Set(span, false)
 			}
 
 			ext.HTTPStatusCode.Set(span, uint16(c.Response().Status))
-			return nil
+			return err
 		}
 	}
 }
