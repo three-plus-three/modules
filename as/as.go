@@ -1020,7 +1020,7 @@ func ObjectWithDefault(v interface{}, defaultValue map[string]interface{}) map[s
 	if m, ok := v.(map[string]interface{}); ok {
 		return m
 	}
-	if m, ok := value.(map[string]string); ok {
+	if m, ok := v.(map[string]string); ok {
 		result := make(map[string]interface{}, len(m))
 		for key, value := range m {
 			result[key] = value
