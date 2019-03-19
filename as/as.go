@@ -44,15 +44,29 @@ func Map(value interface{}) (map[string]interface{}, error) {
 	if m, ok := value.(map[string]interface{}); ok {
 		return m, nil
 	}
+	if m, ok := value.(map[string]string); ok {
+		result := make(map[string]interface{}, len(m))
+		for key, value := range m {
+			result[key] = value
+		}
+		return result, nil
+	}
 	return nil, errType(value, "map")
 }
 
 func Object(value interface{}) (map[string]interface{}, error) {
+	if nil == value {
+		return nil, ErrValueNull
+	}
 	if m, ok := value.(map[string]interface{}); ok {
 		return m, nil
 	}
-	if nil == value {
-		return nil, ErrValueNull
+	if m, ok := value.(map[string]string); ok {
+		result := make(map[string]interface{}, len(m))
+		for key, value := range m {
+			result[key] = value
+		}
+		return result, nil
 	}
 	return nil, errType(value, "object")
 }
