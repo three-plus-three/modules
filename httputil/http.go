@@ -13,9 +13,8 @@ import (
 	"strings"
 
 	"github.com/three-plus-three/modules/errors"
+	"github.com/three-plus-three/modules/netutil"
 )
-
-type HandleFunc func(req *http.Request, resp *http.Response) error
 
 var InsecureHttpTransport = &http.Transport{
 	Proxy: http.ProxyFromEnvironment,
@@ -23,6 +22,15 @@ var InsecureHttpTransport = &http.Transport{
 		InsecureSkipVerify: true,
 	},
 }
+
+func init() {
+	if t, ok := http.DefaultTransport.(*http.Transport); ok {
+		t.DialContext = netutil.WrapDialContext(t.DialContext)
+		InsecureHttpTransport.DialContext = t.DialContext
+	}
+}
+
+type HandleFunc func(req *http.Request, resp *http.Response) error
 
 var InsecureHttpClent = &http.Client{Transport: InsecureHttpTransport}
 

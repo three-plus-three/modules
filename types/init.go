@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/three-plus-three/modules/environment"
+	"github.com/three-plus-three/modules/util"
 )
 
 var modelsFile *flag.Flag
@@ -51,7 +52,7 @@ func Load(env *environment.Environment) (*TableDefinitions, error) {
 		"../../../../../cn/com/hengwei/meta/tpt_models.xml"}
 	found := false
 	for _, file := range files {
-		if environment.FileExists(file) {
+		if util.FileExists(file) {
 			flag.Set("ds.models", file)
 			found = true
 			break

@@ -1,185 +1,177 @@
 package environment
 
 import (
-	"container/list"
-	"io"
 	"net"
 	"net/url"
-	"sync"
-	"sync/atomic"
+	"os"
 
+	"github.com/three-plus-three/modules/netutil"
 	"github.com/three-plus-three/modules/urlutil"
 )
 
-var UnknownServiceConfig = &ServiceConfig{Id: ENV_MAX_PROXY_ID}
+var UnknownServiceConfig = &ServiceConfig{ID: ENV_MAX_PROXY_ID}
 
 // ServiceConfig 服务的配置
 type ServiceConfig struct {
-	env   *Environment
-	Id    ENV_PROXY_TYPE
-	Name  string
-	IsSSL bool
-	Host  string
-	Port  string
-	Path  string
+	env     *Environment
+	ID      ENV_PROXY_TYPE
+	Name    string
+	IsSSL   bool
+	Type    string
+	Host    string
+	Port    string
+	UrlPath string
 
-	surl atomic.Value
-
-	listeners_mu sync.Mutex
-	listeners    list.List
+	// surl atomic.Value
 }
 
 func (cfg *ServiceConfig) copyFrom(src *ServiceConfig) {
 	cfg.env = src.env
-	cfg.Id = src.Id
+	cfg.ID = src.ID
+	cfg.IsSSL = src.IsSSL
+	cfg.Type = src.Type
 	cfg.Name = src.Name
 	cfg.Host = src.Host
 	cfg.Port = src.Port
-	cfg.Path = src.Path
-	if o := src.surl.Load(); o != nil {
-		cfg.surl.Store(o)
-	}
-
-	cfg.listeners.Init()
-
-	src.listeners_mu.Lock()
-	defer src.listeners_mu.Unlock()
-	cfg.listeners.PushBackList(&src.listeners)
+	cfg.UrlPath = src.UrlPath
 }
 
-// Notify 发送变动通知
-func (cfg *ServiceConfig) Notify() {
-	if cfg.Id >= ENV_MAX_PROXY_ID {
-		panic("unknow service")
-	}
+func (sc *ServiceConfig) loadConfig(cfg map[string]string, so ServiceOption) {
+	sc.ID = so.ID
+	sc.Name = so.Name
 
-	cfg.listeners_mu.Lock()
-	defer cfg.listeners_mu.Unlock()
-	for current := cfg.listeners.Front(); current != nil; current = current.Next() {
-		if nil == current.Value {
-			continue
+	sc.Type = stringWith(cfg, so.Name+".type", so.Type)
+	sc.IsSSL = boolWith(cfg, so.Name+".is_ssl", so.IsSSL)
+
+	switch so.ID {
+	case ENV_HOME_PROXY_ID:
+		sc.Host = hostWith(cfg, so.Name+".host", stringWith(cfg, "daemon.host", so.Host))
+		sc.Port = portWith(cfg, so.Name+".port", portWith(cfg, "daemon.port", so.Port))
+		//	case ENV_GATEWAY_PROXY_ID:
+		//		sc.Host = hostWith(cfg, so.Name+".host", stringWith(cfg, "daemon.host", so.Host))
+		//		sc.Port = portWith(cfg, so.Name+".port", portWith(cfg, "daemon.port", so.Port))
+	case ENV_MC_DEV_PROXY_ID:
+		if mcDevPort := os.Getenv("mc_dev_port"); "" != mcDevPort {
+			sc.Port = mcDevPort
 		}
-
-		if cb, ok := current.Value.(func(*ServiceConfig)); ok {
-			cb(cfg)
-		}
+	default:
+		sc.Host = hostWith(cfg, so.Name+".host", so.Host)
+		sc.Port = portWith(cfg, so.Name+".port", so.Port)
 	}
-}
-
-type serviceListener struct {
-	cfg *ServiceConfig
-	el  *list.Element
-}
-
-func (s serviceListener) Close() error {
-	s.cfg.listeners_mu.Lock()
-	defer s.cfg.listeners_mu.Unlock()
-
-	s.cfg.listeners.Remove(s.el)
-	return nil
-}
-
-// On 注册变动事件
-func (cfg *ServiceConfig) On(cb func(*ServiceConfig)) io.Closer {
-	if cfg.Id >= ENV_MAX_PROXY_ID {
-		panic("unknow service")
-	}
-
-	cb(cfg)
-	cfg.listeners_mu.Lock()
-	defer cfg.listeners_mu.Unlock()
-
-	el := cfg.listeners.PushBack(cb)
-	return serviceListener{cfg, el}
-}
-
-// RemoveAllListener 清空所有监听器
-func (cfg *ServiceConfig) RemoveAllListener() {
-	if cfg.Id >= ENV_MAX_PROXY_ID {
-		panic("unknow service")
-	}
-
-	cfg.listeners_mu.Lock()
-	defer cfg.listeners_mu.Unlock()
-	cfg.listeners.Init()
 }
 
 // ListenAddr 服务的监听地址
-func (cfg *ServiceConfig) ListenAddr(s string) string {
-	if cfg.Id >= ENV_MAX_PROXY_ID {
+func (cfg *ServiceConfig) ListenAddr(typ, pa string) (string, string) {
+	if cfg.ID >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
 	}
-	if s != "" {
-		return s
+	if typ == "" {
+		typ = cfg.Type
+	}
+
+	if (typ == "" || typ == "auto") && cfg.env.EnabledPipe() {
+		typ = "unix"
+	}
+	if typ == "" {
+		typ = "tcp"
+	}
+
+	if pa != "" {
+		if netutil.IsUnixsocket(typ) {
+			_, port, err := net.SplitHostPort(pa)
+			if err == nil {
+				return typ, netutil.MakePipename(port)
+			}
+		}
+
+		return typ, pa
+	}
+
+	if netutil.IsUnixsocket(typ) {
+		return typ, netutil.MakePipename(cfg.Port)
 	}
 
 	listenAddress := cfg.env.Config.StringWithDefault("listen_address", "")
-	return net.JoinHostPort(listenAddress, cfg.Port)
+	return typ, net.JoinHostPort(listenAddress, cfg.Port)
 }
 
 // ListenAddr 服务的连接地址
-func (cfg *ServiceConfig) RemoteAddr(s string) string {
-	if cfg.Id >= ENV_MAX_PROXY_ID {
+func (cfg *ServiceConfig) RemoteAddr(typ, pa string) (string, string) {
+	if cfg.ID >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
 	}
-	if s != "" {
-		if _, _, e := net.SplitHostPort(s); nil == e {
-			return s
+	if pa != "" {
+		if _, _, e := net.SplitHostPort(pa); e == nil {
+			return typ, pa
 		}
-		return net.JoinHostPort(s, cfg.Port)
+
+		return typ, net.JoinHostPort(pa, cfg.Port)
+	}
+
+	typ = cfg.Type
+
+	if (typ == "" || typ == "auto") && cfg.env.EnabledPipe() {
+		typ = "unix"
+	}
+	if typ == "" {
+		typ = "tcp"
+	}
+
+	//	if engine := cfg.env.GetEngineConfig(); engine.IsEnabled && !engine.IsMasterHost {
+	//		host := engine.RemoteHost
+	//		port := cfg.Port
+	//		typ = "tcp"
+
+	//		if remotePort := engine.RemotePort; "" != remotePort && "0" != remotePort {
+	//			port = remotePort
+	//		}
+	//		return typ, net.JoinHostPort(host, port)
+	//	}
+
+	if netutil.IsUnixsocket(typ) {
+		return typ, netutil.MakePipename(cfg.Port)
 	}
 	if "" == cfg.Host {
-		return "127.0.0.1:" + cfg.Port
+		return typ, net.JoinHostPort("127.0.0.1", cfg.Port)
 	}
-	return net.JoinHostPort(cfg.Host, cfg.Port)
+	return typ, net.JoinHostPort(cfg.Host, cfg.Port)
 }
 
-// SetHost 指定地址
-func (cfg *ServiceConfig) SetHost(s string) {
-	cfg.Host = s
-	cfg.surl.Store("")
-	cfg.Notify()
-}
+// // SetHost 指定地址
+// func (cfg *ServiceConfig) SetHost(s string) {
+// 	cfg.Host = s
+// 	cfg.surl.Store("")
+// 	cfg.Notify()
+// }
 
 // SetPort 指定端口
-func (cfg *ServiceConfig) SetPort(s string) {
+func (cfg *ServiceConfig) setPort(s string) {
 	cfg.Port = s
-	cfg.surl.Store("")
-	cfg.Notify()
+	//cfg.surl.Store("")
+	//cfg.Notify()
 }
 
-// SetPath 指定路径
-func (cfg *ServiceConfig) SetPath(s string) {
-	cfg.Path = s
-	cfg.surl.Store("")
-	cfg.Notify()
-}
-
-// SetUrl 指定 URL
-func (cfg *ServiceConfig) SetUrl(s string) {
-	if cfg.Id >= ENV_MAX_PROXY_ID {
+// UrlFor 服务的访问 URL
+func (cfg *ServiceConfig) URLFor(s ...string) string {
+	if cfg.ID >= ENV_MAX_PROXY_ID {
 		panic("unknow service")
 	}
 
-	cfg.surl.Store(s)
-	cfg.Notify()
-}
-
-// Url 服务的访问 URL
-func (cfg *ServiceConfig) Url() string {
-	if cfg.Id >= ENV_MAX_PROXY_ID {
-		panic("unknow service")
-	}
-
-	if sp := cfg.surl.Load(); nil != sp {
-		if s, ok := sp.(string); ok && "" != s {
-			return s
-		}
-	}
+	// if sp := cfg.surl.Load(); nil != sp {
+	// 	if s, ok := sp.(string); ok && "" != s {
+	// 		return s
+	// 	}
+	// }
 
 	isSSL := cfg.IsSSL
 	host := cfg.Host
 	port := cfg.Port
+
+	if (cfg.Type == "" || cfg.Type == "auto") && cfg.env.EnabledPipe() {
+		host = netutil.UNIXSOCKET
+	} else if netutil.IsUnixsocket(cfg.Type) {
+		host = netutil.UNIXSOCKET
+	}
 
 	if engine := cfg.env.GetEngineConfig(); engine.IsEnabled && !engine.IsMasterHost {
 		host = engine.RemoteHost
@@ -190,34 +182,23 @@ func (cfg *ServiceConfig) Url() string {
 		}
 	}
 
-	var s string
-	if isSSL || ENV_LCN_PROXY_ID == cfg.Id {
-		if "" == cfg.Path {
-			s = "https://" + net.JoinHostPort(host, port)
-		} else {
-			s = "https://" + net.JoinHostPort(host, port) + "/" + cfg.Path
-		}
-	} else {
-		if "" == cfg.Path {
-			s = "http://" + net.JoinHostPort(host, port)
-		} else {
-			s = "http://" + net.JoinHostPort(host, port) + "/" + cfg.Path
-		}
+	var baseUrl string
+	var scheme = "http://"
+	if isSSL || ENV_LCN_PROXY_ID == cfg.ID {
+		scheme = "https://"
 	}
-	cfg.surl.Store(s)
-	return s
-}
+	if "" == cfg.UrlPath {
+		baseUrl = scheme + net.JoinHostPort(host, port)
+	} else {
+		baseUrl = scheme + net.JoinHostPort(host, port) + "/" + cfg.UrlPath
+	}
 
-// UrlFor 服务的访问 URL
-func (cfg *ServiceConfig) UrlFor(s ...string) string {
-	baseUrl := cfg.Url()
 	return urlutil.JoinWith(baseUrl, s)
 }
 
 // UrlFor 服务的访问 URL
-func (cfg *ServiceConfig) URI() *url.URL {
-	s := cfg.Url()
-	if u, e := url.Parse(s); nil != e {
+func (cfg *ServiceConfig) URIFor(s ...string) *url.URL {
+	if u, e := url.Parse(cfg.URLFor(s...)); nil != e {
 		panic(e)
 	} else {
 		return u

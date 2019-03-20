@@ -165,7 +165,7 @@ func (hc HttpClient) DoWithContext(ctx context.Context, action string, result in
 }
 
 func (hc HttpClient) doWithContext(force bool, ctx context.Context, action string, result interface{}) errors.RuntimeError {
-	var urlStr = hc.cfg.UrlFor(hc.basePath)
+	var urlStr = hc.cfg.URLFor(hc.basePath)
 	if len(hc.params) != 0 {
 		urlStr = urlStr + "?" + hc.params.Encode()
 		if hc.auth != nil {

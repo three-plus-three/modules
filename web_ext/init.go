@@ -85,15 +85,15 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 				if fp.Value.String() == fp.DefValue {
 					revel.HTTPPort, _ = strconv.Atoi(serviceObject.Port)
 					revel.ServerEngineInit.Port = revel.HTTPPort
-					revel.ServerEngineInit.Address = serviceObject.ListenAddr("")
+					revel.ServerEngineInit.Network, revel.ServerEngineInit.Address = serviceObject.ListenAddr("", "")
 				}
 			} else {
 				revel.HTTPPort, _ = strconv.Atoi(serviceObject.Port)
 				revel.ServerEngineInit.Port = revel.HTTPPort
-				revel.ServerEngineInit.Address = serviceObject.ListenAddr("")
+				revel.ServerEngineInit.Network, revel.ServerEngineInit.Address = serviceObject.ListenAddr("", "")
 			}
 		} else {
-			serviceObject.SetPort("9000")
+			serviceObject.Port = "9000"
 		}
 
 		projectContext := serviceObject.Name

@@ -29,7 +29,7 @@ func (env *Environment) initTSDB(printIfFilesNotFound bool) error {
 		tsdbHTTP, _ := as.Object(tsdbConfig["http"])
 		if nil != tsdbHTTP {
 			if _, port, err := net.SplitHostPort(fmt.Sprint(tsdbHTTP["bind-address"])); err == nil {
-				env.GetServiceConfig(ENV_INFLUXDB_PROXY_ID).SetPort(port)
+				env.GetServiceConfig(ENV_INFLUXDB_PROXY_ID).setPort(port)
 				if printIfFilesNotFound {
 					log.Println("[warn] load tsdb http port ("+port+") from", tsdbConfigFile)
 				}
@@ -39,7 +39,7 @@ func (env *Environment) initTSDB(printIfFilesNotFound bool) error {
 		tsdbAdmin, _ := as.Object(tsdbConfig["admin"])
 		if nil != tsdbAdmin {
 			if _, port, err := net.SplitHostPort(fmt.Sprint(tsdbAdmin["bind-address"])); err == nil {
-				env.GetServiceConfig(ENV_INFLUXDB_ADM_PROXY_ID).SetPort(port)
+				env.GetServiceConfig(ENV_INFLUXDB_ADM_PROXY_ID).setPort(port)
 				if printIfFilesNotFound {
 					log.Println("[warn] load tsdb admin port ("+port+") from", tsdbConfigFile)
 				}

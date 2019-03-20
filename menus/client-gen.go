@@ -35,12 +35,12 @@ type Callback func() ([]toolbox.Menu, error)
 func Connect(env *environment.Environment, appID environment.ENV_PROXY_TYPE,
 	cb Callback, mode, queueName, urlPath string, logger *log.Logger) Client {
 	// wsrv := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
-	// hubURL := so.UrlFor(env.DaemonUrlPath, "/mq/")
+	// hubURL := so.URLFor(env.DaemonUrlPath, "/mq/")
 	// builder := hub.Connect(hubURL)
 
 	switch mode {
 	case "apart":
-		wsrv := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
+		wsrv := env.GetServiceConfig(environment.ENV_HOME_PROXY_ID)
 		apart := &apartClient{
 			logger:    logger, // log.New(os.Stderr, "[menus]", log.LstdFlags),
 			env:       env,
@@ -187,7 +187,7 @@ func (srv *apartClient) Flush() error {
 
 func (srv *apartClient) runSub() {
 	errCount := 0
-	hubURL := srv.wsrv.UrlFor(srv.env.DaemonUrlPath, "/mq/")
+	hubURL := srv.wsrv.URLFor(srv.env.DaemonUrlPath, "/mq/")
 	builder := hub.Connect(hubURL)
 
 	for atomic.LoadInt32(&srv.isClosed) == 0 {

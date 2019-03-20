@@ -3,7 +3,7 @@ package hub
 import (
 	"sync/atomic"
 
-	"golang.org/x/net/websocket"
+	"github.com/three-plus-three/modules/websocket2"
 )
 
 type ErrDisconnect struct {
@@ -21,7 +21,7 @@ func IsConnected(e error) bool {
 
 type Subscription struct {
 	closed int32
-	Conn   *websocket.Conn
+	Conn   *websocket2.Conn
 }
 
 func (sub *Subscription) Close() error {
@@ -34,7 +34,7 @@ func (sub *Subscription) Close() error {
 func (sub *Subscription) Run(cb func(*Subscription, Message)) error {
 	for {
 		var bs []byte
-		err := websocket.Message.Receive(sub.Conn, &bs)
+		err := websocket2.Message.Receive(sub.Conn, &bs)
 		if err != nil {
 			return err
 		}

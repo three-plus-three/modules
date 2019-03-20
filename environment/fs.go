@@ -1,6 +1,10 @@
 package environment
 
-import "path/filepath"
+import (
+	"path/filepath"
+
+	"github.com/three-plus-three/modules/util"
+)
 
 // FileSystem 运行环境中文件系统的抽象
 type FileSystem interface {
@@ -84,7 +88,7 @@ func (fs *linuxFs) SearchConfig(s ...string) []string {
 	var files []string
 	for _, nm := range []string{fs.FromConfig(filepath.Join(s...)),
 		fs.FromDataConfig(filepath.Join(s...))} {
-		if FileExists(nm) {
+		if util.FileExists(nm) {
 			files = append(files, nm)
 		}
 	}
