@@ -63,7 +63,7 @@ func Tracing(comp string) echo.MiddlewareFunc {
 			opName := comp + ":" + c.Request().URL.Path
 			// 监测Header中是否有Trace信息
 			wireContext, err := opentracing.GlobalTracer().Extract(
-				opentracing.TextMap,
+				opentracing.HTTPHeaders,
 				opentracing.HTTPHeadersCarrier(c.Request().Header))
 			if err != nil {
 				if isDebug := c.QueryParam("opentracing"); isDebug != "true" && isDebug != "1" {
