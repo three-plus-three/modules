@@ -42,7 +42,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 				switch act {
 				case actInsertAfterInTree:
 					if len(c.items) == 0 {
-						if c.layout.URL != "" && c.layout.Title != "" {
+						if c.layout.Title == toolbox.MenuDivider || (!isEmptyURL(c.layout.URL) && c.layout.Title != "") {
 							c.items = append(c.items, c.layout.toMenu())
 						}
 					}
@@ -53,7 +53,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 					copy(results[idx+1+len(c.items):], allList[idx+1:])
 				case actInsertBeforeInTree:
 					if len(c.items) == 0 {
-						if c.layout.URL != "" && c.layout.Title != "" {
+						if c.layout.Title == toolbox.MenuDivider || (!isEmptyURL(c.layout.URL) && c.layout.Title != "") {
 							c.items = append(c.items, c.layout.toMenu())
 						}
 					}
@@ -65,7 +65,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 
 				case actReplaceInTree:
 					if len(c.items) == 0 {
-						if c.layout.URL != "" && c.layout.Title != "" {
+						if c.layout.Title == toolbox.MenuDivider || (!isEmptyURL(c.layout.URL) && c.layout.Title != "") {
 							c.items = append(c.items, c.layout.toMenu())
 						}
 					}
@@ -99,7 +99,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 			switch act {
 			case actInsertAfterInTree:
 				if len(c.items) == 0 {
-					if !isEmptyURL(c.layout.URL) && c.layout.Title != "" {
+					if c.layout.Title == toolbox.MenuDivider || (!isEmptyURL(c.layout.URL) && c.layout.Title != "") {
 						c.items = append(c.items, c.layout.toMenu())
 					}
 				}
@@ -115,7 +115,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 				}
 			case actInsertBeforeInTree:
 				if len(c.items) == 0 {
-					if !isEmptyURL(c.layout.URL) && c.layout.Title != "" {
+					if c.layout.Title == toolbox.MenuDivider || (!isEmptyURL(c.layout.URL) && c.layout.Title != "") {
 						c.items = append(c.items, c.layout.toMenu())
 					}
 				}
@@ -131,7 +131,7 @@ func insertToTree(allList []toolbox.Menu, c *container, isInline bool, act int) 
 				}
 			case actReplaceInTree:
 				if len(c.items) == 0 {
-					if !isEmptyURL(c.layout.URL) && c.layout.Title != "" {
+					if c.layout.Title == toolbox.MenuDivider || (!isEmptyURL(c.layout.URL) && c.layout.Title != "") {
 						item := c.layout.toMenu()
 						mergeMenuNonrecursive(&item, &allList[idx])
 						c.items = append(c.items, item)

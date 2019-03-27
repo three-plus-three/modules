@@ -21,6 +21,11 @@ func GenerateID() string {
 	return CreateID(time.Now(), atomic.AddUint32(&idCounter, 1))
 }
 
+// SequenceID returns a new sequence ObjectId.
+func SequenceID() uint32 {
+	return atomic.AddUint32(&idCounter, 1)
+}
+
 // CreateID create a unique ObjectId.
 func CreateID(t time.Time, count uint32) string {
 	var b [8]byte
