@@ -41,6 +41,12 @@
         "url": "/hengwei/mc/notificationgroups/index"
       },
       {
+        "uid": "mc.IPAddresses.Index",
+        "title": "IP地址管理",
+        "permission": "mc.IPAddresses",
+        "url": "/hengwei/mc/ipaddresses/index"
+      },
+      {
         "uid": "mc.SchdJobs.Index",
         "title": "计划任务",
         "permission": "mc.SchdJobs",
@@ -1146,563 +1152,52 @@
     ]
   },
   "layout": {
-    "am": [
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.products",
-        "title": "综合运维中心",
-        "url": "",
-        "icon": "fa-desktop"
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.nm",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.wserver",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.um",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.loganalyzer",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.mc",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.itsm",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.record_mgr",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.vpn_management",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.home",
-        "title": "资产主页",
-        "url": "",
-        "icon": "fa-home"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.common_functions",
-        "title": "常用功能",
-        "url": "",
-        "icon": "fa-list",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.putinstorage",
-            "title": "资产入库",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.assetstateedit",
-            "title": "资产分派",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.assetdepreciation",
-            "title": "资产折旧配置",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.import",
-            "title": "资产导入",
-            "url": "",
-            "children": [
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.importasset",
-                "title": "csv 导入",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.importxlsx",
-                "title": "xlsx导入",
-                "url": ""
-              }
-            ]
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.asssetSync",
-            "title": "资产同步",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.exporttasset",
-            "title": "资产导出",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.divider1",
-            "title": "divider",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.asset_list.0",
-            "title": "在运的资产",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.asset_list.1",
-            "title": "退役的资产",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.asset_list.2",
-            "title": "库存备用的资产",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.asset_list.3",
-            "title": "报废的资产",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.asset_list.4",
-            "title": "在修的资产",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.asset_list.5",
-            "title": "待投运的资产",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.asset_list.6",
-            "title": "借出的资产",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "",
-        "title": "资产",
-        "url": "",
-        "icon": "fa-qrcode",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.as.it",
-            "title": "IT资产",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.as.noit",
-            "title": "非IT资产",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.as.com_noit",
-            "title": "非IT资产组件",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.group",
-            "title": "自定义分组查看",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.softwares",
-        "title": "软件",
-        "url": "",
-        "icon": "fa-floppy-o",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.installedsoftwares",
-            "title": "已安装的软件",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.licenseagreements",
-            "title": "许可协议",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.softwarelicenses",
-            "title": "软件许可",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.contracts",
-        "title": "合同",
-        "url": "",
-        "icon": "fa-files-o"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.cmdblist",
-        "title": "CMDB",
-        "url": "",
-        "icon": "fa-cubes"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.management",
-        "title": "设置",
-        "url": "",
-        "icon": "fa-cogs",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.asset_management",
-            "title": "资产设置",
-            "url": "",
-            "children": [
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.products",
-                "title": "产品",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.vendors",
-                "title": "供应商",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.manufacturers",
-                "title": "制造商",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.resourcestates",
-                "title": "资产状态",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.resourcestaterelations",
-                "title": "资产状态关联",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.itemGroup",
-                "title": "自定义分组",
-                "url": ""
-              }
-            ]
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.organization_details",
-            "title": "组织区域设置",
-            "url": "",
-            "children": [
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.districts",
-                "title": "区域",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.locations",
-                "title": "地点",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.departments",
-                "title": "部门",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.staffs",
-                "title": "员工",
-                "url": ""
-              }
-            ]
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.cmdb",
-            "title": "CMDB元数据设置",
-            "url": "",
-            "children": [
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.metaitems",
-                "title": "配置项类型",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.influences",
-                "title": "影响",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.relationships",
-                "title": "关系类型",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.fieldGroups",
-                "title": "字段分组",
-                "url": ""
-              }
-            ]
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.software",
-            "title": "软件设置",
-            "url": "",
-            "children": [
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "softwaretypes",
-                "title": "软件类型",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "softwarecategories",
-                "title": "软件分类",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "licensetypes",
-                "title": "许可类型",
-                "url": ""
-              }
-            ]
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.contract",
-            "title": "合同设置",
-            "url": "",
-            "children": [
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.contracttypes",
-                "title": "合同类型",
-                "url": ""
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.reports",
-        "title": "资产报表",
-        "url": "",
-        "icon": "fa-area-chart"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.audit",
-        "title": "审计",
-        "url": "",
-        "icon": "fa-line-chart"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.assetalerts",
-        "title": "资产预警",
-        "url": "",
-        "icon": "fa-bell"
-      }
-    ],
     "default": [
+      {
+        "category": "",
+        "location": "after",
+        "target": "nm.monitor.device_browse",
+        "inline": false,
+        "uid": "nm.monitor.divider222",
+        "title": "divider",
+        "permission": "nm.monitor.divider222",
+        "url": ""
+      },
+      {
+        "category": "location",
+        "location": "replace",
+        "target": "nm.monitor.computer_room",
+        "inline": true,
+        "uid": "nm.monitor.computer_room2",
+        "title": "3D机房",
+        "classes": "new-window",
+        "url": "/hengwei/mc/computerrooms/overview#"
+      },
+      {
+        "category": "location",
+        "location": "after",
+        "target": "nm.monitor.divider222",
+        "inline": true,
+        "uid": "nm.monitor.slider",
+        "title": "幻灯放映",
+        "classes": "new-window",
+        "url": "/hengwei/mc/slideshow/view"
+      },
+      {
+        "category": "remove",
+        "location": "after",
+        "target": "",
+        "inline": true,
+        "uid": "mc.IPAddresses.Index",
+        "title": "IP地址管理",
+        "classes": "new-window",
+        "permission": "mc.IPAddresses",
+        "url": "/hengwei/mc/ipaddresses/index"
+      },
       {
         "category": "location",
         "location": "before",
+        "target": "nm.home",
         "inline": false,
         "uid": "app.products",
         "title": "综合运维中心",
@@ -1712,6 +1207,7 @@
       {
         "category": "location",
         "location": "replace",
+        "target": "nm.system.help",
         "inline": true,
         "uid": "nm.system.help2",
         "title": "帮助",
@@ -1720,6 +1216,7 @@
       {
         "category": "remove",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "app.record_mgr",
         "title": "",
@@ -1728,6 +1225,7 @@
       {
         "category": "remove",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "app.am",
         "title": "",
@@ -1736,6 +1234,7 @@
       {
         "category": "remove",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "app.vpn_management",
         "title": "",
@@ -1744,6 +1243,7 @@
       {
         "category": "remove",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "app.itsm",
         "title": "",
@@ -1752,6 +1252,7 @@
       {
         "category": "removeIfUrlEmpty",
         "location": "",
+        "target": "nm.system.engine_nodes",
         "inline": false,
         "uid": "",
         "title": "",
@@ -1760,6 +1261,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.home",
         "title": "运维主页",
@@ -1769,6 +1271,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.monitor1",
         "title": "总览视图",
@@ -1778,6 +1281,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor.topology",
             "title": "网络视图",
@@ -1786,6 +1290,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor.computer_room",
             "title": "机房视图",
@@ -1794,6 +1299,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor.biz_view_list",
             "title": "业务视图",
@@ -1802,6 +1308,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor.divider1",
             "title": "divider",
@@ -1810,6 +1317,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor.view_panel",
             "title": "监控总览",
@@ -1818,6 +1326,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor.biz_browse",
             "title": "业务总览",
@@ -1826,6 +1335,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor.services_browse",
             "title": "服务总览",
@@ -1834,6 +1344,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor.device_browse",
             "title": "设备总览",
@@ -1844,6 +1355,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.auto.operation1",
         "title": "智动运维",
@@ -1854,6 +1366,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "mc.Todolists.Index",
             "title": "待办事项",
@@ -1862,6 +1375,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.auto.inspection",
             "title": "智动巡检",
@@ -1871,6 +1385,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor.tour_inspection.current_task",
                 "title": "当前巡检任务",
@@ -1879,6 +1394,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor.tour_inspection.error_view",
                 "title": "任务异常一览",
@@ -1887,6 +1403,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor.tour_inspection.error_confirm",
                 "title": "巡检异常处理",
@@ -1895,6 +1412,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor.tour_inspection.query",
                 "title": "巡检结果查询",
@@ -1903,6 +1421,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor.tour_inspection.report",
                 "title": "巡检报告查看",
@@ -1912,6 +1431,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.auto.operation.divider1",
                 "title": "divider",
@@ -1920,6 +1440,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor.tour_inspection.inspect_task",
                 "title": "巡检任务管理",
@@ -1928,6 +1449,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor.tour_inspection.inspect_point",
                 "title": "巡检点管理",
@@ -1936,6 +1458,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor.tour_inspection.inspect_files",
                 "title": "巡检文件管理",
@@ -1946,6 +1469,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.auto.backup",
             "title": "智动配置备份",
@@ -1955,6 +1479,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.common_tools.archive_rule",
                 "title": "智动备份规则",
@@ -1963,6 +1488,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.common_tools.archive_report",
                 "title": "智动备份查看",
@@ -1971,6 +1497,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.auto.operation.divider2",
                 "title": "divider",
@@ -1979,6 +1506,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.common_tools.device_conf_template",
                 "title": "智动分析模板",
@@ -1987,6 +1515,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.common_tools.tftp_script",
                 "title": "设备TFTP脚本设置",
@@ -1999,6 +1528,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.net_analysis1",
         "title": "网络分析",
@@ -2008,6 +1538,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.data_flow.live_view",
             "title": "网络流量分析",
@@ -2016,6 +1547,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.data_flow.biz_analysis",
             "title": "业务流量分析",
@@ -2024,6 +1556,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.data_flow.biz_management",
             "title": "业务管理",
@@ -2032,6 +1565,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.net_analysis.divider",
             "title": "divider",
@@ -2040,6 +1574,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.ip_address.list",
             "title": "地址簿总览",
@@ -2048,6 +1583,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.ip_address.comparison",
             "title": "地址簿对照表",
@@ -2056,6 +1592,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.ip_address.setting",
             "title": "地址簿采集设置",
@@ -2064,6 +1601,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.ip_address.trace_log",
             "title": "地址簿运行日志",
@@ -2074,6 +1612,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.data_flow1",
         "title": "实时数据分析",
@@ -2083,6 +1622,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor.all_view",
             "title": "实时数据曲线",
@@ -2091,6 +1631,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor_management.device_monitor",
             "title": "设备负载监控",
@@ -2099,6 +1640,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.device_cpu_monitor",
                 "title": "CPU利用率",
@@ -2108,6 +1650,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.device_mem_monitor",
                 "title": "内存利用率",
@@ -2119,6 +1662,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor_management.line_monitor",
             "title": "线路流量监控",
@@ -2127,6 +1671,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.line_octets_monitor",
                 "title": "上下行流量",
@@ -2135,6 +1680,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.line_pkts_monitor",
                 "title": "上下行帧流量",
@@ -2145,6 +1691,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.monitor_management.topn",
             "title": "负载TOPN",
@@ -2153,6 +1700,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.device_cpu_topn",
                 "title": "CPU利用率TOP-N",
@@ -2161,6 +1709,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.device_mem_topn",
                 "title": "内存利用率TOP-N",
@@ -2169,6 +1718,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.divider",
                 "title": "divider",
@@ -2177,6 +1727,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.link_octets_topn",
                 "title": "线路流量TOP-N",
@@ -2185,6 +1736,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.link_pkts_topn",
                 "title": "帧流量TOP-N",
@@ -2195,6 +1747,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.device.table",
             "title": "设备表信息",
@@ -2203,6 +1756,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.arp_info",
                 "title": "设备ARP表信息",
@@ -2211,6 +1765,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.address_info",
                 "title": "设备IP地址表信息",
@@ -2219,6 +1774,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.tcp_connection",
                 "title": "设备TCP连接信息",
@@ -2227,6 +1783,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.udp_listen",
                 "title": "设备UDP监听信息",
@@ -2237,6 +1794,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.view.runtime",
             "title": "运行视图",
@@ -2245,6 +1803,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.device_view",
                 "title": "设备运行视图",
@@ -2253,6 +1812,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.host_view",
                 "title": "主机运行视图",
@@ -2261,6 +1821,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.db_view",
                 "title": "数据库运行视图",
@@ -2269,6 +1830,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.monitor_management.mid_view",
                 "title": "中间件运行视图",
@@ -2281,6 +1843,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.vm_storage1",
         "title": "虚拟化&存储",
@@ -2290,6 +1853,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.vm_storage.object_browse",
             "title": "监控一览",
@@ -2298,6 +1862,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.virtualization",
             "title": "虚拟化",
@@ -2307,6 +1872,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.vmware_view",
                 "title": "虚拟化视图",
@@ -2315,6 +1881,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.v_center",
                 "title": "虚拟中心管理",
@@ -2323,6 +1890,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.esxi",
                 "title": "ESX/ESXI主机管理",
@@ -2331,6 +1899,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.vm",
                 "title": "虚拟机管理",
@@ -2339,6 +1908,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.data_store",
                 "title": "虚拟存储管理",
@@ -2347,6 +1917,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.divider3",
                 "title": "divider",
@@ -2355,6 +1926,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.hyperv_list",
                 "title": "Hyper-V列表",
@@ -2363,6 +1935,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.hyperv_browse",
                 "title": "Hyper-V状态一览",
@@ -2373,6 +1946,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.storage",
             "title": "存储",
@@ -2382,6 +1956,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.raid_browse",
                 "title": "存储设备一览",
@@ -2390,6 +1965,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.raid_capacity",
                 "title": "存储容量使用",
@@ -2398,6 +1974,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.vm_storage.raid_topn",
                 "title": "存储性能排行",
@@ -2410,6 +1987,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.common_tools1",
         "title": "常用工具",
@@ -2419,6 +1997,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.ping_test",
             "title": "Ping测试",
@@ -2427,6 +2006,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.snmp_test",
             "title": "Snmp连接测试",
@@ -2435,6 +2015,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.trace_route",
             "title": "Trace Route",
@@ -2443,6 +2024,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.dig_test",
             "title": "Dig",
@@ -2451,6 +2033,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.divider3",
             "title": "divider",
@@ -2459,6 +2042,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.telnet",
             "title": "Telnet",
@@ -2467,6 +2051,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.ssh",
             "title": "SSH",
@@ -2475,6 +2060,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.divider4",
             "title": "divider",
@@ -2483,6 +2069,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.cim",
             "title": "Cim浏览",
@@ -2491,6 +2078,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.common_tools.divider5",
             "title": "divider",
@@ -2499,6 +2087,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.ipDevice.distribution",
             "title": "IP设备分布",
@@ -2507,6 +2096,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.ipService.distribution",
             "title": "IP服务分布",
@@ -2517,6 +2107,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.alarm_log1",
         "title": "告警&日志",
@@ -2526,6 +2117,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.alert.current_alert",
             "title": "未恢复告警",
@@ -2534,6 +2126,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.log",
             "title": "日志信息",
@@ -2543,6 +2136,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alert.log",
                 "title": "告警日志",
@@ -2551,6 +2145,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alert.device_port_log",
                 "title": "设备端口日志",
@@ -2559,6 +2154,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alert.composite_log",
                 "title": "组合告警日志",
@@ -2567,6 +2163,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.notifications.list",
                 "title": "外部日志告警日志",
@@ -2575,6 +2172,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.harvest.trap_query",
                 "title": "SnmpTrap日志",
@@ -2583,6 +2181,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alarm_log.divider1",
                 "title": "divider",
@@ -2591,6 +2190,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alert.error_list",
                 "title": "告警规则运行日志",
@@ -2599,6 +2199,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.report_management.history_error_list",
                 "title": "历史规则运行日志",
@@ -2607,6 +2208,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.sms.list",
                 "title": "短信发出日志",
@@ -2615,6 +2217,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.common_tools.error_list",
                 "title": "颜色规则日志",
@@ -2625,6 +2228,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "loganalyzer",
             "title": "Syslog日志",
@@ -2633,6 +2237,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "loganalyzer.dashboards",
                 "title": "总览",
@@ -2641,6 +2246,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "loganalyzer.view",
                 "title": "查询",
@@ -2649,6 +2255,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "loganalyzer.filters",
                 "title": "过滤器",
@@ -2657,6 +2264,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "loganalyzer.settings",
                 "title": "设置",
@@ -2667,6 +2275,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.alarm_rule",
             "title": "规则设置",
@@ -2676,6 +2285,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alert.rule",
                 "title": "告警规则",
@@ -2684,6 +2294,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alert.composited_rule",
                 "title": "组合告警",
@@ -2692,6 +2303,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alarm_rule.divider3",
                 "title": "divider",
@@ -2700,6 +2312,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alert.log_alert",
                 "title": "外部日志告警规则",
@@ -2708,6 +2321,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alert.custom_detect_rule",
                 "title": "自定义检测告警",
@@ -2716,6 +2330,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alarm_rule.divider4",
                 "title": "divider",
@@ -2724,6 +2339,7 @@
               {
                 "category": "",
                 "location": "",
+                "target": "",
                 "inline": false,
                 "uid": "nm.alert.baseline",
                 "title": "基线数据管理",
@@ -2736,6 +2352,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.history_report1",
         "title": "历史&报表",
@@ -2745,6 +2362,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.report_management.history_rule",
             "title": "历史记录规则",
@@ -2753,6 +2371,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.report_management.history_analysis",
             "title": "记录数据查询",
@@ -2761,6 +2380,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.report_management.history_flux",
             "title": "流量数据查询",
@@ -2769,6 +2389,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.report_management.divider1",
             "title": "divider",
@@ -2777,6 +2398,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.report_management.report_rule",
             "title": "报表规则管理",
@@ -2785,6 +2407,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.report_management.report_browse",
             "title": "生成报表查看",
@@ -2793,6 +2416,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.report_management.default_report_rule",
             "title": "预置报表管理",
@@ -2801,6 +2425,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.report_management.default_report_browse",
             "title": "预置报表查看",
@@ -2809,6 +2434,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.report_management.custom_kpi",
             "title": "自定义统计数据",
@@ -2819,6 +2445,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.resource1",
         "title": "管理对象",
@@ -2828,6 +2455,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.topology.search",
             "title": "生成拓扑图",
@@ -2836,6 +2464,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.topology.report",
             "title": "拓扑生成报告",
@@ -2844,6 +2473,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "",
             "title": "divider",
@@ -2852,6 +2482,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.device",
             "title": "设备管理",
@@ -2860,6 +2491,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.link",
             "title": "线路管理",
@@ -2868,6 +2500,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.composite_port",
             "title": "组合端口管理",
@@ -2876,6 +2509,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.divider1",
             "title": "divider",
@@ -2884,6 +2518,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.host",
             "title": "主机管理",
@@ -2892,6 +2527,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.database",
             "title": "数据库管理",
@@ -2900,6 +2536,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.midware",
             "title": "中间件管理",
@@ -2908,6 +2545,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.app",
             "title": "标准应用管理",
@@ -2916,6 +2554,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.divider3",
             "title": "divider",
@@ -2924,6 +2563,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.tag_list",
             "title": "Tag列表",
@@ -2932,6 +2572,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.mo_setting",
             "title": "管理对象设置",
@@ -2940,6 +2581,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.run_time",
             "title": "运行时段设置",
@@ -2948,6 +2590,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.divider4",
             "title": "divider",
@@ -2956,6 +2599,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.import",
             "title": "资源导入",
@@ -2964,6 +2608,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.resource.diagnosis",
             "title": "资源诊断",
@@ -2974,6 +2619,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.system2",
         "title": "系统设置",
@@ -2983,6 +2629,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "um.HengweiUsers",
             "title": "用户管理",
@@ -2991,6 +2638,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "um.HengweiUserGroups",
             "title": "用户组管理",
@@ -2999,6 +2647,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "um.HengweiRoles",
             "title": "角色管理",
@@ -3007,6 +2656,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "um.HengweiPermissionGroups",
             "title": "权限管理",
@@ -3015,6 +2665,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.divider2",
             "title": "divider",
@@ -3023,6 +2674,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "mc.SchdJobs.Index",
             "title": "计划任务",
@@ -3031,6 +2683,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "mc.Products.Index",
             "title": "系统组件",
@@ -3039,6 +2692,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.engine_nodes",
             "title": "分布式采集引擎",
@@ -3047,6 +2701,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.mail_server",
             "title": "外部服务器设置",
@@ -3055,6 +2710,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.divider3",
             "title": "divider",
@@ -3063,6 +2719,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.image_manage",
             "title": "图元管理",
@@ -3071,6 +2728,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.script_manage",
             "title": "脚本管理",
@@ -3079,6 +2737,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.sql_script_manage",
             "title": "数据库脚本管理",
@@ -3087,6 +2746,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.divider4",
             "title": "divider",
@@ -3095,6 +2755,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.operation_logs",
             "title": "用户操作日志",
@@ -3103,6 +2764,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.divider5",
             "title": "divider",
@@ -3111,6 +2773,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "mc.NotificationGroups.Index",
             "title": "通知管理",
@@ -3119,6 +2782,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.divider6",
             "title": "divider",
@@ -3127,6 +2791,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "mc.Tables.Index",
             "title": "系统空间管理",
@@ -3135,6 +2800,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "mc.TSDBShards.Index",
             "title": "历史数据管理",
@@ -3143,6 +2809,16 @@
           {
             "category": "",
             "location": "",
+            "target": "",
+            "inline": false,
+            "uid": "nm.resource.domain",
+            "title": "域管理",
+            "url": ""
+          },
+          {
+            "category": "",
+            "location": "",
+            "target": "",
             "inline": false,
             "uid": "mc.AutoBackup.Index",
             "title": "备份数据",
@@ -3151,6 +2827,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.divider7",
             "title": "divider",
@@ -3159,6 +2836,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.generate_license",
             "title": "生成License",
@@ -3167,6 +2845,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.import_license",
             "title": "导入License",
@@ -3175,6 +2854,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.divider8",
             "title": "divider",
@@ -3183,6 +2863,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "nm.system.help",
             "title": "帮助",
@@ -3191,6 +2872,7 @@
           {
             "category": "",
             "location": "",
+            "target": "",
             "inline": false,
             "uid": "mc.About.Index",
             "title": "关于",
@@ -3201,6 +2883,7 @@
       {
         "category": "",
         "location": "",
+        "target": "",
         "inline": false,
         "uid": "nm.2222",
         "title": "集中展示",
@@ -3211,6 +2894,7 @@
       {
         "category": "location",
         "location": "before",
+        "target": "nm.system.help",
         "inline": true,
         "uid": "xxxxxx",
         "title": "运维平台",
@@ -3219,952 +2903,14 @@
         "icon": "fa-trello"
       }
     ],
-    "default_old": [
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.home",
-        "title": "运维主页",
-        "url": "",
-        "icon": "fa-home"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.monitor",
-        "title": "运维管理",
-        "url": "#",
-        "icon": "fa-trello"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.monitor_management",
-        "title": "监控管理",
-        "url": "#",
-        "icon": "fa-file-video-o"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.alert",
-        "title": "告警管理",
-        "url": "#",
-        "icon": "fa-warning"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.resource",
-        "title": "资源管理",
-        "url": "#",
-        "icon": "fa-hdd-o"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.data_management",
-        "title": "数据管理",
-        "url": "#",
-        "icon": "fa-cubes"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.vm_storage",
-        "title": "虚拟化&存储",
-        "url": "#",
-        "icon": "fa-vimeo-square"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.data_flow",
-        "title": "流量分析",
-        "url": "#",
-        "icon": "fa-filter"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.common_tools",
-        "title": "常用工具",
-        "url": "#",
-        "icon": "fa-wrench"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.report_management",
-        "title": "报表管理",
-        "url": "#",
-        "icon": "fa-list-alt"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.system",
-        "title": "系统管理",
-        "url": "#",
-        "icon": "fa-cog"
-      },
-      {
-        "category": "location",
-        "location": "replace",
-        "inline": true,
-        "uid": "app.um",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "location",
-        "location": "before",
-        "inline": false,
-        "uid": "app.products",
-        "title": "综合运维中心",
-        "url": "",
-        "icon": "fa-desktop"
-      },
-      {
-        "category": "location",
-        "location": "after",
-        "inline": true,
-        "uid": "nm.system.help",
-        "title": "帮助",
-        "url": "/hengwei/internal/doc/"
-      },
-      {
-        "category": "location",
-        "location": "replace",
-        "inline": true,
-        "uid": "app.loganalyzer",
-        "title": "",
-        "url": ""
-      }
-    ],
-    "itsm": [
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.products",
-        "title": "综合运维中心",
-        "url": "",
-        "icon": "fa-desktop"
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.nm",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.wserver",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.um",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.loganalyzer",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.mc",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.am",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.record_mgr",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.vpn_management",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "Home",
-        "title": "事件中心",
-        "url": "",
-        "icon": "fa-home"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "Dashboards.Index",
-        "title": "ITSM总览",
-        "url": "",
-        "icon": "fa-dashboard"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "Projects.Index",
-        "title": "项目管理",
-        "url": "",
-        "icon": "fa-rub"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "Solutions.Index",
-        "title": "解决方案",
-        "url": "",
-        "icon": "fa-wrench"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "Changes",
-        "title": "变更管理",
-        "url": "",
-        "icon": "fa-file-code-o",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "Changes.Index",
-            "title": "变更列表",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "DefaultForChangeWorkflow.Index",
-            "title": "变更流程图配置",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "",
-            "title": "变更字段配置",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "CustomReports.Index",
-        "title": "报表管理",
-        "url": "",
-        "icon": "fa-bar-chart-o"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "Requests",
-        "title": "事件类型",
-        "url": "",
-        "icon": "fa-file-excel-o",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "AutomaticCheck.Index",
-            "title": "自动巡检管理",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "Alerts.Index",
-            "title": "告警管理",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "Tickets.Index",
-        "title": "两票管理",
-        "url": "",
-        "icon": "fa-tags"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "Events",
-        "title": "缺陷管理",
-        "url": "",
-        "icon": "fa-bug"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "",
-        "title": "知识库",
-        "url": "",
-        "icon": "fa-cogs",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "KnowledgeSubjects",
-            "title": "知识库主题",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "Knowledges",
-            "title": "知识库信息",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "",
-        "title": "ITSM设置",
-        "url": "",
-        "icon": "fa-cogs",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "BaseInfo",
-            "title": "基本信息",
-            "url": "",
-            "children": [
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "Requesters.Index",
-                "title": "请求人列表",
-                "url": ""
-              }
-            ]
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "Systemproperties",
-            "title": "全局属性",
-            "url": "",
-            "children": [
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "priority",
-                "title": "优先级",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "taskStatus",
-                "title": "任务状态",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "projectStatus",
-                "title": "项目状态",
-                "url": ""
-              },
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "projectType",
-                "title": "项目类型",
-                "url": ""
-              }
-            ]
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "Slas.Index",
-            "title": "服务等级协议(SLA)",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "WorkTimeConfig",
-            "title": "工作时间配置",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "RequestTypes",
-            "title": "请求类型",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "RequestConfig",
-            "title": "请求信息配置",
-            "url": ""
-          }
-        ]
-      }
-    ],
-    "record_mgr": [
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.products",
-        "title": "综合运维中心",
-        "url": "",
-        "icon": "fa-desktop"
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.nm",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.wserver",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.um",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.loganalyzer",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.mc",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.itsm",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.am",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.vpn_management",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.records",
-        "title": "备案",
-        "url": "#",
-        "icon": "fa-folder-o",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.infoDevice",
-            "title": "信息设备备案",
-            "url": "/hengwei/record_mgr/itemobjects/index?active=am.infoDevice&classify=&displayStatus=&filterFields=&metaItemId=0&showTree=true&treeFilter=%7B%22category%22%3A+%22%E5%A4%87%E6%A1%88%22%2C+%22recordType%22%3A+%22infoDevice%22%7D&treeType=classify"
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.port",
-            "title": "端口备案",
-            "url": "/hengwei/record_mgr/itemobjects/index?active=am.port&classify=&displayStatus=&filterFields=&metaItemId=0&showTree=true&treeFilter=%7B%22category%22%3A+%22%E5%A4%87%E6%A1%88%22%2C+%22recordType%22%3A+%22port%22%7D&treeType=classify"
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.strategy",
-            "title": "策略备案",
-            "url": "/hengwei/record_mgr/itemobjects/index?active=am.strategy&classify=&displayStatus=&filterFields=&metaItemId=0&showTree=true&treeFilter=%7B%22category%22%3A+%22%E5%A4%87%E6%A1%88%22%2C+%22recordType%22%3A+%22strategy%22%7D&treeType=classify"
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.others",
-            "title": "其他备案",
-            "url": "/hengwei/record_mgr/itemobjects/index?active=am.others&classify=&displayStatus=&filterFields=&metaItemId=0&showTree=true&treeFilter=%7B%22category%22%3A+%22%E5%A4%87%E6%A1%88%22%2C+%22recordType%22%3A+%22others%22%7D&treeType=classify"
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.scan",
-            "title": "端口扫描",
-            "url": "/hengwei/record_mgr/scanport/index"
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.management",
-        "title": "管理",
-        "url": "#",
-        "icon": "fa-cogs",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "am.cmdb",
-            "title": "CMDB",
-            "url": "#",
-            "children": [
-              {
-                "category": "",
-                "location": "",
-                "inline": false,
-                "uid": "am.metaitems",
-                "title": "配置项类型",
-                "url": "/hengwei/record_mgr/meta_items"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "am.reports",
-        "title": "报表",
-        "url": "/hengwei/record_mgr/reports/index?pageIndex=0&pageSize=0",
-        "icon": "fa-area-chart"
-      }
-    ],
-    "vpn_management": [
-      {
-        "category": "location",
-        "location": "before",
-        "inline": false,
-        "uid": "app.products",
-        "title": "综合运维中心",
-        "url": "",
-        "icon": "fa-desktop"
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.nm",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.wserver",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.um",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.loganalyzer",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.mc",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.itsm",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.am",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "remove",
-        "location": "",
-        "inline": false,
-        "uid": "app.record_mgr",
-        "title": "",
-        "url": ""
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.home",
-        "title": "VPN 管理首页",
-        "url": "",
-        "icon": "fa-home"
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.monitor1",
-        "title": "运维视图",
-        "url": "",
-        "icon": "fa-trello",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.monitor.mpls_topology",
-            "title": "MPLS拓扑",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.monitor.lsp_topology",
-            "title": "LSP拓扑",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.monitor.l2vpn_topology",
-            "title": "L2VPN拓扑",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.alert1",
-        "title": "告警管理",
-        "url": "",
-        "icon": "fa-warning",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.alert.current_alert",
-            "title": "当前告警",
-            "url": "",
-            "icon": "show-remote"
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.alert.log",
-            "title": "告警日志",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.divider",
-            "title": "divider",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.alert.rule",
-            "title": "告警规则",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.alert.composited_rule",
-            "title": "组合告警",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.divider",
-            "title": "divider",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.alert.error_list",
-            "title": "规则运行日志",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.resource1",
-        "title": "资源管理",
-        "url": "",
-        "icon": "fa-hdd-o",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.resource.mpls_device",
-            "title": "MPLS设备管理",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.resource.mpls_ce",
-            "title": "CE列表",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.resource.mpls_vpn",
-            "title": "VPN列表",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.divider",
-            "title": "divider",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.mpls.mpls_link",
-            "title": "MPLS线路列表",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.mpls.mpls_lsp",
-            "title": "LSP列表",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.topology_discover1",
-        "title": "拓扑发现",
-        "url": "",
-        "icon": "fa-cubes",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.topology_discover.search",
-            "title": "搜索网络拓扑",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.topology_discover.search_mpls",
-            "title": "搜索L3VPN网络",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.topology_discover.search_l2vpn",
-            "title": "搜索L2VPN网络",
-            "url": ""
-          }
-        ]
-      },
-      {
-        "category": "",
-        "location": "",
-        "inline": false,
-        "uid": "nm.report_management1",
-        "title": "历史记录",
-        "url": "",
-        "icon": "fa-list-alt",
-        "children": [
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.report_management.history_rule",
-            "title": "历史记录规则",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.report_management.history_analysis",
-            "title": "记录数据查询",
-            "url": ""
-          },
-          {
-            "category": "",
-            "location": "",
-            "inline": false,
-            "uid": "nm.report_management.history_error_list",
-            "title": "规则运行日志",
-            "url": ""
-          }
-        ]
-      }
-    ]
-  },
+   },
   "menuList": [
+    {
+      "uid": "nm.monitor.slider",
+      "title": "幻灯放映",
+      "url": "/hengwei/mc/slideshow/view",
+      "classes": "new-window"
+    },
     {
       "uid": "app.products",
       "title": "综合运维中心",
@@ -4212,10 +2958,10 @@
           "url": "/hengwei/web/network_topologies/root"
         },
         {
-          "uid": "nm.monitor.computer_room",
-          "title": "机房视图",
-          "permission": "nm.monitor.computer_room",
-          "url": "/hengwei/web/room_topologies/first"
+          "uid": "nm.monitor.computer_room2",
+          "title": "3D机房",
+          "url": "/hengwei/mc/computerrooms/overview#",
+          "classes": "new-window"
         },
         {
           "uid": "nm.monitor.biz_view_list",
@@ -4265,6 +3011,154 @@
           "title": "待办事项",
           "permission": "mc.Todolists",
           "url": "/hengwei/mc/todolist"
+        },
+        {
+          "uid": "nm.auto.inspection",
+          "title": "智动巡检",
+          "icon": "fa-auto.operation",
+          "children": [
+            {
+              "uid": "nm.monitor.tour_inspection.current_task",
+              "title": "当前巡检任务",
+              "permission": "nm.monitor.tour_inspection.current_task",
+              "url": "/hengwei/web/tour_inspection/inspect_tasks/current_tasks"
+            },
+            {
+              "uid": "nm.monitor.tour_inspection.error_view",
+              "title": "任务异常一览",
+              "permission": "nm.monitor.tour_inspection.error_view",
+              "url": "/hengwei/web/tour_inspection/inspect_tasks/task_exceptions"
+            },
+            {
+              "uid": "nm.monitor.tour_inspection.error_confirm",
+              "title": "巡检异常处理",
+              "permission": "nm.monitor.tour_inspection.error_confirm",
+              "url": "/hengwei/web/tour_inspection/inspect_tasks/all_exceptions"
+            },
+            {
+              "uid": "nm.monitor.tour_inspection.query",
+              "title": "巡检结果查询",
+              "permission": "nm.monitor.tour_inspection.query",
+              "url": "/hengwei/web/tour_inspection/query"
+            },
+            {
+              "uid": "nm.monitor.tour_inspection.report",
+              "title": "巡检报告查看",
+              "permission": "nm.monitor.tour_inspection.report",
+              "url": "/hengwei/web/tour_inspection/view_report_select",
+              "icon": "show-remote"
+            },
+            {
+              "uid": "nm.auto.operation.divider1",
+              "title": "divider"
+            },
+            {
+              "uid": "nm.monitor.tour_inspection.inspect_task",
+              "title": "巡检任务管理",
+              "permission": "nm.monitor.tour_inspection.inspect_task",
+              "url": "/hengwei/web/tour_inspection/inspect_tasks"
+            },
+            {
+              "uid": "nm.monitor.tour_inspection.inspect_point",
+              "title": "巡检点管理",
+              "permission": "nm.monitor.tour_inspection.inspect_point",
+              "url": "/hengwei/web/tour_inspection/inspect_points"
+            },
+            {
+              "uid": "nm.monitor.tour_inspection.inspect_files",
+              "title": "巡检文件管理",
+              "permission": "nm.monitor.tour_inspection.inspect_files",
+              "url": "/hengwei/web/tour_inspection/inspect_files"
+            }
+          ]
+        },
+        {
+          "uid": "nm.auto.backup",
+          "title": "智动配置备份",
+          "icon": "fa-auto.backup",
+          "children": [
+            {
+              "uid": "nm.common_tools.archive_rule",
+              "title": "智动备份规则",
+              "permission": "nm.common_tools.archive_rule",
+              "url": "/hengwei/web/config_management/archive_rules"
+            },
+            {
+              "uid": "nm.common_tools.archive_report",
+              "title": "智动备份查看",
+              "permission": "nm.common_tools.archive_report",
+              "url": "/hengwei/web/config_management/archive_report"
+            },
+            {
+              "uid": "nm.auto.operation.divider2",
+              "title": "divider"
+            },
+            {
+              "uid": "nm.common_tools.device_conf_template",
+              "title": "智动分析模板",
+              "permission": "nm.common_tools.device_conf_template",
+              "url": "/hengwei/web/config_management/conf_tempates"
+            },
+            {
+              "uid": "nm.common_tools.tftp_script",
+              "title": "设备TFTP脚本设置",
+              "permission": "nm.common_tools.tftp_script",
+              "url": "/hengwei/web/config_management/tftp_scripts"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "nm.net_analysis1",
+      "title": "网络分析",
+      "icon": "fa-filter",
+      "children": [
+        {
+          "uid": "nm.data_flow.live_view",
+          "title": "网络流量分析",
+          "permission": "nm.data_flow.live_view",
+          "url": "/hengwei/web/data_flow/live_view"
+        },
+        {
+          "uid": "nm.data_flow.biz_analysis",
+          "title": "业务流量分析",
+          "permission": "nm.data_flow.biz_analysis",
+          "url": "/hengwei/web/data_flow/biz_live_view"
+        },
+        {
+          "uid": "nm.data_flow.biz_management",
+          "title": "业务管理",
+          "permission": "nm.data_flow.biz_management",
+          "url": "/hengwei/web/data_flow/bz_objects"
+        },
+        {
+          "uid": "nm.net_analysis.divider",
+          "title": "divider"
+        },
+        {
+          "uid": "nm.ip_address.list",
+          "title": "地址簿总览",
+          "permission": "nm.ip_address.list",
+          "url": "/hengwei/web/ip_addresses"
+        },
+        {
+          "uid": "nm.ip_address.comparison",
+          "title": "地址簿对照表",
+          "permission": "nm.ip_address.comparison",
+          "url": "/hengwei/web/ip_addresses/comparisons"
+        },
+        {
+          "uid": "nm.ip_address.setting",
+          "title": "地址簿采集设置",
+          "permission": "nm.ip_address.setting",
+          "url": "/hengwei/web/ip_addresses/sampling_settings"
+        },
+        {
+          "uid": "nm.ip_address.trace_log",
+          "title": "地址簿运行日志",
+          "permission": "nm.ip_address.trace_log",
+          "url": "/hengwei/web/ip_addresses/trace_log"
         }
       ]
     },
@@ -4424,6 +3318,98 @@
               "permission": "nm.monitor_management.mid_view",
               "url": "/hengwei/web/mos/view_monitor_by_select?managed_type=service_midware",
               "icon": "show-remote"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "uid": "nm.vm_storage1",
+      "title": "虚拟化&存储",
+      "icon": "fa-vimeo-square",
+      "children": [
+        {
+          "uid": "nm.vm_storage.object_browse",
+          "title": "监控一览",
+          "permission": "nm.vm_storage.object_browse",
+          "url": "/hengwei/web/vmware_vobjects/object_tree/browse"
+        },
+        {
+          "uid": "nm.virtualization",
+          "title": "虚拟化",
+          "icon": "fa-virtualization",
+          "children": [
+            {
+              "uid": "nm.vm_storage.vmware_view",
+              "title": "虚拟化视图",
+              "permission": "nm.vm_storage.vmware_view",
+              "url": "/hengwei/web/vmware_topologies/default?pm=vm_storage.vmware_view"
+            },
+            {
+              "uid": "nm.vm_storage.v_center",
+              "title": "虚拟中心管理",
+              "permission": "nm.vm_storage.v_center",
+              "url": "/hengwei/web/vmware_vcenters"
+            },
+            {
+              "uid": "nm.vm_storage.esxi",
+              "title": "ESX/ESXI主机管理",
+              "permission": "nm.vm_storage.esxi",
+              "url": "/hengwei/web/vmware_vcenters/esxi_hosts"
+            },
+            {
+              "uid": "nm.vm_storage.vm",
+              "title": "虚拟机管理",
+              "permission": "nm.vm_storage.vm",
+              "url": "/hengwei/web/vmware_vcenters/virtual_machines"
+            },
+            {
+              "uid": "nm.vm_storage.data_store",
+              "title": "虚拟存储管理",
+              "permission": "nm.vm_storage.data_store",
+              "url": "/hengwei/web/vmware_vcenters/data_stores"
+            },
+            {
+              "uid": "nm.vm_storage.divider3",
+              "title": "divider",
+              "permission": "nm.vm_storage.divider3"
+            },
+            {
+              "uid": "nm.vm_storage.hyperv_list",
+              "title": "Hyper-V列表",
+              "permission": "nm.vm_storage.hyperv_list",
+              "url": "/hengwei/web/hypervs"
+            },
+            {
+              "uid": "nm.vm_storage.hyperv_browse",
+              "title": "Hyper-V状态一览",
+              "permission": "nm.vm_storage.hyperv_browse",
+              "url": "/hengwei/web/hypervs/browse"
+            }
+          ]
+        },
+        {
+          "uid": "nm.storage",
+          "title": "存储",
+          "icon": "fa-storage",
+          "children": [
+            {
+              "uid": "nm.vm_storage.raid_browse",
+              "title": "存储设备一览",
+              "permission": "nm.vm_storage.raid_browse",
+              "url": "/hengwei/web/san_hosts"
+            },
+            {
+              "uid": "nm.vm_storage.raid_capacity",
+              "title": "存储容量使用",
+              "permission": "nm.vm_storage.raid_capacity",
+              "url": "/hengwei/web/san_hosts/capacity_usage"
+            },
+            {
+              "uid": "nm.vm_storage.raid_topn",
+              "title": "存储性能排行",
+              "permission": "nm.vm_storage.raid_topn",
+              "url": "/hengwei/web/san_hosts/perf_topn"
             }
           ]
         }
@@ -4665,6 +3651,66 @@
       ]
     },
     {
+      "uid": "nm.history_report1",
+      "title": "历史&报表",
+      "icon": "fa-history",
+      "children": [
+        {
+          "uid": "nm.report_management.history_rule",
+          "title": "历史记录规则",
+          "permission": "nm.report_management.history_rule",
+          "url": "/hengwei/web/histories"
+        },
+        {
+          "uid": "nm.report_management.history_analysis",
+          "title": "记录数据查询",
+          "permission": "nm.report_management.history_analysis",
+          "url": "/hengwei/web/history_records"
+        },
+        {
+          "uid": "nm.report_management.history_flux",
+          "title": "流量数据查询",
+          "permission": "nm.report_management.history_flux",
+          "url": "/hengwei/web/history_records/flux"
+        },
+        {
+          "uid": "nm.report_management.divider1",
+          "title": "divider",
+          "permission": "nm.report_management.divider1"
+        },
+        {
+          "uid": "nm.report_management.report_rule",
+          "title": "报表规则管理",
+          "permission": "nm.report_management.report_rule",
+          "url": "/hengwei/web/report_management/rules"
+        },
+        {
+          "uid": "nm.report_management.report_browse",
+          "title": "生成报表查看",
+          "permission": "nm.report_management.report_browse",
+          "url": "/hengwei/web/report_management/prints"
+        },
+        {
+          "uid": "nm.report_management.default_report_rule",
+          "title": "预置报表管理",
+          "permission": "nm.report_management.default_report_rule",
+          "url": "/hengwei/web/report_management/default_rules"
+        },
+        {
+          "uid": "nm.report_management.default_report_browse",
+          "title": "预置报表查看",
+          "permission": "nm.report_management.default_report_browse",
+          "url": "/hengwei/web/report_management/prints?list_default=true"
+        },
+        {
+          "uid": "nm.report_management.custom_kpi",
+          "title": "自定义统计数据",
+          "permission": "nm.report_management.custom_kpi",
+          "url": "/hengwei/web/report_management/custom_kpis"
+        }
+      ]
+    },
+    {
       "uid": "nm.resource1",
       "title": "管理对象",
       "icon": "fa-hdd-o",
@@ -4682,11 +3728,7 @@
           "url": "/hengwei/web/topologies/search_report"
         },
         {
-          "uid": "xxxxxx",
-          "title": "运维平台",
-          "permission": "products.wserver",
-          "url": "/hengwei/",
-          "icon": "fa-trello"
+          "title": "divider"
         },
         {
           "uid": "nm.resource.device",
@@ -4818,6 +3860,12 @@
           "url": "/hengwei/mc/schdjobs/index"
         },
         {
+          "uid": "mc.Products.Index",
+          "title": "系统组件",
+          "permission": "mc.Products",
+          "url": "/hengwei/mc/products/index"
+        },
+        {
           "uid": "nm.system.engine_nodes",
           "title": "分布式采集引擎",
           "permission": "nm.system.engine_nodes",
@@ -4892,6 +3940,10 @@
           "url": "/hengwei/mc/tsdbshards/index"
         },
         {
+          "uid": "nm.resource.domain",
+          "title": "域管理"
+        },
+        {
           "uid": "mc.AutoBackup.Index",
           "title": "备份数据",
           "permission": "mc.AutoBackup",
@@ -4918,6 +3970,13 @@
           "title": "divider"
         },
         {
+          "uid": "xxxxxx",
+          "title": "运维平台",
+          "permission": "products.wserver",
+          "url": "/hengwei/",
+          "icon": "fa-trello"
+        },
+        {
           "uid": "nm.system.help2",
           "title": "帮助",
           "url": "/hengwei/internal/doc/"
@@ -4929,6 +3988,13 @@
           "url": "/hengwei/mc/about/index"
         }
       ]
+    },
+    {
+      "uid": "nm.2222",
+      "title": "集中展示",
+      "permission": "products.wserver",
+      "url": "http://192.168.1.128:8082/hengwei/web/biz_topologies/23#",
+      "icon": "fa-asterisk"
     }
   ]
 }
