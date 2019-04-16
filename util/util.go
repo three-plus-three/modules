@@ -1,11 +1,9 @@
 package util
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"reflect"
 	"time"
@@ -104,16 +102,4 @@ func IsZero(v reflect.Value) bool {
 		return v.IsNil()
 	}
 	return false
-}
-
-func ReadFileWithDefault(files []string, defaultValue string) string {
-	for _, s := range files {
-		content, e := ioutil.ReadFile(s)
-		if nil == e {
-			if content = bytes.TrimSpace(content); len(content) > 0 {
-				return string(content)
-			}
-		}
-	}
-	return defaultValue
 }

@@ -1,8 +1,10 @@
 package environment
 
 import (
+	"bytes"
 	"errors"
 	"flag"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -42,6 +44,9 @@ func (self EngineConfig) isMaster() bool {
 
 // Environment
 type Environment struct {
+	HeaderTitleText string
+	FooterTitleText string
+
 	Fs FileSystem
 
 	Name   string
@@ -288,7 +293,36 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		env.Logger.Warn("no load app.secret from '" + strings.Join(filenames, ",") + "'")
 	}
 
+	env.HeaderTitleText = "IT综合运维管理平台"
+	if env.Config.BoolWithDefault("is_nflow", false) {
+		env.HeaderTitleText = "数据流分析 v1.0"
+	}
+
+	env.HeaderTitleText = ReadFileWithDefault([]string{
+		env.Fs.FromDataConfig("resources/profiles/header.txt"),
+		env.Fs.FromData("resources/profiles/header.txt"),
+		filepath.Join(os.Getenv("hw_root_dir"), "data/resources/profiles/header.txt")},
+		env.HeaderTitleText)
+
+	env.FooterTitleText = ReadFileWithDefault([]string{
+		env.Fs.FromDataConfig("resources/profiles/footer.txt"),
+		env.Fs.FromData("resources/profiles/footer.txt"),
+		filepath.Join(os.Getenv("hw_root_dir"), "data/resources/profiles/footer.txt")},
+		"© 2019 恒维信息技术(上海)有限公司, 保留所有版权。")
+
 	return env, callHooks(env)
+}
+
+func ReadFileWithDefault(files []string, defaultValue string) string {
+	for _, s := range files {
+		content, e := ioutil.ReadFile(s)
+		if nil == e {
+			if content = bytes.TrimSpace(content); len(content) > 0 {
+				return string(content)
+			}
+		}
+	}
+	return defaultValue
 }
 
 func loadServiceConfig(cfg map[string]string, so ServiceOption, sc *ServiceConfig) *ServiceConfig {
