@@ -15,7 +15,7 @@ import (
 
 type OnlineUser struct {
 	UserID    int64     `json:"user_id" xorm:"user_id pk"`
-	AuthID    string    `json:"uuid,omitempty" xorm:"uuid unique"`
+	Uuid      string    `json:"uuid,omitempty" xorm:"uuid unique"`
 	Address   string    `json:"address" xorm:"address"`
 	CreatedAt time.Time `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
@@ -29,8 +29,8 @@ func KeyForOnlineUsers(key string) string {
 	switch key {
 	case "user_id":
 		return "onlineUser.UserID"
-	case "uuid":
-		return "onlineUser.AuthID"
+	case "Uuid":
+		return "onlineUser.UUID"
 	case "address":
 		return "onlineUser.Address"
 	case "created_at":
