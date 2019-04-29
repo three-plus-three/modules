@@ -2,7 +2,6 @@
 package errors
 
 import (
-	"bytes"
 	"database/sql"
 	native "errors"
 	"fmt"
@@ -73,15 +72,15 @@ func Concat(errs ...error) error {
 	case 1:
 		return errs[0]
 	default:
-		return ErrAppend(errs)
+		return ErrArray(errs)
 	}
 }
 
-func ErrArray(errs []error, format string, args ...interface{}) error {
-	return ErrAppend(errs, fmt.Sprintf(format, args...))
+func ErrAppend(errs []error, format string, args ...interface{}) error {
+	return ErrArray(errs, fmt.Sprintf(format, args...))
 }
 
-func ErrAppend(errs []error, errMessage ...string) error {
+func ErrArray(errs []error, errMessage ...string) error {
 	var message string
 	if len(errMessage) > 0 {
 		message = strings.Join(errMessage, " ")
@@ -154,7 +153,7 @@ func (err *ApplicationError) Code() int {
 
 func (err *ApplicationError) Error() string {
 	if err.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
-		var buffer bytes.Buffer
+		var buffer strings.Builder
 		if err.ErrMessage != "" {
 			buffer.WriteString(err.ErrMessage)
 		} else {
@@ -221,4 +220,49 @@ func Is(realError, exceptedError error) bool {
 	}
 
 	return Is(ae.Parent, exceptedError)
+}
+
+func ConcatApplicationErrors(errs []*ApplicationError, errMessage ...string) *ApplicationError {
+	var message string
+	if len(errMessage) > 0 {
+		message = strings.Join(errMessage, " ")
+	}
+
+	if len(errs) == 0 {
+		if message == "" {
+			panic("Concat Fail")
+		}
+		return NewApplicationError(ErrCodeInternalError, message)
+	}
+
+	var appError *ApplicationError
+	if message == "" {
+		if len(errs) == 1 {
+			return errs[0]
+		}
+
+		if aerr := errs[0]; aerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+			appError = aerr
+			errs = errs[1:]
+		} else if aerr := errs[len(errs)-1]; aerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+			appError = aerr
+			errs = errs[:len(errs)-1]
+		}
+	}
+
+	if appError == nil {
+		appError = &ApplicationError{ErrCode: ErrCodeMultipleError, ErrMessage: message}
+	}
+
+	for _, me := range errs {
+		if me.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) && me.ErrMessage == "" {
+			if len(me.Internals) > 0 {
+				appError.Internals = append(appError.Internals, me.Internals...)
+			}
+		} else {
+			appError.Internals = append(appError.Internals, me)
+		}
+	}
+
+	return appError
 }
