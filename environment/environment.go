@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/google/gops/agent"
 	"github.com/kardianos/osext"
 	commons_cfg "github.com/three-plus-three/modules/cfg"
 	"go.uber.org/zap"
@@ -309,6 +310,10 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		env.Fs.FromData("resources/profiles/footer.txt"),
 		filepath.Join(os.Getenv("hw_root_dir"), "data/resources/profiles/footer.txt")},
 		"© 2019 恒维信息技术(上海)有限公司, 保留所有版权。")
+
+	if err := agent.Listen(agent.Options{}); err != nil {
+		env.Logger.Warn("启动调试代理失败", zap.Error(err))
+	}
 
 	return env, callHooks(env)
 }
