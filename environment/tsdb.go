@@ -8,6 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/three-plus-three/modules/as"
+	"github.com/three-plus-three/modules/util"
 )
 
 func (env *Environment) initTSDB(printIfFilesNotFound bool) error {
@@ -20,6 +21,10 @@ func (env *Environment) initTSDB(printIfFilesNotFound bool) error {
 		tsdbConfigFile = env.Fs.FromConfig("tsdb_config.conf")
 	}
 
+	if filename := env.Fs.FromDataConfig("tsdb_config.conf"); util.FileExists(filename) {
+		tsdbConfigFile = filename
+	}
+
 	_, err := toml.DecodeFile(tsdbConfigFile, &tsdbConfig)
 	if err != nil {
 		if printIfFilesNotFound {
@@ -29,7 +34,7 @@ func (env *Environment) initTSDB(printIfFilesNotFound bool) error {
 		tsdbHTTP, _ := as.Object(tsdbConfig["http"])
 		if nil != tsdbHTTP {
 			if _, port, err := net.SplitHostPort(fmt.Sprint(tsdbHTTP["bind-address"])); err == nil {
-				env.GetServiceConfig(ENV_INFLUXDB_PROXY_ID).setPort(port)
+				env.GetServiceConfig(ENV_INFLUXDB_PROXY_ID).SetPort(port)
 				if printIfFilesNotFound {
 					log.Println("[warn] load tsdb http port ("+port+") from", tsdbConfigFile)
 				}
@@ -39,7 +44,7 @@ func (env *Environment) initTSDB(printIfFilesNotFound bool) error {
 		tsdbAdmin, _ := as.Object(tsdbConfig["admin"])
 		if nil != tsdbAdmin {
 			if _, port, err := net.SplitHostPort(fmt.Sprint(tsdbAdmin["bind-address"])); err == nil {
-				env.GetServiceConfig(ENV_INFLUXDB_ADM_PROXY_ID).setPort(port)
+				env.GetServiceConfig(ENV_INFLUXDB_ADM_PROXY_ID).SetPort(port)
 				if printIfFilesNotFound {
 					log.Println("[warn] load tsdb admin port ("+port+") from", tsdbConfigFile)
 				}

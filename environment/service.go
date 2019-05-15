@@ -137,15 +137,15 @@ func (cfg *ServiceConfig) RemoteAddr(typ, pa string) (string, string) {
 	return typ, net.JoinHostPort(cfg.Host, cfg.Port)
 }
 
-// // SetHost 指定地址
-// func (cfg *ServiceConfig) SetHost(s string) {
-// 	cfg.Host = s
-// 	cfg.surl.Store("")
-// 	cfg.Notify()
-// }
+// SetHost 指定地址
+func (cfg *ServiceConfig) SetHost(s string) {
+	cfg.Host = s
+	// 	cfg.surl.Store("")
+	// 	cfg.Notify()
+}
 
 // SetPort 指定端口
-func (cfg *ServiceConfig) setPort(s string) {
+func (cfg *ServiceConfig) SetPort(s string) {
 	cfg.Port = s
 	//cfg.surl.Store("")
 	//cfg.Notify()
