@@ -8,6 +8,8 @@ import (
 	"runtime"
 )
 
+const UNIXSOCKET = "unixsocket"
+
 var isWindows = runtime.GOOS == "windows"
 
 func IsUnixsocket(network string) bool {
@@ -40,8 +42,6 @@ func MakePipename(port string) string {
 	}
 	return MakePipenameUnix(port)
 }
-
-const UNIXSOCKET = "unixsocket"
 
 type HttpDialer struct {
 	DialWithContext func(ctx context.Context, network, addr string) (net.Conn, error)

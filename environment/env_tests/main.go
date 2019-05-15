@@ -1,21 +1,25 @@
 package env_tests
 
 import (
-	"cn/com/hengwei/commons"
 	"flag"
 	"log"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
+	"testing"
 
 	"github.com/three-plus-three/modules/environment"
+	"github.com/three-plus-three/modules/netutil"
+	"github.com/three-plus-three/modules/util"
 )
 
-var env_file = flag.String("env_file", "test_postgres.properties", "")
+var EnvFile = flag.String("env_file", "test_postgres.properties", "")
 
 func Clone(env *environment.Environment) *environment.Environment {
 	var copyed *environment.Environment
 	if env == nil {
-		file := *env_file
+		file := *EnvFile
 		if !filepath.IsAbs(file) {
 			var files = []string{file}
 
@@ -26,7 +30,7 @@ func Clone(env *environment.Environment) *environment.Environment {
 			}
 
 			for _, s := range files {
-				if commons.FileExists(s) {
+				if util.FileExists(s) {
 					file = s
 					break
 				}
@@ -45,12 +49,49 @@ func Clone(env *environment.Environment) *environment.Environment {
 		}
 
 		copyed = env
-		for id := environment.ENV_MIN_PROXY_ID; id < environment.ENV_MAX_PROXY_ID; id++ {
-			copyed.GetServiceConfig(id).SetUrl("")
-		}
+		//		for id := environment.ENV_MIN_PROXY_ID; id < environment.ENV_MAX_PROXY_ID; id++ {
+		//			copyed.GetServiceConfig(id).SetUrl("")
+		//		}
 	} else {
 		copyed = env.Clone()
 	}
-	copyed.RemoveAllListener()
+	// copyed.RemoveAllListener()
 	return copyed
 }
+
+func SetURL(t testing.TB, cfg *environment.ServiceConfig, urlStr string) {
+	t.Helper()
+
+	if urlStr == "" {
+		cfg.UrlPath = ""
+		return
+	}
+
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg.Type = "tcp"
+	cfg.Host = u.Host
+	if host, port, err := net.SplitHostPort(u.Host); err == nil {
+		cfg.Host = host
+		cfg.Port = port
+		if host == netutil.UNIXSOCKET {
+			cfg.Type = "unix"
+		}
+	} else if u.Scheme == "http" {
+		cfg.Port = "80"
+	} else if u.Scheme == "https" {
+		cfg.Port = "443"
+	}
+
+	cfg.UrlPath = u.Path
+	if cfg.UrlPath == "/" {
+		cfg.UrlPath = ""
+	}
+}
+
+var AbsoluteToImport = util.AbsoluteToImport
+var ImportToAbsolute = util.ImportToAbsolute
+var CleanImport = util.CleanImport
