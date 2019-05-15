@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"os"
 	"reflect"
 	"time"
 
@@ -102,4 +103,27 @@ func IsZero(v reflect.Value) bool {
 		return v.IsNil()
 	}
 	return false
+}
+
+// FileExists 文件是否存在
+func FileExists(dir string) bool {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return false
+	}
+
+	return !info.IsDir()
+}
+
+// DirExists 目录是否存在
+func DirExists(dir string) bool {
+	d, e := os.Stat(dir)
+	switch {
+	case e != nil:
+		return false
+	case !d.IsDir():
+		return false
+	}
+
+	return true
 }
