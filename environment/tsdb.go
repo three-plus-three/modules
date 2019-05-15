@@ -8,6 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/three-plus-three/modules/as"
+	"github.com/three-plus-three/modules/util"
 )
 
 func (env *Environment) initTSDB(printIfFilesNotFound bool) error {
@@ -18,6 +19,10 @@ func (env *Environment) initTSDB(printIfFilesNotFound bool) error {
 		tsdbConfigFile = env.Fs.FromConfig("tsdb_config.win.conf")
 	} else {
 		tsdbConfigFile = env.Fs.FromConfig("tsdb_config.conf")
+	}
+
+	if filename := env.Fs.FromDataConfig("tsdb_config.conf"); util.FileExists(filename) {
+		tsdbConfigFile = filename
 	}
 
 	_, err := toml.DecodeFile(tsdbConfigFile, &tsdbConfig)
