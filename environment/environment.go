@@ -60,11 +60,7 @@ type Environment struct {
 }
 
 func (env *Environment) EnabledPipe() bool {
-	if IsWindows {
-		return env.Config.BoolWithDefault("pipe_enabled", false)
-	}
-
-	return true
+	return env.Config.BoolWithDefault("pipe_enabled", false)
 }
 
 func (env *Environment) SetCurrent(current ENV_PROXY_TYPE) *Environment {

@@ -77,7 +77,7 @@ var (
 		{ID: ENV_HOME_SSL_PROXY_ID, Name: "daemon_ssl", Type: "tcp", IsSSL: true, Host: "127.0.0.1", Port: "37090"},
 
 		{ID: ENV_SAMPLING_PROXY_ID, Name: "sampling", Host: "127.0.0.1", Port: "37072"},
-		{ID: ENV_POLL_PROXY_ID, Name: "poll", Type: "auto", Host: "127.0.0.1", Port: "37073"},
+		{ID: ENV_POLL_PROXY_ID, Name: "poll", Host: "127.0.0.1", Port: "37073"},
 		{ID: ENV_SCHD_PROXY_ID, Name: "schd", Host: "127.0.0.1", Port: "37075"},
 		{ID: ENV_LCN_PROXY_ID, Name: "lcn", Type: "tcp", IsSSL: true, Host: "127.0.0.1", Port: "37076"},
 		{ID: ENV_IP_MGR_PROXY_ID, Name: "ip_mgr", Host: "127.0.0.1", Port: "37077"},

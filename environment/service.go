@@ -69,11 +69,12 @@ func (cfg *ServiceConfig) ListenAddr(typ, pa string) (string, string) {
 		typ = cfg.Type
 	}
 
-	if (typ == "" || typ == "auto") && cfg.env.EnabledPipe() {
-		typ = "unix"
-	}
-	if typ == "" {
-		typ = "tcp"
+	if typ == "" || typ == "auto" {
+		if cfg.env.EnabledPipe() {
+			typ = "unix"
+		} else {
+			typ = "tcp"
+		}
 	}
 
 	if pa != "" {
@@ -110,11 +111,12 @@ func (cfg *ServiceConfig) RemoteAddr(typ, pa string) (string, string) {
 
 	typ = cfg.Type
 
-	if (typ == "" || typ == "auto") && cfg.env.EnabledPipe() {
-		typ = "unix"
-	}
-	if typ == "" {
-		typ = "tcp"
+	if typ == "" || typ == "auto" {
+		if cfg.env.EnabledPipe() {
+			typ = "unix"
+		} else {
+			typ = "tcp"
+		}
 	}
 
 	//	if engine := cfg.env.GetEngineConfig(); engine.IsEnabled && !engine.IsMasterHost {
@@ -167,8 +169,10 @@ func (cfg *ServiceConfig) URLFor(s ...string) string {
 	host := cfg.Host
 	port := cfg.Port
 
-	if (cfg.Type == "" || cfg.Type == "auto") && cfg.env.EnabledPipe() {
-		host = netutil.UNIXSOCKET
+	if cfg.Type == "" || cfg.Type == "auto" {
+		if cfg.env.EnabledPipe() {
+			host = netutil.UNIXSOCKET
+		}
 	} else if netutil.IsUnixsocket(cfg.Type) {
 		host = netutil.UNIXSOCKET
 	}
