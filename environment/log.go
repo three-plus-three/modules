@@ -26,7 +26,7 @@ func (env *Environment) initLogger(name string) error {
 	return nil
 }
 
-func (env *Environment) reinitLogger(name string) error {
+func (env *Environment) ensureLogger(name string) error {
 	if env.Logger == nil {
 		return env.initLogger(name)
 	}

@@ -69,7 +69,7 @@ func (env *Environment) SetCurrent(current ENV_PROXY_TYPE) *Environment {
 		return env
 	}
 	so := env.GetServiceConfig(env.CurrentApplication)
-	if err := env.reinitLogger(so.Name); err != nil {
+	if err := env.ensureLogger(so.Name); err != nil {
 		panic(err)
 	}
 	return env
