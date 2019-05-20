@@ -13,6 +13,7 @@ import (
 	"github.com/google/gops/agent"
 	"github.com/kardianos/osext"
 	commons_cfg "github.com/three-plus-three/modules/cfg"
+	"github.com/three-plus-three/modules/util"
 	"go.uber.org/zap"
 )
 
@@ -27,20 +28,6 @@ type Options struct {
 	Args                 []string
 	NotRedirectStdLog    bool
 	IsTest               bool
-}
-
-// EngineConfig 多引擎时的配置
-type EngineConfig struct {
-	IsEnabled    bool
-	IsMasterHost bool
-	Name         string
-	IsSSL        bool
-	RemoteHost   string
-	RemotePort   string
-}
-
-func (self EngineConfig) isMaster() bool {
-	return strings.ToLower(strings.TrimSpace(self.Name)) == "default"
 }
 
 // Environment
@@ -72,13 +59,17 @@ type Environment struct {
 	Engine EngineConfig
 }
 
+func (env *Environment) EnabledPipe() bool {
+	return env.Config.BoolWithDefault("pipe_enabled", false)
+}
+
 func (env *Environment) SetCurrent(current ENV_PROXY_TYPE) *Environment {
 	env.CurrentApplication = current
 	if !IsValidProxyID(current) {
 		return env
 	}
 	so := env.GetServiceConfig(env.CurrentApplication)
-	if err := env.reinitLogger(so.Name); err != nil {
+	if err := env.ensureLogger(so.Name); err != nil {
 		panic(err)
 	}
 	return env
@@ -105,25 +96,28 @@ func (self *Environment) Clone() *Environment {
 	return copyed
 }
 
-func (self *Environment) RemoveAllListener() {
-	for idx := range self.serviceOptions {
-		self.serviceOptions[idx].RemoveAllListener()
-	}
-}
+// func (self *Environment) RemoveAllListener() {
+// 	for idx := range self.serviceOptions {
+// 		self.serviceOptions[idx].RemoveAllListener()
+// 	}
+// }
 
 func (self *Environment) GetMasterConfig() *ServiceConfig {
-	if engineCfg := self.GetEngineConfig(); engineCfg.IsEnabled && !engineCfg.IsMasterHost {
-		if engineCfg.RemotePort != "" && engineCfg.RemotePort != "0" {
-			return self.GetServiceConfig(ENV_WSERVER_SSL_PROXY_ID)
+	if !self.Engine.IsMasterHost {
+		if self.Engine.RemotePort != "" && self.Engine.RemotePort != "0" {
+			return self.GetServiceConfig(ENV_HOME_SSL_PROXY_ID)
 		}
 	}
 
-	return self.GetServiceConfig(ENV_WSERVER_PROXY_ID)
+	if self.EnabledPipe() {
+		return self.GetServiceConfig(ENV_GATEWAY_PROXY_ID)
+	}
+	return self.GetServiceConfig(ENV_HOME_PROXY_ID)
 }
 
 func (self *Environment) GetServiceConfig(id ENV_PROXY_TYPE) *ServiceConfig {
 	for idx := range self.serviceOptions {
-		if self.serviceOptions[idx].Id == id {
+		if self.serviceOptions[idx].ID == id {
 			return &self.serviceOptions[idx]
 		}
 	}
@@ -139,13 +133,13 @@ func NewEnvironment(opt Options) (*Environment, error) {
 	if runtime.GOOS == "windows" {
 		var rootDir string
 		if "" == opt.ConfDir {
-			if cwd, e := os.Getwd(); nil == e && FileExists(filepath.Join(cwd, "conf", "app.properties")) {
+			if cwd, e := os.Getwd(); nil == e && util.FileExists(filepath.Join(cwd, "conf", "app.properties")) {
 				rootDir = cwd
-			} else if nil == e && FileExists(filepath.Join(cwd, "..", "conf", "app.properties")) {
+			} else if nil == e && util.FileExists(filepath.Join(cwd, "..", "conf", "app.properties")) {
 				rootDir = filepath.Clean(filepath.Join(cwd, ".."))
-			} else if exeDir, e := osext.ExecutableFolder(); nil == e && FileExists(filepath.Join(exeDir, "conf", "app.properties")) {
+			} else if exeDir, e := osext.ExecutableFolder(); nil == e && util.FileExists(filepath.Join(exeDir, "conf", "app.properties")) {
 				rootDir = exeDir
-			} else if nil == e && FileExists(filepath.Join(exeDir, "..", "conf", "app.properties")) {
+			} else if nil == e && util.FileExists(filepath.Join(exeDir, "..", "conf", "app.properties")) {
 				rootDir = filepath.Clean(filepath.Join(exeDir, ".."))
 			} else if opt.IsTest {
 				rootDir, _ = os.Getwd()
@@ -157,7 +151,7 @@ func NewEnvironment(opt Options) (*Environment, error) {
 					"../../../../../../../cn/com/hengwei"} {
 					abs, _ := filepath.Abs(s)
 					abs = filepath.Clean(abs)
-					if DirExists(abs) {
+					if util.DirExists(abs) {
 						rootDir = abs
 						found = true
 						break
@@ -247,14 +241,14 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 
 	env.Db.Models = ReadDbConfig("models.", cfg, dbDefaults)
 	env.Db.Data = ReadDbConfig("data.", cfg, dbDefaults)
-	env.Engine = loadEngineRegistry(&env.Config)
+	env.Engine = loadEngineConfig(&env.Config)
 	env.serviceOptions = make([]ServiceConfig, len(ServiceOptions))
 	for idx, so := range ServiceOptions {
-		loadServiceConfig(cfg, so, &env.serviceOptions[idx])
+		env.serviceOptions[idx].loadConfig(cfg, so)
 	}
 	for idx := range env.serviceOptions {
 		env.serviceOptions[idx].env = env
-		env.serviceOptions[idx].listeners.Init()
+		// env.serviceOptions[idx].listeners.Init()
 	}
 
 	if env.CurrentApplication != ENV_MIN_PROXY_ID {
@@ -328,60 +322,4 @@ func ReadFileWithDefault(files []string, defaultValue string) string {
 		}
 	}
 	return defaultValue
-}
-
-func loadServiceConfig(cfg map[string]string, so ServiceOption, sc *ServiceConfig) *ServiceConfig {
-	sc.Id = so.ID
-	sc.Name = so.Name
-
-	sc.IsSSL = boolWith(cfg, so.Name+".is_ssl", so.IsSSL)
-	if so.ID == ENV_WSERVER_PROXY_ID {
-		sc.Host = hostWith(cfg, so.Name+".host", stringWith(cfg, "daemon.host", so.Host))
-		sc.Port = portWith(cfg, so.Name+".port", stringWith(cfg, "daemon.port", so.Port))
-	} else {
-		sc.Host = hostWith(cfg, so.Name+".host", so.Host)
-		sc.Port = portWith(cfg, so.Name+".port", so.Port)
-	}
-
-	if ENV_MC_DEV_PROXY_ID == so.ID {
-		if mcDevPort := os.Getenv("mc_dev_port"); "" != mcDevPort {
-			sc.Port = mcDevPort
-		}
-	}
-
-	return sc
-}
-
-func loadEngineRegistry(cfg *Config) EngineConfig {
-	engine := EngineConfig{IsEnabled: cfg.BoolWithDefault("engine.is_enabled", false),
-		Name:       strings.TrimSpace(cfg.StringWithDefault("engine.name", "default")),
-		IsSSL:      cfg.BoolWithDefault("engine.is_ssl", false),
-		RemoteHost: strings.TrimSpace(cfg.StringWithDefault("engine.remote_host", "127.0.0.1")),
-		RemotePort: strings.TrimSpace(cfg.StringWithDefault("engine.remote_port", ""))}
-
-	engine.IsMasterHost = engine.isMaster()
-	return engine
-}
-
-// FileExists 文件是否存在
-func FileExists(dir string) bool {
-	info, err := os.Stat(dir)
-	if err != nil {
-		return false
-	}
-
-	return !info.IsDir()
-}
-
-// DirExists 目录是否存在
-func DirExists(dir string) bool {
-	d, e := os.Stat(dir)
-	switch {
-	case e != nil:
-		return false
-	case !d.IsDir():
-		return false
-	}
-
-	return true
 }

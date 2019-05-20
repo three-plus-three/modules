@@ -2,14 +2,15 @@ package environment
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 
-	"log"
+	"github.com/three-plus-three/modules/util"
 )
 
 func loadMinioConfig(fs FileSystem) map[string]interface{} {
 	configFile := fs.FromData(".minio", "config.json")
-	if !FileExists(configFile) {
+	if !util.FileExists(configFile) {
 		log.Println("[warn] '" + configFile + "' isn't exists.")
 		return nil
 	}

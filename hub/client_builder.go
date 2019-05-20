@@ -6,7 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/websocket"
+	"github.com/three-plus-three/modules/netutil"
+	"github.com/three-plus-three/modules/websocket2"
 )
 
 const (
@@ -67,7 +68,7 @@ func (builder *ClientBuilder) to(uri string) (*Publisher, error) {
 	return (*Publisher)(conn), nil
 }
 
-func (builder *ClientBuilder) connect(uri string) (*websocket.Conn, error) {
+func (builder *ClientBuilder) connect(uri string) (*websocket2.Conn, error) {
 	origin := uri
 	if strings.HasPrefix(uri, "http://") {
 		uri = "ws://" + strings.TrimPrefix(uri, "http://")
@@ -75,17 +76,16 @@ func (builder *ClientBuilder) connect(uri string) (*websocket.Conn, error) {
 		uri = "wss://" + strings.TrimPrefix(uri, "https://")
 	}
 
-	config, err := websocket.NewConfig(uri, origin)
+	config, err := websocket2.NewConfig(uri, origin)
 	if err != nil {
 		return nil, err
 	}
 	//config.Protocol = []string{protocol}
 
-	if config.Dialer == nil {
-		config.Dialer = &net.Dialer{}
-	}
-	config.Dialer.KeepAlive = 30 * time.Second
-	return websocket.DialConfig(config)
+	var dialer net.Dialer
+	dialer.KeepAlive = 30 * time.Second
+	config.Dialer = (&netutil.HttpDialer{DialWithContext: dialer.DialContext}).Dial
+	return websocket2.DialConfig(config)
 }
 
 func (builder *ClientBuilder) SubscribeQueue(name string) (*Subscription, error) {
@@ -112,17 +112,17 @@ func Connect(uri string) *ClientBuilder {
 	return &ClientBuilder{baseURL: uri}
 }
 
-type Publisher websocket.Conn
+type Publisher websocket2.Conn
 
 func (pub *Publisher) Send(bs Message) error {
-	return websocket.Message.Send((*websocket.Conn)(pub), bs.Bytes())
+	return websocket2.Message.Send((*websocket2.Conn)(pub), bs.Bytes())
 }
 
 func (pub *Publisher) Close() error {
-	return closeConn((*websocket.Conn)(pub))
+	return closeConn((*websocket2.Conn)(pub))
 }
 
-func closeConn(conn *websocket.Conn) error {
+func closeConn(conn *websocket2.Conn) error {
 	return conn.Close()
 }
 

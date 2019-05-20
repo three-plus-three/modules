@@ -172,7 +172,7 @@ func UpdateProduct(env *environment.Environment,
 
 	so := env.GetServiceConfig(applicationID)
 	url := urlutil.Join(env.DaemonUrlPath, so.Name)
-	if applicationID == environment.ENV_WSERVER_PROXY_ID {
+	if applicationID == environment.ENV_HOME_PROXY_ID {
 		url = env.DaemonUrlPath
 	}
 
@@ -185,7 +185,7 @@ func UpdateProduct(env *environment.Environment,
 	now := time.Now()
 	if count == 0 {
 
-		if applicationID == environment.ENV_WSERVER_PROXY_ID {
+		if applicationID == environment.ENV_HOME_PROXY_ID {
 			_, err = db.Exec("INSERT INTO tpt_products (name, version, url, icon, title, classes, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
 				so.Name, version, url, icon, title, classes, now, now)
 		} else {

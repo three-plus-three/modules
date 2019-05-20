@@ -520,7 +520,7 @@ func readLayout(in []byte) (Layout, error) {
 
 func ReadProductsFromLayout(env *environment.Environment) (*LayoutItem, error) {
 	layoutArgs := map[string]interface{}{
-		"httpAddress": env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID).UrlFor(),
+		"httpAddress": env.GetServiceConfig(environment.ENV_HOME_PROXY_ID).URLFor(),
 		"urlPrefix":   env.DaemonUrlPath,
 		"urlRoot":     env.DaemonUrlPath,
 	}
