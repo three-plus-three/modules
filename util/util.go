@@ -7,10 +7,13 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
 )
+
+var IsWindows = runtime.GOOS == "windows"
 
 // CloseWith 捕获错误并打印
 func CloseWith(closer io.Closer) {
