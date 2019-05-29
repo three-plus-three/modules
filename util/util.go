@@ -130,3 +130,12 @@ func DirExists(dir string) bool {
 
 	return true
 }
+
+type CloseFunc func() error
+
+func (f CloseFunc) Close() error {
+	if f == nil {
+		return nil
+	}
+	return f()
+}

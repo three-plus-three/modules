@@ -1,6 +1,8 @@
 package concurrency
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+)
 
 type errorWrapper struct {
 	err error

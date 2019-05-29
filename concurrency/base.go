@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
+
+	"github.com/three-plus-three/modules/util"
 )
 
 type Closes struct {
@@ -142,15 +144,6 @@ func (cw *closeWrapper) Close() error {
 	return cw.v.Close()
 }
 
-type CloseFunc func() error
-
-func (f CloseFunc) Close() error {
-	if f == nil {
-		return nil
-	}
-	return f()
-}
-
 type CloseW struct {
 	C interface {
 		Close()
@@ -185,3 +178,5 @@ func ToCloser(c interface{}) io.Closer {
 	}
 	panic(errors.New("it isn't a closer"))
 }
+
+type CloseFunc = util.CloseFunc
