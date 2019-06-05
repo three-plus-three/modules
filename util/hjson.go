@@ -30,6 +30,14 @@ func HjsonToJSON(bs []byte) ([]byte, error) {
 	return fixJSON(out), nil
 }
 
+func UnmarshalFromHjson(in []byte, value interface{}) error {
+	bs, err := HjsonToJSON(in)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(bs, value)
+}
+
 func FromHjsonFile(filename string, target interface{}) error {
 	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
