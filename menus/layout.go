@@ -374,7 +374,16 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 		}
 	}
 
-	return ClearDividerFromList(results), nil
+	results = ClearDividerFromList(results)
+	found := SearchMenuInTree(results, "nm.orphan")
+	if found != nil {
+		if len(found.Children) == 0 {
+			results = removeInTree(results, "nm.orphan")
+			results = ClearDividerFromList(results)
+		}
+	}
+
+	return results, nil
 }
 
 func toToolboxMenus(mainLayout []LayoutItem, byID map[string]*container) []toolbox.Menu {
