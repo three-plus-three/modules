@@ -51,6 +51,15 @@ func FromHjsonFile(filename string, target interface{}) error {
 	return json.Unmarshal(bs, target)
 }
 
+func FromHjsonBytes(in []byte, target interface{}) error {
+	bs, err := HjsonToJSON(in)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(bs, target)
+}
+
 func WriteToFile(filename string, value interface{}, indent ...bool) error {
 	var out []byte
 	var err error
