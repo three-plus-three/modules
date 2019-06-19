@@ -143,7 +143,7 @@ func (p *FieldSpec) CSSClasses() []string {
 	} else if p.Type == "decimal" {
 		classes = append(classes, "number")
 	} else if p.Type == "date" {
-		classes = append(classes, "dateISO")
+		classes = append(classes, "date dateISO")
 	} else if p.Type == "ipAddress" {
 		classes = append(classes, "ipv4")
 	} else if p.Type == "physicalAddress" {
