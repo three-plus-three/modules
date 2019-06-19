@@ -155,11 +155,7 @@ func (cfg *ServiceConfig) SetPort(s string) {
 }
 
 // UrlFor 服务的访问 URL
-func (cfg *ServiceConfig) URLFor(s ...string) string {
-	if cfg.ID >= ENV_MAX_PROXY_ID {
-		panic("unknow service")
-	}
-
+func (cfg *ServiceConfig) getHostAndPort() (bool, string, string) {
 	// if sp := cfg.surl.Load(); nil != sp {
 	// 	if s, ok := sp.(string); ok && "" != s {
 	// 		return s
@@ -187,9 +183,22 @@ func (cfg *ServiceConfig) URLFor(s ...string) string {
 		}
 	}
 
+	if ENV_LCN_PROXY_ID == cfg.ID {
+		isSSL = true
+	}
+	return isSSL, host, port
+}
+
+func (cfg *ServiceConfig) URLFor(s ...string) string {
+	if cfg.ID >= ENV_MAX_PROXY_ID {
+		panic("unknow service")
+	}
+
+	isSSL, host, port := cfg.getHostAndPort()
+
 	var baseUrl string
 	var scheme = "http://"
-	if isSSL || ENV_LCN_PROXY_ID == cfg.ID {
+	if isSSL {
 		scheme = "https://"
 	}
 	if "" == cfg.UrlPath {
@@ -225,7 +234,13 @@ func (cfg *ServiceConfig) Resty() *resty.Proxy {
 		panic(err)
 	}
 	pxy.SetURLFor(func(u *url.URL) error {
-		// TODO
+		isSSL, host, port := cfg.getHostAndPort()
+		if isSSL {
+			u.Scheme = "https"
+		} else {
+			u.Scheme = "http"
+		}
+		u.Host = net.JoinHostPort(host, port)
 		return nil
 	})
 	return pxy
