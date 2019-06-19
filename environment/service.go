@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/runner-mei/resty"
 	"github.com/three-plus-three/modules/netutil"
 	"github.com/three-plus-three/modules/urlutil"
 )
@@ -215,4 +216,17 @@ func (cfg *ServiceConfig) Client(paths ...string) *HttpClient {
 		cfg:      cfg,
 		basePath: urlutil.Join(paths...),
 	}
+}
+
+// Resty 服务的访问
+func (cfg *ServiceConfig) Resty() *resty.Proxy {
+	pxy, err := resty.New(cfg.URLFor())
+	if err != nil {
+		panic(err)
+	}
+	pxy.SetURLFor(func(u *url.URL) error {
+		// TODO
+		return nil
+	})
+	return pxy
 }
