@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/revel/revel"
 	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/errors"
@@ -338,7 +337,10 @@ func (f PermissionProviderFunc) Read() (*PermissionData, error) {
 }
 
 // Register 注册本 App 的权限信息
-func Register(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, privoder PermissionProvider) Client {
+func Register(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, mode string, privoder PermissionProvider) Client {
+	if mode == "" {
+		mode = "apart" // revel.Config.StringDefault("hengwei.perm.mode", "apart")
+	}
 	logger := log.New(os.Stderr)
 	srvOpt := env.GetServiceConfig(serviceID)
 	client := Connect(env,
@@ -346,7 +348,7 @@ func Register(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE
 		Callback(func() (*PermissionData, error) {
 			return privoder.Read()
 		}),
-		revel.Config.StringDefault("hengwei.perm.mode", "apart"),
+		mode,
 		PermissionEventName,
 		urlutil.Join(env.DaemonUrlPath, "/perm/"),
 		logger)

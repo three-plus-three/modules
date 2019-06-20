@@ -3,7 +3,6 @@ package permissions
 import (
 	"time"
 
-	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/toolbox"
 )
 
@@ -19,12 +18,6 @@ type PermissionGroup struct {
 
 func (pg *PermissionGroup) TableName() string {
 	return "hengwei_permission_groups"
-}
-
-func (pg *PermissionGroup) Validate(validation *revel.Validation) bool {
-	validation.Required(pg.Name).Key("permissionGroup.Name")
-	validation.MaxSize(pg.Description, 2000).Key("permissionGroup.Description")
-	return validation.HasErrors()
 }
 
 func KeyForPermissionGroups(key string) string {

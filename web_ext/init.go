@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/revel/revel"
+	mylog "github.com/runner-mei/log"
 	_ "github.com/three-plus-three/modules/bind"
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/errors"
@@ -220,7 +221,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			revel.Config.StringDefault("hengwei.menu.mode", ""),
 			"menus.changed",
 			urlutil.Join(lifecycleData.Env.DaemonUrlPath, "/menu/"),
-			log.New(os.Stderr, "[menus]", log.LstdFlags))
+			mylog.New(os.Stderr).Named("menu"))
 
 		lifecycleData.OnClosing(menuClient)
 		lifecycleData.menuClient = menuClient

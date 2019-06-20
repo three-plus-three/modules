@@ -3,7 +3,6 @@ package permissions
 import (
 	"time"
 
-	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/toolbox"
 )
 
@@ -24,11 +23,6 @@ func (role *Role) IsBuiltin() bool {
 
 func (role *Role) TableName() string {
 	return "hengwei_roles"
-}
-
-func (role *Role) Validate(validation *revel.Validation) bool {
-	validation.Required(role.Name).Key("role.Name")
-	return validation.HasErrors()
 }
 
 func KeyForRoles(key string) string {

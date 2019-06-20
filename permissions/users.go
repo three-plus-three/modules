@@ -1,15 +1,8 @@
 package permissions
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/revel/revel"
-	"github.com/three-plus-three/modules/netutil"
 	"github.com/three-plus-three/modules/toolbox"
 )
 
@@ -80,84 +73,6 @@ func (user *User) IsHidden() bool {
 	return user.Name == toolbox.UserTPTNetwork // || user.Type == ItsmReporter
 }
 
-func (user *User) Validate(validation *revel.Validation) bool {
-	validation.Required(user.Name).Key("user.Name")
-	validation.Required(user.Nickname).Key("user.Nickname")
-	if user.Source != "ldap" {
-		validation.MinSize(user.Password, 8).Key("user.Password")
-		validation.MaxSize(user.Password, 250).Key("user.Password")
-	}
-
-	o := user.Attributes["white_address_list"]
-	if o != nil {
-		var ss = toStrings(o)
-		if len(ss) != 0 {
-			_, err := netutil.ToCheckers(ss)
-			if err != nil {
-				validation.Error(err.Error()).Key("user.Attributes[white_address_list]")
-			}
-		}
-	}
-	return validation.HasErrors()
-}
-
-func toStrings(o interface{}) []string {
-	if ss, ok := o.([]string); ok {
-		return ss
-	}
-
-	if ss, ok := o.([]interface{}); ok {
-		var ipList []string
-		for _, i := range ss {
-			ipList = append(ipList, fmt.Sprint(i))
-		}
-		return ipList
-	}
-
-	s, ok := o.(string)
-	if !ok {
-		bs, ok := o.([]byte)
-		if !ok {
-			panic(fmt.Errorf("o is unsupport type - %T %s", o, o))
-		}
-		s = string(bs)
-	}
-
-	var ipList []string
-	if err := json.Unmarshal([]byte(s), &ipList); err == nil {
-		return ipList
-	}
-
-	scanner := bufio.NewScanner(strings.NewReader(s))
-	for scanner.Scan() {
-		bs := scanner.Bytes()
-		if len(bs) == 0 {
-			continue
-		}
-		bs = bytes.TrimSpace(bs)
-		if len(bs) == 0 {
-			continue
-		}
-
-		fields := bytes.Split(bs, []byte(","))
-		for _, field := range fields {
-			if len(field) == 0 {
-				continue
-			}
-			field = bytes.TrimSpace(field)
-			if len(field) == 0 {
-				continue
-			}
-
-			ipList = append(ipList, string(field))
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		panic(netutil.ErrInvalidIPRange)
-	}
-	return ipList
-}
-
 func KeyForUsers(key string) string {
 	switch key {
 	case "id":
@@ -217,11 +132,6 @@ type UserGroup struct {
 
 func (userGroup *UserGroup) TableName() string {
 	return "hengwei_user_groups"
-}
-
-func (userGroup *UserGroup) Validate(validation *revel.Validation) bool {
-	validation.Required(userGroup.Name).Key("userGroup.Name")
-	return validation.HasErrors()
 }
 
 func KeyForUserGroups(key string) string {
