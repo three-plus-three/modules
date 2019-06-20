@@ -1,15 +1,15 @@
 package menus
 
 import (
-	"cn/com/hengwei/commons/env_tests"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/aryann/difflib"
+	"github.com/runner-mei/log"
+	"github.com/three-plus-three/modules/environment/env_tests"
 	"github.com/three-plus-three/modules/hub/engine"
 	"github.com/three-plus-three/modules/toolbox"
 )
@@ -37,7 +37,7 @@ func TestMenuSimple(t *testing.T) {
 		// 	return
 		// }
 
-		logger := log.New(os.Stderr, "[menu] ", log.LstdFlags)
+		logger := log.New(os.Stderr)
 		weaver, err := NewWeaver(logger, env, core, nil, test.layout, nil, nil)
 		if err != nil {
 			t.Error(tidx, test.name, err)
@@ -231,7 +231,7 @@ func TestMenuSimple2(t *testing.T) {
 		t.Run(test.filename, func(t *testing.T) {
 			core, _ := engine.NewCore(&engine.Options{})
 
-			logger := log.New(os.Stderr, "[menu] ", log.LstdFlags)
+			logger := log.New(os.Stderr)
 			weaver := &menuWeaver{Logger: logger, env: env, core: core, layouts: nil}
 
 			data, err := ioutil.ReadFile(test.filename)
@@ -387,5 +387,5 @@ func TestMenuSimple3(t *testing.T) {
 
 	a, _ := weaver.deleteByLicense("ctx", results)
 	bs, _ := json.MarshalIndent(a, "", "  ")
-	log.Println(string(bs))
+	t.Log(string(bs))
 }

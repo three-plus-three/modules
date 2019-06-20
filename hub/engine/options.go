@@ -2,10 +2,12 @@ package engine
 
 import (
 	"crypto/md5"
+	"errors"
 	"hash/crc32"
 	"io"
-	"log"
 	"os"
+
+	"github.com/runner-mei/log"
 )
 
 type Options struct {
@@ -20,14 +22,14 @@ type Options struct {
 	// NoopInterval     time.Duration
 
 	Watch  Watcher
-	Logger *log.Logger
+	Logger log.Logger
 }
 
 func (self *Options) ensureDefault() {
 	if self.ID == 0 {
 		hostname, err := os.Hostname()
 		if err != nil {
-			log.Fatal(err)
+			panic(errors.New("hostname is empty and read hostname fail: " + err.Error()))
 		}
 
 		h := md5.New()
@@ -59,6 +61,6 @@ func (self *Options) ensureDefault() {
 	// }
 
 	if self.Logger == nil {
-		self.Logger = log.New(os.Stderr, "[mq] ", log.Ldate|log.Ltime|log.Lmicroseconds)
+		self.Logger = log.New(os.Stderr)
 	}
 }

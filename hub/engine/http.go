@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"net/url"
@@ -14,8 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/hub"
-
 	"golang.org/x/net/websocket"
 )
 
@@ -40,7 +39,7 @@ func getRealIP(req *http.Request) string {
 type StandardEngine struct {
 	*Core
 	NoRoute http.Handler
-	Logger  *log.Logger
+	Logger  log.Logger
 }
 
 func (se *StandardEngine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -305,7 +304,11 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 		client:     params.Get("client"),
 		name:       params.Get("name"),
 		c:          make(chan struct{}),
-		logger:     se.Logger}
+	}
+
+	stub.logger = se.Logger.With(log.String("client", stub.client),
+		log.String("hub_subscriber.name", stub.name),
+		log.String("hub_subscriber.peer", stub.remoteAddr))
 	// var consumer *Consumer
 
 	stub.srv.Handshake = func(config *websocket.Config, req *http.Request) (err error) {
@@ -325,24 +328,27 @@ func (se *StandardEngine) subscribe(w http.ResponseWriter, r *http.Request, mode
 
 		stub.disconnect = se.Core.Connect(stub)
 
+		logger := stub.logger
+
 		go func() {
 			defer stub.Close()
 			for {
 				var data []byte
 				if e := websocket.Message.Receive(conn, &data); nil != e {
 					if e == io.EOF {
-						se.Logger.Println("connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
+						logger.Info("connection is closed - peer is shutdown.")
 					} else if strings.Contains(e.Error(), "use of closed network connection") {
-						se.Logger.Println("connection(read:", stub.remoteAddr, ") is closed.")
+						logger.Info("connection is closed.")
 					} else {
-						se.Logger.Println("connection(read:", stub.remoteAddr, ") is closed -", e)
+						logger.Info("connection is closed", log.Error(e))
 					}
 					break
 				}
 			}
 		}()
-		se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, " and peer =", stub.remoteAddr, ") is connected.")
-		defer se.Logger.Println("[", stub.client, "] subscriber(name=", stub.name, " and peer =", stub.remoteAddr, ") is disconnected.")
+
+		logger.Info("subscriber is connected.")
+		defer logger.Info("subscriber is disconnected.")
 
 		consumer := cb(stub.name)
 		if consumer == nil {
@@ -393,8 +399,14 @@ func (se *StandardEngine) send(w http.ResponseWriter, r *http.Request, mode stri
 		defer stub.Close()
 		stub.disconnect = se.Core.Connect(stub)
 
-		se.Logger.Println("[", stub.client, "] publisher(name=", stub.name, "and peer =", stub.remoteAddr, ") is connected.")
-		defer se.Logger.Println("[", stub.client, "] publisher(name=", stub.name, "and peer =", stub.remoteAddr, ") is disconnected.")
+		se.Logger.Info("publisher is connected.",
+			log.String("client", stub.client),
+			log.String("hub_publisher.name", stub.name),
+			log.String("hub_publisher.peer", stub.remoteAddr))
+		defer se.Logger.Info("publisheris disconnected.",
+			log.String("client", stub.client),
+			log.String("hub_publisher.name", stub.name),
+			log.String("hub_publisher.peer", stub.remoteAddr))
 
 		run(stub, o)
 	})

@@ -6,11 +6,11 @@ package menus
 
 import (
 	"io"
-	"log"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/hub"
@@ -33,8 +33,8 @@ type Callback func() ([]toolbox.Menu, error)
 
 // Connect 连接到 weaver 服务
 func Connect(env *environment.Environment, appID environment.ENV_PROXY_TYPE,
-	cb Callback, mode, queueName, urlPath string, logger *log.Logger) Client {
-	// wsrv := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
+	cb Callback, mode, queueName, urlPath string, logger log.Logger) Client {
+	// wsrv := env.GetServiceConfig(environment.ENV_HOME_PROXY_ID)
 	// hubURL := so.URLFor(env.DaemonUrlPath, "/mq/")
 	// builder := hub.Connect(hubURL)
 
@@ -42,7 +42,7 @@ func Connect(env *environment.Environment, appID environment.ENV_PROXY_TYPE,
 	case "apart":
 		wsrv := env.GetServiceConfig(environment.ENV_HOME_PROXY_ID)
 		apart := &apartClient{
-			logger:    logger, // log.New(os.Stderr, "[menus]", log.LstdFlags),
+			logger:    logger.With(log.String("queueName", queueName)), // log.New(os.Stderr, "[menus]", log.LstdFlags),
 			env:       env,
 			wsrv:      wsrv,
 			appSrv:    env.GetServiceConfig(appID),
@@ -85,7 +85,7 @@ type apartResult struct {
 }
 
 type apartClient struct {
-	logger    *log.Logger
+	logger    log.Logger
 	env       *environment.Environment
 	wsrv      *environment.ServiceConfig
 	appSrv    *environment.ServiceConfig
@@ -196,7 +196,7 @@ func (srv *apartClient) runSub() {
 		if err != nil {
 			errCount++
 			if errCount%50 < 3 {
-				srv.logger.Println("subscribe", srv.queueName, "fail,", err)
+				srv.logger.Error("subscribe fail", log.Error(err))
 			}
 
 			select {
@@ -216,7 +216,7 @@ func (srv *apartClient) runSub() {
 			srv.save(value, err)
 		})
 		if err != nil {
-			srv.logger.Println("subscribe", srv.queueName, "fail,", err)
+			srv.logger.Error("subscribe fail", log.Error(err))
 		}
 		srv.cw.Set(nil)
 
@@ -226,7 +226,7 @@ func (srv *apartClient) runSub() {
 			select {
 			case srv.c <- struct{}{}:
 			default:
-				srv.logger.Println("failed to send flush event.")
+				srv.logger.Error("failed to send flush event")
 			}
 		}()
 	}
@@ -239,21 +239,21 @@ func (srv *apartClient) run() {
 
 	flush := func() {
 		if skipped, err := srv.write(); err != nil {
-			srv.logger.Println("write value fail,", err)
+			srv.logger.Error("write value fail", log.Error(err))
 			writed = false
 		} else {
 			writed = true
 			if skipped {
-				srv.logger.Println("write value is skipped!")
+				srv.logger.Warn("write value is skipped", log.Error(err))
 			} else {
-				srv.logger.Println("write value is ok!")
+				srv.logger.Info("write value is ok", log.Error(err))
 			}
 		}
 
 		value, err := srv.read()
 		srv.save(value, err)
 		if err != nil {
-			srv.logger.Println("read value fail,", err)
+			srv.logger.Error("read value fail", log.Error(err))
 			writed = false
 		}
 

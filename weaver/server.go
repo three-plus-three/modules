@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/cheekybits/genny/generic"
+	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/environment"
 )
 
@@ -28,7 +28,7 @@ type Server struct {
 	env        *environment.Environment
 	weaver     Weaver
 	renderHTML func(w http.ResponseWriter, r *http.Request, data WeaveType)
-	logger     *log.Logger
+	logger     log.Logger
 }
 
 func (srv *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +77,7 @@ func renderJSON(w http.ResponseWriter, code int, value interface{}) error {
 func (srv *Server) stats(w http.ResponseWriter, r *http.Request) {
 	err := renderJSON(w, http.StatusOK, srv.weaver.Stats())
 	if err != nil {
-		srv.logger.Println("stats fail,", err)
+		srv.logger.Error("stats fail", log.Error(err))
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 	}
 }
@@ -87,7 +87,7 @@ func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
 	if ctx == "stats" {
 		err := renderJSON(w, http.StatusOK, srv.weaver.Stats())
 		if err != nil {
-			srv.logger.Println("stats fail,", err)
+			srv.logger.Error("stats fail", log.String("app", ctx), log.Error(err))
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		}
 		return
@@ -95,7 +95,7 @@ func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
 
 	results, err := srv.weaver.Generate(ctx)
 	if err != nil {
-		srv.logger.Println(err)
+		srv.logger.Error("stats fail", log.String("app", ctx), log.Error(err))
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -109,16 +109,16 @@ func (srv *Server) read(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(results)
 	if err != nil {
-		srv.logger.Println(err)
+		srv.logger.Error("stats fail", log.String("app", ctx), log.Error(err))
 	} else {
-		srv.logger.Println("query is ok -", r.URL.Query().Get("app"))
+		srv.logger.Info("query is ok", log.String("app", ctx))
 	}
 }
 
 func (srv *Server) write(w http.ResponseWriter, r *http.Request) {
 	group := r.URL.Query().Get("app")
 	if group == "" {
-		srv.logger.Println("app is missing")
+		srv.logger.Error("app is missing")
 		http.Error(w, "app is missing", http.StatusBadRequest)
 		return
 	}
@@ -126,24 +126,25 @@ func (srv *Server) write(w http.ResponseWriter, r *http.Request) {
 	var data WeaveType
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		srv.logger.Println("update", group, "fail,", err)
+		srv.logger.Error("update fail", log.String("group", group), log.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = srv.weaver.Update(group, data)
 	if err != nil {
-		srv.logger.Println("update", group, "fail,", err)
+		srv.logger.Error("update fail", log.String("group", group), log.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	renderTEXT(w, http.StatusOK, "OK")
-	srv.logger.Println("update", group, "is successful")
+
+	srv.logger.Info("update is successful", log.String("group", group))
 }
 
 // NewServer 创建一个菜单服备
-func NewServer(env *environment.Environment, weaver Weaver, logger *log.Logger,
+func NewServer(env *environment.Environment, weaver Weaver, logger log.Logger,
 	renderHTML func(w http.ResponseWriter, r *http.Request, data WeaveType)) (*Server, error) {
 	return &Server{
 		env:        env,

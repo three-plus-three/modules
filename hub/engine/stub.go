@@ -2,14 +2,13 @@ package engine
 
 import (
 	"io"
-	"log"
 	"math"
 	"strings"
 	"sync/atomic"
 	"time"
 
+	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/hub"
-
 	"golang.org/x/net/websocket"
 )
 
@@ -24,7 +23,7 @@ type engineStub struct {
 	client     string
 	name       string
 	conn       *websocket.Conn
-	logger     *log.Logger
+	logger     log.Logger
 
 	c      chan struct{}
 	closed int32
@@ -61,7 +60,7 @@ func (stub *engineStub) subscribe(consumer *Consumer) {
 		case msg, ok := <-consumer.C:
 			if !ok {
 				is_running = false
-				stub.logger.Println("[", stub.client, "] connection(write:", stub.remoteAddr, ") is closed - queue is shutdown.")
+				stub.logger.Info("connection(write) is closed - queue is shutdown.")
 				break
 			}
 
@@ -69,19 +68,19 @@ func (stub *engineStub) subscribe(consumer *Consumer) {
 				is_running = false
 
 				if !consumer.Unread(msg) {
-					stub.logger.Println("[", stub.client, "] message is missing on the connection(write:", stub.remoteAddr, ") is .")
+					stub.logger.Info("message is missing on the connection(write) is .")
 				}
 
 				if strings.Contains(e.Error(), "use of closed network connection") {
-					stub.logger.Println("[", stub.client, "] connection(write:", stub.remoteAddr, ") is closed.")
+					stub.logger.Info("connection(write) is closed.")
 				} else {
-					stub.logger.Println("[", stub.client, "] connection(write:", stub.remoteAddr, ") is closed -", e)
+					stub.logger.Info("connection(write) is closed.", log.Error(e))
 				}
 				break
 			}
 		case <-stub.c:
 			is_running = false
-			stub.logger.Println("[", stub.client, "] connection(write:", stub.remoteAddr, ") is closed - queue is shutdown.")
+			stub.logger.Info("connection(write) is closed - queue is shutdown.")
 		}
 	}
 }
@@ -96,11 +95,11 @@ func (stub *engineStub) publish(producer chan<- hub.Message) {
 		var data []byte
 		if e := websocket.Message.Receive(stub.conn, &data); nil != e {
 			if e == io.EOF {
-				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
+				stub.logger.Info("connection(read) is closed - peer is shutdown.")
 			} else if strings.Contains(e.Error(), "use of closed network connection") {
-				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed.")
+				stub.logger.Info("connection(read) is closed.")
 			} else {
-				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed -", e)
+				stub.logger.Info("connection(read) is closed.", log.Error(e))
 			}
 			isRunning = false
 			continue
@@ -116,10 +115,10 @@ func (stub *engineStub) publish(producer chan<- hub.Message) {
 			case <-ticker.C:
 				continueTick++
 				if continueTick >= trySendCount {
-					stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed - queue is overflow.")
+					stub.logger.Info("connection(read) is closed - queue is overflow.")
 				}
 			case <-stub.c:
-				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed - queue is shutdown.")
+				stub.logger.Info("connection(read) is closed - queue is shutdown.")
 
 				continueTick = math.MaxInt32
 				isRunning = false
@@ -136,11 +135,11 @@ func (stub *engineStub) sendToTopic(producer Producer) {
 		var data []byte
 		if e := websocket.Message.Receive(stub.conn, &data); nil != e {
 			if e == io.EOF {
-				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed - peer is shutdown.")
+				stub.logger.Info("connection(read) is closed - peer is shutdown.")
 			} else if strings.Contains(e.Error(), "use of closed network connection") {
-				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed.")
+				stub.logger.Info("connection(read) is closed.")
 			} else {
-				stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is closed -", e)
+				stub.logger.Info("connection(read) is closed.", log.Error(e))
 			}
 			break
 		}
@@ -148,7 +147,7 @@ func (stub *engineStub) sendToTopic(producer Producer) {
 		msg := hub.CreateDataMessage(data)
 		rs, err := producer.SendWithContext(msg, ticker.C)
 		if err != hub.ErrPartialSend {
-			stub.logger.Println("[", stub.client, "] connection(read:", stub.remoteAddr, ") is fail -", err)
+			stub.logger.Info("connection(read) is fail", log.Error(err))
 		} else {
 			rs.SendWithContext(msg, ticker.C)
 		}

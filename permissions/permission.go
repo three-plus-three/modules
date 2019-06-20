@@ -1,7 +1,6 @@
 package permissions
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -9,6 +8,7 @@ import (
 	"time"
 
 	"github.com/revel/revel"
+	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/urlutil"
@@ -116,6 +116,7 @@ type permissionCacheImpl struct {
 	privoders   map[string]PermissionProvider
 	isLoading   int32
 	changedFunc func()
+	logger      log.Logger
 }
 
 // func (cache *permissionCacheImpl) tryRead() *permissionCacheData {
@@ -191,7 +192,9 @@ func (cache *permissionCacheImpl) data() (*permissionCacheData, error) {
 			go func() {
 				defer atomic.StoreInt32(&cache.isLoading, 0)
 				if _, err := cache.load(); err != nil {
-					log.Println("[warn] permissions - ", err)
+					if cache.logger != nil {
+						cache.logger.Warn("load permissions to cache is fail", log.Error(err))
+					}
 				}
 			}()
 		}
@@ -336,6 +339,7 @@ func (f PermissionProviderFunc) Read() (*PermissionData, error) {
 
 // Register 注册本 App 的权限信息
 func Register(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, privoder PermissionProvider) Client {
+	logger := log.New(os.Stderr)
 	srvOpt := env.GetServiceConfig(serviceID)
 	client := Connect(env,
 		serviceID,
@@ -345,7 +349,7 @@ func Register(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE
 		revel.Config.StringDefault("hengwei.perm.mode", "apart"),
 		PermissionEventName,
 		urlutil.Join(env.DaemonUrlPath, "/perm/"),
-		log.New(os.Stderr, "[perm-client]", log.LstdFlags))
+		logger)
 
 	// lifecycleData.OnClosing(client)
 
@@ -354,6 +358,7 @@ func Register(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE
 		permissionsCache.changed()
 	})
 
+	permissionsCache.logger = logger
 	permissionsCache.register(srvOpt.Name, client)
 	return client
 }

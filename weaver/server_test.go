@@ -2,16 +2,14 @@ package weaver
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/environment"
-
 	"github.com/three-plus-three/modules/environment/env_tests"
 )
 
@@ -40,7 +38,7 @@ func (w *testWeaver) Generate(ctx string) (WeaveType, error) {
 func TestServerSimple(t *testing.T) {
 	env := env_tests.Clone(nil)
 
-	srv, err := NewServer(env, &testWeaver{}, log.New(os.Stderr, "[menus]", log.LstdFlags), nil)
+	srv, err := NewServer(env, &testWeaver{}, log.Empty(), nil)
 	if err != nil {
 		t.Error(err)
 		return
@@ -50,11 +48,11 @@ func TestServerSimple(t *testing.T) {
 	hsrv := httptest.NewServer(srv)
 	defer hsrv.Close()
 	_, port, _ := net.SplitHostPort(strings.TrimPrefix(hsrv.URL, "http://"))
-	env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID).SetPort(port)
+	env.GetServiceConfig(environment.ENV_HOME_PROXY_ID).SetPort(port)
 
 	client := Connect(env, environment.ENV_AM_PROXY_ID, Callback(func() (ValueType, error) {
 		return 12, nil
-	}), "apart", "abc", "/", log.New(os.Stderr, "[abc]", log.LstdFlags))
+	}), "apart", "abc", "/", log.Empty())
 
 	defer client.Close()
 

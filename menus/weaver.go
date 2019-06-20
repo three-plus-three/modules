@@ -3,12 +3,12 @@ package menus
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 
+	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/hub"
@@ -23,7 +23,7 @@ import (
 // ErrAlreadyClosed  server is closed
 var ErrAlreadyClosed = errors.New("server is closed")
 
-func NewWeaver(logger *log.Logger, env *environment.Environment, core *hub_engine.Core, disabled []string, layout Layout, layouts map[string]Layout, hasLicense func(ctx string, menu toolbox.Menu) (bool, error)) (Weaver, error) {
+func NewWeaver(logger log.Logger, env *environment.Environment, core *hub_engine.Core, disabled []string, layout Layout, layouts map[string]Layout, hasLicense func(ctx string, menu toolbox.Menu) (bool, error)) (Weaver, error) {
 	weaver := &menuWeaver{Logger: logger,
 		env:        env,
 		core:       core,
@@ -65,7 +65,7 @@ type Layout interface {
 }
 
 type menuWeaver struct {
-	Logger        *log.Logger
+	Logger        log.Logger
 	env           *environment.Environment
 	core          *hub_engine.Core
 	layout        Layout
@@ -131,13 +131,13 @@ func (weaver *menuWeaver) Init() error {
 	filename := weaver.env.Fs.FromTMP("app_menus.json")
 	in, err := os.Open(filename)
 	if err != nil {
-		weaver.Logger.Println("LoadFromDB:", err)
+		weaver.Logger.Warn("LoadFromDB", log.Error(err))
 	} else {
 		defer in.Close()
 
 		err = json.NewDecoder(in).Decode(&byApplications)
 		if err != nil {
-			weaver.Logger.Println("LoadFromDB:", err)
+			weaver.Logger.Warn("LoadFromDB", log.Error(err))
 		}
 	}
 
@@ -147,9 +147,9 @@ func (weaver *menuWeaver) Init() error {
 	weaver.menuListByLayout = nil
 	weaver.menuList, err = weaver.generate()
 	if err != nil {
-		weaver.Logger.Println("LoadFromDB:", err)
+		weaver.Logger.Warn("LoadFromDB", log.Error(err))
 	} else if weaver.menuList, err = weaver.deleteByLicense("default", weaver.menuList); err != nil {
-		weaver.Logger.Println("LoadFromDB:", err)
+		weaver.Logger.Warn("LoadFromDB", log.Error(err))
 	}
 
 	weaver.menuList = weaver.deleteByDisabled(weaver.menuList)
@@ -196,20 +196,20 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 
 	filename := weaver.env.Fs.FromTMP("app_menus.json")
 	if err = os.MkdirAll(filepath.Dir(filename), 0777); err != nil {
-		weaver.Logger.Println("update menu list in app " + app + " to file fail, " + err.Error())
+		weaver.Logger.Warn("update menu list in app "+app+" to file fail", log.Error(err))
 		return nil
 	}
 
 	out, err := os.Create(filename)
 	if err != nil {
-		weaver.Logger.Println("update menu list in app " + app + " to file fail, " + err.Error())
+		weaver.Logger.Warn("update menu list in app "+app+" to file fail", log.Error(err))
 		return nil
 	}
 	defer out.Close()
 
 	err = json.NewEncoder(out).Encode(weaver.byApplications)
 	if err != nil {
-		weaver.Logger.Println("update menu list in app " + app + " to file fail, " + err.Error())
+		weaver.Logger.Warn("update menu list in app "+app+" to file fail", log.Error(err))
 	}
 	return nil
 }
@@ -225,14 +225,14 @@ func (weaver *menuWeaver) Generate(ctx string) ([]toolbox.Menu, error) {
 
 		in, err := ioutil.ReadFile(weaver.env.Fs.FromDataConfig("custom_menus", filename))
 		if err != nil && !os.IsNotExist(err) {
-			weaver.Logger.Println(err)
+			weaver.Logger.Warn("Generate", log.Error(err))
 		}
 
 		if len(in) != 0 {
 			var menuList []toolbox.Menu
 			err := json.Unmarshal(in, &menuList)
 			if err != nil {
-				weaver.Logger.Println(err)
+				weaver.Logger.Warn("Generate", log.Error(err))
 			} else {
 				menuList, err = weaver.deleteByLicense(ctx, menuList)
 				if err != nil {
@@ -258,9 +258,9 @@ func (weaver *menuWeaver) read(ctx string, args ...interface{}) ([]toolbox.Menu,
 
 		menuList, err := weaver.generate()
 		if err != nil {
-			weaver.Logger.Println("generate:", err)
+			weaver.Logger.Warn("generate", log.Error(err))
 		} else if menuList, err = weaver.deleteByLicense(ctx, menuList); err != nil {
-			weaver.Logger.Println("generate:", err)
+			weaver.Logger.Warn("generate", log.Error(err))
 		} else {
 			menuList = weaver.deleteByDisabled(menuList)
 			weaver.menuList = ClearDividerFromList(menuList)
@@ -305,7 +305,7 @@ func (weaver *menuWeaver) read(ctx string, args ...interface{}) ([]toolbox.Menu,
 			menuList, err := layout.Generate(weaver.byApplications)
 			if err == nil {
 				menuList, err = weaver.deleteByLicense(ctx, menuList)
-				weaver.Logger.Println("generate:", err)
+				weaver.Logger.Warn("generate", log.Error(err))
 
 				menuList = weaver.deleteByDisabled(menuList)
 				menuList = ClearDividerFromList(menuList)

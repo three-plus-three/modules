@@ -155,11 +155,11 @@ func (core *Core) GetClients() []map[string]interface{} {
 }
 
 func (core *Core) log(args ...interface{}) {
-	core.options.Logger.Println(args...)
+	core.options.Logger.Info(fmt.Sprint(args...))
 }
 
 func (core *Core) logf(format string, args ...interface{}) {
-	core.options.Logger.Printf(format, args...)
+	core.options.Logger.Infof(format, args...)
 }
 
 func (core *Core) catchThrow(ctx string, cb func()) {
