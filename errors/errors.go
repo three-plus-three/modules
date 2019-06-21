@@ -183,6 +183,16 @@ func ToRuntimeError(e error, code ...int) RuntimeError {
 	if re, ok := e.(RuntimeError); ok {
 		return re
 	}
+	if he, ok := e.(interface {
+		Code() int
+	}); ok {
+		return &ApplicationError{Parent: e, ErrCode: he.Code(), ErrMessage: e.Error()}
+	}
+	if he, ok := e.(interface {
+		HTTPCode() int
+	}); ok {
+		return &ApplicationError{Parent: e, ErrCode: he.HTTPCode(), ErrMessage: e.Error()}
+	}
 	if len(code) > 0 {
 		return &ApplicationError{Parent: e, ErrCode: code[0], ErrMessage: e.Error()}
 	}
@@ -194,8 +204,16 @@ func ToApplicationError(e error, code ...int) *ApplicationError {
 	if ae, ok := e.(*ApplicationError); ok {
 		return ae
 	}
-	if re, ok := e.(RuntimeError); ok {
-		return &ApplicationError{Parent: e, ErrCode: re.Code(), ErrMessage: re.Error()}
+	if he, ok := e.(interface {
+		Code() int
+	}); ok {
+		return &ApplicationError{Parent: e, ErrCode: he.Code(), ErrMessage: e.Error()}
+	}
+
+	if he, ok := e.(interface {
+		HTTPCode() int
+	}); ok {
+		return &ApplicationError{Parent: e, ErrCode: he.HTTPCode(), ErrMessage: e.Error()}
 	}
 
 	if len(code) > 0 {
