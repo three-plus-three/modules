@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -10,19 +11,20 @@ func (env *Environment) initLogger(name string) error {
 	var err error
 	env.LogConfig = zap.NewProductionConfig()
 	env.LogConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	env.Logger, err = env.LogConfig.Build()
+	logger, err := env.LogConfig.Build()
 	if err != nil {
 		return errors.Wrap(err, "init zap logger fail")
 	}
 	if name != "" {
-		env.Logger = env.Logger.Named(name)
+		logger = logger.Named(name)
 	}
 
-	zap.ReplaceGlobals(env.Logger)
-	env.SugaredLogger = env.Logger.Sugar()
+	zap.ReplaceGlobals(logger)
 	if !env.notRedirectStdLog {
-		env.undoRedirectStdLog = zap.RedirectStdLog(env.Logger)
+		env.undoRedirectStdLog = zap.RedirectStdLog(logger)
 	}
+
+	env.Logger = log.NewLogger(logger)
 	return nil
 }
 
@@ -32,15 +34,14 @@ func (env *Environment) ensureLogger(name string) error {
 	}
 
 	env.Logger = env.Logger.Named(name)
-	zap.ReplaceGlobals(env.Logger)
-	env.SugaredLogger = env.Logger.Sugar()
+	zap.ReplaceGlobals(env.Logger.Unwrap())
 
 	if env.undoRedirectStdLog != nil {
 		env.undoRedirectStdLog()
 	}
 
 	if !env.notRedirectStdLog {
-		env.undoRedirectStdLog = zap.RedirectStdLog(env.Logger)
+		env.undoRedirectStdLog = zap.RedirectStdLog(env.Logger.Unwrap())
 	}
 	return nil
 }

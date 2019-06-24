@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/gops/agent"
 	"github.com/kardianos/osext"
+	"github.com/runner-mei/log"
 	commons_cfg "github.com/three-plus-three/modules/cfg"
 	"github.com/three-plus-three/modules/util"
 	"go.uber.org/zap"
@@ -51,8 +52,7 @@ type Environment struct {
 	serviceOptions     []ServiceConfig
 
 	LogConfig          zap.Config
-	Logger             *zap.Logger
-	SugaredLogger      *zap.SugaredLogger
+	Logger             log.Logger
 	undoRedirectStdLog func()
 	notRedirectStdLog  bool
 
