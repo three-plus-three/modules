@@ -9,10 +9,16 @@ import (
 )
 
 func loadMinioConfig(fs FileSystem) map[string]interface{} {
-	configFile := fs.FromData(".minio", "config.json")
+	configFile := fs.FromData("minio", ".minio.sys", "config", "config.json")
 	if !util.FileExists(configFile) {
-		log.Println("[warn] '" + configFile + "' isn't exists.")
-		return nil
+
+		configFile2 := fs.FromData(".minio", "config.json")
+		if !util.FileExists(configFile2) {
+			log.Println("[warn] '" + configFile + "' isn't exists.")
+			log.Println("[warn] '" + configFile2 + "' isn't exists.")
+			return nil
+		}
+		configFile = configFile2
 	}
 
 	r, err := os.Open(configFile)
