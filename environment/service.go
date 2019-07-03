@@ -228,7 +228,7 @@ func (cfg *ServiceConfig) Client(paths ...string) *HttpClient {
 }
 
 // Resty 服务的访问
-func (cfg *ServiceConfig) Resty() *resty.Proxy {
+func (cfg *ServiceConfig) Resty() resty.ImmutableProxy {
 	pxy, err := resty.New(cfg.URLFor())
 	if err != nil {
 		panic(err)
