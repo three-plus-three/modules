@@ -1,18 +1,9 @@
 package httputil
 
 import (
-	"bytes"
-	"context"
 	"crypto/tls"
-	"encoding/json"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"net"
 	"net/http"
-	"strings"
 
-	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/netutil"
 )
 
@@ -30,195 +21,195 @@ func init() {
 	}
 }
 
-type HandleFunc func(req *http.Request, resp *http.Response) error
-
 var InsecureHttpClent = &http.Client{Transport: InsecureHttpTransport}
 
-func InvokeHttp(action, url string, body interface{}, exceptedCode int, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
-	return InvokeHttpWithContext(nil, action, url, body, exceptedCode, result, cachedBuffer)
-}
+//type HandleFunc func(req *http.Request, resp *http.Response) error
 
-func InvokeHttpWithContext(ctx context.Context, action, url string, body interface{}, exceptedCode int, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
-	var req *http.Request
-	var e error
+//func InvokeHttp(action, url string, body interface{}, exceptedCode int, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+//	return InvokeHttpWithContext(nil, action, url, body, exceptedCode, result, cachedBuffer)
+//}
 
-	if body == nil {
-		req, e = http.NewRequest(action, url, nil)
-	} else {
-		switch value := body.(type) {
-		case []byte:
-			req, e = http.NewRequest(action, url, bytes.NewReader(value))
-		case string:
-			req, e = http.NewRequest(action, url, strings.NewReader(value))
-		case io.Reader:
-			req, e = http.NewRequest(action, url, value)
-		default:
-			if cachedBuffer == nil {
-				cachedBuffer = bytes.NewBuffer(make([]byte, 0, 1000))
-			} else {
-				cachedBuffer.Reset()
-			}
-			e = json.NewEncoder(cachedBuffer).Encode(body)
-			if nil != e {
-				return errors.NewApplicationError(http.StatusBadRequest, e.Error())
-			}
-			req, e = http.NewRequest(action, url, cachedBuffer)
-		}
-	}
-	if e != nil {
-		return errors.NewApplicationError(http.StatusBadRequest, e.Error())
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Connection", "Keep-Alive")
+//func InvokeHttpWithContext(ctx context.Context, action, url string, body interface{}, exceptedCode int, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+//	var req *http.Request
+//	var e error
 
-	if ctx != nil {
-		req = req.WithContext(ctx)
-	}
+//	if body == nil {
+//		req, e = http.NewRequest(action, url, nil)
+//	} else {
+//		switch value := body.(type) {
+//		case []byte:
+//			req, e = http.NewRequest(action, url, bytes.NewReader(value))
+//		case string:
+//			req, e = http.NewRequest(action, url, strings.NewReader(value))
+//		case io.Reader:
+//			req, e = http.NewRequest(action, url, value)
+//		default:
+//			if cachedBuffer == nil {
+//				cachedBuffer = bytes.NewBuffer(make([]byte, 0, 1000))
+//			} else {
+//				cachedBuffer.Reset()
+//			}
+//			e = json.NewEncoder(cachedBuffer).Encode(body)
+//			if nil != e {
+//				return errors.NewApplicationError(http.StatusBadRequest, e.Error())
+//			}
+//			req, e = http.NewRequest(action, url, cachedBuffer)
+//		}
+//	}
+//	if e != nil {
+//		return errors.NewApplicationError(http.StatusBadRequest, e.Error())
+//	}
+//	req.Header.Set("Content-Type", "application/json")
+//	req.Header.Set("Accept", "application/json")
+//	req.Header.Set("Connection", "Keep-Alive")
 
-	resp, e := http.DefaultClient.Do(req)
-	if nil != e {
-		return errors.NewApplicationError(http.StatusServiceUnavailable, e.Error())
-	}
+//	if ctx != nil {
+//		req = req.WithContext(ctx)
+//	}
 
-	// Install closing the request body (if any)
-	defer func() {
-		if nil != resp.Body {
-			io.Copy(ioutil.Discard, resp.Body)
-			resp.Body.Close()
-		}
-	}()
+//	resp, e := http.DefaultClient.Do(req)
+//	if nil != e {
+//		return errors.NewApplicationError(http.StatusServiceUnavailable, e.Error())
+//	}
 
-	if resp.StatusCode != exceptedCode {
-		if exceptedCode != 0 || resp.StatusCode < http.StatusOK || resp.StatusCode > 299 {
-			var respBody []byte
-			respBody, e = ioutil.ReadAll(resp.Body)
-			if nil != e {
-				panic(e.Error())
-			}
-			if 0 == len(respBody) {
-				return errors.NewApplicationError(resp.StatusCode, fmt.Sprintf("request '%v' fail: %v: read_error", url, resp.StatusCode))
-			}
-			return errors.NewApplicationError(resp.StatusCode, "request '"+url+"' fail: "+resp.Status+": "+string(respBody))
-		}
-	}
+//	// Install closing the request body (if any)
+//	defer func() {
+//		if nil != resp.Body {
+//			io.Copy(ioutil.Discard, resp.Body)
+//			resp.Body.Close()
+//		}
+//	}()
 
-	if nil == result {
-		return nil
-	}
+//	if resp.StatusCode != exceptedCode {
+//		if exceptedCode != 0 || resp.StatusCode < http.StatusOK || resp.StatusCode > 299 {
+//			var respBody []byte
+//			respBody, e = ioutil.ReadAll(resp.Body)
+//			if nil != e {
+//				panic(e.Error())
+//			}
+//			if 0 == len(respBody) {
+//				return errors.NewApplicationError(resp.StatusCode, fmt.Sprintf("request '%v' fail: %v: read_error", url, resp.StatusCode))
+//			}
+//			return errors.NewApplicationError(resp.StatusCode, "request '"+url+"' fail: "+resp.Status+": "+string(respBody))
+//		}
+//	}
 
-	if cb, ok := result.(HandleFunc); ok {
-		e = cb(req, resp)
-		if e != nil {
-			return errors.ToRuntimeError(e)
-		}
-		return nil
-	}
+//	if nil == result {
+//		return nil
+//	}
 
-	if w, ok := result.(io.Writer); ok {
-		_, e = io.Copy(w, resp.Body)
-		if e != nil {
-			return errors.ToRuntimeError(e)
-		}
-		return nil
-	}
+//	if cb, ok := result.(HandleFunc); ok {
+//		e = cb(req, resp)
+//		if e != nil {
+//			return errors.ToRuntimeError(e)
+//		}
+//		return nil
+//	}
 
-	if nil == cachedBuffer {
-		if s, ok := result.(*string); ok {
-			cachedBuffer = bytes.NewBuffer(make([]byte, 0, 1024))
-			if _, e = io.Copy(cachedBuffer, resp.Body); nil != e {
-				return errors.NewApplicationError(http.StatusInternalServerError,
-					fmt.Sprintf("%v: %s", http.StatusInternalServerError, e.Error()))
-			}
-			*s = cachedBuffer.String()
-			return nil
-		}
+//	if w, ok := result.(io.Writer); ok {
+//		_, e = io.Copy(w, resp.Body)
+//		if e != nil {
+//			return errors.ToRuntimeError(e)
+//		}
+//		return nil
+//	}
 
-		if bs, ok := result.(*[]byte); ok {
-			cachedBuffer = bytes.NewBuffer(make([]byte, 0, 1024))
-			if _, e = io.Copy(cachedBuffer, resp.Body); nil != e {
-				return errors.NewApplicationError(http.StatusInternalServerError,
-					fmt.Sprintf("%v: %s", http.StatusInternalServerError, e.Error()))
-			}
+//	if nil == cachedBuffer {
+//		if s, ok := result.(*string); ok {
+//			cachedBuffer = bytes.NewBuffer(make([]byte, 0, 1024))
+//			if _, e = io.Copy(cachedBuffer, resp.Body); nil != e {
+//				return errors.NewApplicationError(http.StatusInternalServerError,
+//					fmt.Sprintf("%v: %s", http.StatusInternalServerError, e.Error()))
+//			}
+//			*s = cachedBuffer.String()
+//			return nil
+//		}
 
-			*bs = cachedBuffer.Bytes()
-			return nil
-		}
+//		if bs, ok := result.(*[]byte); ok {
+//			cachedBuffer = bytes.NewBuffer(make([]byte, 0, 1024))
+//			if _, e = io.Copy(cachedBuffer, resp.Body); nil != e {
+//				return errors.NewApplicationError(http.StatusInternalServerError,
+//					fmt.Sprintf("%v: %s", http.StatusInternalServerError, e.Error()))
+//			}
 
-		//bs, _ := ioutil.ReadAll(resp.Body)
-		//cachedBuffer = bytes.NewBuffer(bs)
-		//decoder := json.NewDecoder(cachedBuffer)
-		decoder := json.NewDecoder(resp.Body)
-		decoder.UseNumber()
-		e = decoder.Decode(result)
-		if nil != e {
-			return errors.NewApplicationError(http.StatusInternalServerError, e.Error())
-		}
-		return nil
-	}
+//			*bs = cachedBuffer.Bytes()
+//			return nil
+//		}
 
-	cachedBuffer.Reset()
+//		//bs, _ := ioutil.ReadAll(resp.Body)
+//		//cachedBuffer = bytes.NewBuffer(bs)
+//		//decoder := json.NewDecoder(cachedBuffer)
+//		decoder := json.NewDecoder(resp.Body)
+//		decoder.UseNumber()
+//		e = decoder.Decode(result)
+//		if nil != e {
+//			return errors.NewApplicationError(http.StatusInternalServerError, e.Error())
+//		}
+//		return nil
+//	}
 
-	if _, e = io.Copy(cachedBuffer, resp.Body); nil != e {
-		return errors.NewApplicationError(http.StatusInternalServerError,
-			fmt.Sprintf("%v: %s", http.StatusInternalServerError, e.Error()))
-	}
-	if s, ok := result.(*string); ok {
-		*s = cachedBuffer.String()
-		return nil
-	}
+//	cachedBuffer.Reset()
 
-	if bs, ok := result.(*[]byte); ok {
-		*bs = cachedBuffer.Bytes()
-		return nil
-	}
+//	if _, e = io.Copy(cachedBuffer, resp.Body); nil != e {
+//		return errors.NewApplicationError(http.StatusInternalServerError,
+//			fmt.Sprintf("%v: %s", http.StatusInternalServerError, e.Error()))
+//	}
+//	if s, ok := result.(*string); ok {
+//		*s = cachedBuffer.String()
+//		return nil
+//	}
 
-	if 0 == cachedBuffer.Len() {
-		return errors.NewApplicationError(resp.StatusCode,
-			fmt.Sprintf("%v: read empty error", resp.StatusCode))
-	}
+//	if bs, ok := result.(*[]byte); ok {
+//		*bs = cachedBuffer.Bytes()
+//		return nil
+//	}
 
-	if e = json.Unmarshal(cachedBuffer.Bytes(), result); nil != e {
-		return errors.NewApplicationError(http.StatusInternalServerError,
-			fmt.Sprintf("umarshal '%s' to %T failed, %s",
-				cachedBuffer.String(), result, e.Error()))
-	}
-	return nil
-}
+//	if 0 == cachedBuffer.Len() {
+//		return errors.NewApplicationError(resp.StatusCode,
+//			fmt.Sprintf("%v: read empty error", resp.StatusCode))
+//	}
 
-func Post(url string, body, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
-	return InvokeHttp("POST", url, body, http.StatusOK, result, cachedBuffer)
-}
+//	if e = json.Unmarshal(cachedBuffer.Bytes(), result); nil != e {
+//		return errors.NewApplicationError(http.StatusInternalServerError,
+//			fmt.Sprintf("umarshal '%s' to %T failed, %s",
+//				cachedBuffer.String(), result, e.Error()))
+//	}
+//	return nil
+//}
 
-func Get(url string, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
-	return InvokeHttp("GET", url, nil, http.StatusOK, result, cachedBuffer)
-}
+//func Post(url string, body, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+//	return InvokeHttp("POST", url, body, http.StatusOK, result, cachedBuffer)
+//}
 
-func Put(url string, body, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
-	return InvokeHttp("PUT", url, body, http.StatusOK, result, cachedBuffer)
-}
+//func Get(url string, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+//	return InvokeHttp("GET", url, nil, http.StatusOK, result, cachedBuffer)
+//}
 
-func Delete(url string, body, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
-	return InvokeHttp("DELETE", url, body, http.StatusOK, result, cachedBuffer)
-}
+//func Put(url string, body, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+//	return InvokeHttp("PUT", url, body, http.StatusOK, result, cachedBuffer)
+//}
 
-func Do(method, url string, body, statusCode int, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
-	return InvokeHttp(method, url, body, statusCode, result, cachedBuffer)
-}
+//func Delete(url string, body, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+//	return InvokeHttp("DELETE", url, body, http.StatusOK, result, cachedBuffer)
+//}
 
-const (
-	HeaderXForwardedFor = "X-Forwarded-For"
-	HeaderXRealIP       = "X-Real-IP"
-)
+//func Do(method, url string, body, statusCode int, result interface{}, cachedBuffer *bytes.Buffer) errors.RuntimeError {
+//	return InvokeHttp(method, url, body, statusCode, result, cachedBuffer)
+//}
 
-func RealIP(req *http.Request) string {
-	ra := req.RemoteAddr
-	if ip := req.Header.Get(HeaderXForwardedFor); ip != "" {
-		ra = ip
-	} else if ip := req.Header.Get(HeaderXRealIP); ip != "" {
-		ra = ip
-	} else {
-		ra, _, _ = net.SplitHostPort(ra)
-	}
-	return ra
-}
+//const (
+//	HeaderXForwardedFor = "X-Forwarded-For"
+//	HeaderXRealIP       = "X-Real-IP"
+//)
+
+//func RealIP(req *http.Request) string {
+//	ra := req.RemoteAddr
+//	if ip := req.Header.Get(HeaderXForwardedFor); ip != "" {
+//		ra = ip
+//	} else if ip := req.Header.Get(HeaderXRealIP); ip != "" {
+//		ra = ip
+//	} else {
+//		ra, _, _ = net.SplitHostPort(ra)
+//	}
+//	return ra
+//}

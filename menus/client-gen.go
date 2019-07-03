@@ -138,9 +138,10 @@ func (srv *apartClient) Read() ([]toolbox.Menu, error) {
 
 func (srv *apartClient) read() ([]toolbox.Menu, error) {
 	var value []toolbox.Menu
-	err := srv.wsrv.Client(srv.urlPath).
+	err := srv.wsrv.Resty().New(srv.urlPath).
 		SetParam("app", srv.appSrv.Name).
-		GET(&value)
+		Result(&value).
+		GET(nil)
 	return value, err
 }
 
@@ -158,7 +159,7 @@ func (srv *apartClient) write() (bool, error) {
 		}
 	}
 
-	return false, srv.wsrv.Client(srv.urlPath).
+	return false, srv.wsrv.Resty().New(srv.urlPath).
 		SetParam("app", srv.appSrv.Name).
 		SetBody(value).
 		POST(nil)

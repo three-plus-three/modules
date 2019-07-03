@@ -221,12 +221,12 @@ func (cfg *ServiceConfig) URIFor(s ...string) *url.URL {
 }
 
 // Client 服务的访问
-func (cfg *ServiceConfig) Client(paths ...string) *HttpClient {
-	return &HttpClient{
-		cfg:      cfg,
-		basePath: urlutil.Join(paths...),
-	}
-}
+//func (cfg *ServiceConfig) Client(paths ...string) *HttpClient {
+//	return &HttpClient{
+//		cfg:      cfg,
+//		basePath: urlutil.Join(paths...),
+//	}
+//}
 
 // Resty 服务的访问
 func (cfg *ServiceConfig) Resty() resty.ImmutableProxy {
