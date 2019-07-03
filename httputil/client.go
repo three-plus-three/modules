@@ -1,16 +1,5 @@
 package httputil
 
-import (
-	"bufio"
-	"bytes"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
-
-	"github.com/three-plus-three/modules/errors"
-)
-
 //type HttpClient struct {
 //	Url      string
 //	Warnings interface{}
@@ -118,37 +107,37 @@ import (
 //	return ReadLinesFromResponse(resp, cachedBuffer, cb)
 //}
 
-func ReadLinesFromResponse(resp *http.Response, cachedBuffer *bytes.Buffer, cb func(line []byte) error) errors.RuntimeError {
-	defer func() {
-		if nil != resp.Body {
-			io.Copy(ioutil.Discard, resp.Body)
-			resp.Body.Close()
-		}
-	}()
+//func ReadLinesFromResponse(resp *http.Response, cachedBuffer *bytes.Buffer, cb func(line []byte) error) errors.RuntimeError {
+//	defer func() {
+//		if nil != resp.Body {
+//			io.Copy(ioutil.Discard, resp.Body)
+//			resp.Body.Close()
+//		}
+//	}()
 
-	if resp.StatusCode != 200 {
-		if resp.StatusCode == http.StatusNoContent {
-			return nil
-		}
+//	if resp.StatusCode != 200 {
+//		if resp.StatusCode == http.StatusNoContent {
+//			return nil
+//		}
 
-		respBody, _ := ioutil.ReadAll(resp.Body)
-		if 0 == len(respBody) {
-			return errors.NewApplicationError(resp.StatusCode, fmt.Sprintf("%v: read_error", resp.StatusCode))
-		}
-		return errors.NewApplicationError(resp.StatusCode, string(respBody))
-	}
+//		respBody, _ := ioutil.ReadAll(resp.Body)
+//		if 0 == len(respBody) {
+//			return errors.NewApplicationError(resp.StatusCode, fmt.Sprintf("%v: read_error", resp.StatusCode))
+//		}
+//		return errors.NewApplicationError(resp.StatusCode, string(respBody))
+//	}
 
-	lineReader := bufio.NewReaderSize(resp.Body, 1024)
-	for {
-		line, _, e := lineReader.ReadLine()
-		if nil != e {
-			if e == io.EOF {
-				return nil
-			}
-			return errors.ToRuntimeError(e)
-		}
-		if e = cb(line); nil != e {
-			return errors.ToRuntimeError(e)
-		}
-	}
-}
+//	lineReader := bufio.NewReaderSize(resp.Body, 1024)
+//	for {
+//		line, _, e := lineReader.ReadLine()
+//		if nil != e {
+//			if e == io.EOF {
+//				return nil
+//			}
+//			return errors.ToRuntimeError(e)
+//		}
+//		if e = cb(line); nil != e {
+//			return errors.ToRuntimeError(e)
+//		}
+//	}
+//}
