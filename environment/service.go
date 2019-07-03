@@ -22,7 +22,7 @@ type ServiceConfig struct {
 	Host    string
 	Port    string
 	UrlPath string
-	Resty   *resty.Proxy
+	proxy   *resty.Proxy
 
 	// surl atomic.Value
 }
@@ -230,14 +230,14 @@ func (cfg *ServiceConfig) Client(paths ...string) *HttpClient {
 
 // Resty 服务的访问
 func (cfg *ServiceConfig) Resty() resty.ImmutableProxy {
-	if cfg.Resty == nil {
+	if cfg.proxy == nil {
 		pxy, err := resty.New(cfg.URLFor())
 		if err != nil {
 			panic(err)
 		}
-		cfg.Resty = pxy
+		cfg.proxy = pxy
 	}
-	cfg.Resty.SetURLFor(func(u *url.URL) error {
+	cfg.proxy.SetURLFor(func(u *url.URL) error {
 		isSSL, host, port := cfg.getHostAndPort()
 		if isSSL {
 			u.Scheme = "https"
@@ -248,5 +248,5 @@ func (cfg *ServiceConfig) Resty() resty.ImmutableProxy {
 		// u.Path = cfg.UrlPath
 		return nil
 	})
-	return cfg.Resty
+	return cfg.proxy
 }
