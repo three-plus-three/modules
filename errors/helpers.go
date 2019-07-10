@@ -9,6 +9,10 @@ import (
 
 // IsTimeoutError 是不是一个超时错误
 func IsTimeoutError(e error) bool {
+	if he, ok := e.(HTTPError); ok {
+		return he.HTTPCode() == ErrTimeout.HTTPCode()
+	}
+
 	if ex, ok := e.(RuntimeError); ok {
 		return ErrTimeout.Code() == ex.Code() ||
 			ErrTimeout.HTTPCode() == ex.Code() ||
@@ -28,11 +32,18 @@ func IsNotFound(e error) bool {
 	if e == sql.ErrNoRows {
 		return true
 	}
+	if he, ok := e.(HTTPError); ok {
+		return he.HTTPCode() == http.StatusNotFound
+	}
 	re, ok := e.(RuntimeError)
 	return ok && re.HTTPCode() == http.StatusNotFound
 }
 
 func IsEmptyError(e error) bool {
+	if he, ok := e.(HTTPError); ok {
+		return he.HTTPCode() == ErrResultEmpty.HTTPCode()
+	}
+
 	if ex, ok := e.(RuntimeError); ok {
 		return ErrCodeResultEmpty == ex.Code() ||
 			ErrCodeResultEmpty == ex.Code()/1000

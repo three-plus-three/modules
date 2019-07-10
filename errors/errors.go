@@ -9,11 +9,16 @@ import (
 	"strings"
 )
 
+type HTTPError interface {
+	HTTPCode() int
+}
+
 //  RuntimeError 一个带 Code 的 error
 type RuntimeError interface {
-	HTTPCode() int
+	HTTPError
+	error
+
 	Code() int
-	Error() string
 }
 
 //  NotFound 创建一个 ErrNotFound
