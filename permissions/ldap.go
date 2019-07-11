@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/three-plus-three/modules/environment"
-	ldap "gopkg.in/ldap.v2"
+	ldap "gopkg.in/ldap.v3"
 )
 
 func IsConnectError(err error) bool {

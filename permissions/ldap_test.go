@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/three-plus-three/modules/environment/env_tests"
-	ldap "gopkg.in/ldap.v2"
+	ldap "gopkg.in/ldap.v3"
 )
 
 var testpassword = flag.String("test.ldap_password", "", "")
