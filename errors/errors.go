@@ -46,29 +46,6 @@ type PGError interface {
 	Get(k byte) (v string)
 }
 
-//  Wrap 为 error 增加上下文信息
-func Wrap(e error, s string, args ...interface{}) error {
-	return RuntimeWrap(e, s, args...)
-}
-
-//  RuntimeWrap 为 error 增加上下文信息
-func RuntimeWrap(e error, s string, args ...interface{}) RuntimeError {
-	if "" == s {
-		return ToRuntimeError(e)
-	}
-
-	msg := fmt.Sprintf(s, args...) + ": " + e.Error()
-	if re, ok := e.(RuntimeError); ok {
-		return &ApplicationError{Parent: e, ErrCode: re.Code(), ErrMessage: msg}
-	}
-
-	if e == sql.ErrNoRows {
-		return &ApplicationError{Parent: e, ErrCode: http.StatusNotFound, ErrMessage: msg}
-	}
-
-	return &ApplicationError{Parent: e, ErrCode: http.StatusInternalServerError, ErrMessage: msg}
-}
-
 // Concat 拼接多个错误
 func Concat(errs ...error) error {
 	switch len(errs) {
@@ -193,9 +170,7 @@ func ToRuntimeError(e error, code ...int) RuntimeError {
 	}); ok {
 		return &ApplicationError{Parent: e, ErrCode: he.Code(), ErrMessage: e.Error()}
 	}
-	if he, ok := e.(interface {
-		HTTPCode() int
-	}); ok {
+	if he, ok := e.(HTTPError); ok {
 		return &ApplicationError{Parent: e, ErrCode: he.HTTPCode(), ErrMessage: e.Error()}
 	}
 	if len(code) > 0 {
@@ -215,9 +190,7 @@ func ToApplicationError(e error, code ...int) *ApplicationError {
 		return &ApplicationError{Parent: e, ErrCode: he.Code(), ErrMessage: e.Error()}
 	}
 
-	if he, ok := e.(interface {
-		HTTPCode() int
-	}); ok {
+	if he, ok := e.(HTTPError); ok {
 		return &ApplicationError{Parent: e, ErrCode: he.HTTPCode(), ErrMessage: e.Error()}
 	}
 
@@ -227,9 +200,35 @@ func ToApplicationError(e error, code ...int) *ApplicationError {
 	return &ApplicationError{Parent: e, ErrCode: http.StatusInternalServerError, ErrMessage: e.Error()}
 }
 
-// BadArgument 创建一个 ErrBadArgument
-func BadArgument(msg string) *ApplicationError {
-	return &ApplicationError{ErrCode: http.StatusBadRequest, ErrMessage: msg}
+//  Wrap 为 error 增加上下文信息
+func Wrap(e error, s string, args ...interface{}) error {
+	return RuntimeWrap(e, s, args...)
+}
+
+//  RuntimeWrap 为 error 增加上下文信息
+func RuntimeWrap(e error, s string, args ...interface{}) RuntimeError {
+	if "" == s {
+		return ToRuntimeError(e)
+	}
+
+	msg := fmt.Sprintf(s, args...) + ": " + e.Error()
+	if re, ok := e.(RuntimeError); ok {
+		return &ApplicationError{Parent: e, ErrCode: re.Code(), ErrMessage: msg}
+	}
+	if re, ok := e.(interface {
+		Code() int
+	}); ok {
+		return &ApplicationError{Parent: e, ErrCode: re.Code(), ErrMessage: msg}
+	}
+	if re, ok := e.(HTTPError); ok {
+		return &ApplicationError{Parent: e, ErrCode: re.HTTPCode(), ErrMessage: msg}
+	}
+
+	if e == sql.ErrNoRows {
+		return &ApplicationError{Parent: e, ErrCode: http.StatusNotFound, ErrMessage: msg}
+	}
+
+	return &ApplicationError{Parent: e, ErrCode: http.StatusInternalServerError, ErrMessage: msg}
 }
 
 func Is(realError, exceptedError error) bool {
@@ -243,6 +242,11 @@ func Is(realError, exceptedError error) bool {
 	}
 
 	return Is(ae.Parent, exceptedError)
+}
+
+// BadArgument 创建一个 ErrBadArgument
+func BadArgument(msg string) *ApplicationError {
+	return &ApplicationError{ErrCode: http.StatusBadRequest, ErrMessage: msg}
 }
 
 func ConcatApplicationErrors(errs []*ApplicationError, errMessage ...string) *ApplicationError {
