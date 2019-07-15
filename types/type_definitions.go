@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/big"
 	"strings"
+
 	//"labix.org/v2/mgo/bson"
 	"encoding/json"
 	"net"
@@ -447,16 +448,16 @@ func (self *stringType) CreateEnumerationValidator(values []string) (Validator, 
 	return &StringEnumerationValidator{Values: new_values}, nil
 }
 
-func (self *stringType) CreatePatternValidator(pattern string) (Validator, error) {
-	if "" == pattern {
+func (self *stringType) CreatePatternValidator(s string) (Validator, error) {
+	if "" == s {
 		return nil, errors.New("pattern is empty")
 	}
 
-	p, err := regexp.Compile(pattern)
+	pattern, err := regexp.Compile(s)
 	if nil != err {
 		return nil, err
 	}
-	return &PatternValidator{Pattern: p}, nil
+	return &PatternValidator{pattern: pattern, s: s}, nil
 }
 
 func (self *stringType) CreateRangeValidator(minValue, maxValue string) (Validator, error) {

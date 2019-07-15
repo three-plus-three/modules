@@ -14,7 +14,12 @@ type Validator interface {
 }
 
 type PatternValidator struct {
-	Pattern *regexp.Regexp
+	s       string
+	pattern *regexp.Regexp
+}
+
+func (self *PatternValidator) PatternString() string {
+	return self.s
 }
 
 func (self *PatternValidator) Validate(pv interface{}, attributes map[string]interface{}) (bool, error) {
@@ -28,9 +33,9 @@ func (self *PatternValidator) Validate(pv interface{}, attributes map[string]int
 		return false, errors.New("syntex error, it is not a string")
 	}
 
-	if nil != self.Pattern {
-		if !self.Pattern.MatchString(s) {
-			return false, errors.New("'" + s + "' is not match '" + self.Pattern.String() + "'")
+	if nil != self.pattern {
+		if !self.pattern.MatchString(s) {
+			return false, errors.New("'" + s + "' is not match '" + self.s + "'")
 		}
 	}
 	return true, nil
@@ -38,6 +43,10 @@ func (self *PatternValidator) Validate(pv interface{}, attributes map[string]int
 
 type StringLengthValidator struct {
 	MinLength, MaxLength int
+}
+
+func (self *StringLengthValidator) Length() (int, int) {
+	return self.MinLength, self.MaxLength
 }
 
 func (self *StringLengthValidator) Validate(pv interface{}, attributes map[string]interface{}) (bool, error) {
@@ -67,6 +76,10 @@ type IntegerValidator struct {
 	MinValue, MaxValue int64
 }
 
+func (self *IntegerValidator) Range() (bool, int64, bool, int64) {
+	return self.HasMin, self.MinValue, self.HasMax, self.MaxValue
+}
+
 func (self *IntegerValidator) Validate(pv interface{}, attributes map[string]interface{}) (bool, error) {
 	i64, ok := pv.(int64)
 	if !ok {
@@ -89,6 +102,10 @@ type DecimalValidator struct {
 	MinValue, MaxValue float64
 }
 
+func (self *DecimalValidator) Range() (bool, float64, bool, float64) {
+	return self.HasMin, self.MinValue, self.HasMax, self.MaxValue
+}
+
 func (self *DecimalValidator) Validate(pv interface{}, attributes map[string]interface{}) (bool, error) {
 	f64, ok := pv.(float64)
 	if !ok {
@@ -108,6 +125,10 @@ func (self *DecimalValidator) Validate(pv interface{}, attributes map[string]int
 type DateValidator struct {
 	HasMin, HasMax     bool
 	MinValue, MaxValue time.Time
+}
+
+func (self *DateValidator) Range() (bool, time.Time, bool, time.Time) {
+	return self.HasMin, self.MinValue, self.HasMax, self.MaxValue
 }
 
 func (self *DateValidator) Validate(pv interface{}, attributes map[string]interface{}) (bool, error) {
@@ -135,6 +156,14 @@ type EnumerationValidator struct {
 	Values []interface{}
 }
 
+func (self *EnumerationValidator) EnumerationValues() []string {
+	values := make([]string, len(self.Values))
+	for idx := range self.Values {
+		values[idx] = fmt.Sprint(self.Values[idx])
+	}
+	return values
+}
+
 func (self *EnumerationValidator) Validate(pv interface{}, attributes map[string]interface{}) (bool, error) {
 	var found bool = false
 	for _, v := range self.Values {
@@ -151,6 +180,14 @@ func (self *EnumerationValidator) Validate(pv interface{}, attributes map[string
 
 type BigIntegerValidator struct {
 	Values []big.Int
+}
+
+func (self *BigIntegerValidator) EnumerationValues() []string {
+	values := make([]string, len(self.Values))
+	for idx := range self.Values {
+		values[idx] = self.Values[idx].String()
+	}
+	return values
 }
 
 func (self *BigIntegerValidator) Validate(pv interface{}, attributes map[string]interface{}) (bool, error) {
@@ -174,6 +211,10 @@ func (self *BigIntegerValidator) Validate(pv interface{}, attributes map[string]
 
 type StringEnumerationValidator struct {
 	Values []string
+}
+
+func (self *StringEnumerationValidator) EnumerationValues() []string {
+	return self.Values
 }
 
 func (self *StringEnumerationValidator) Validate(pv interface{}, attributes map[string]interface{}) (bool, error) {
@@ -202,6 +243,14 @@ func (self *StringEnumerationValidator) Validate(pv interface{}, attributes map[
 
 type IntegerEnumerationValidator struct {
 	Values []int64
+}
+
+func (self *IntegerEnumerationValidator) EnumerationValues() []string {
+	values := make([]string, len(self.Values))
+	for idx := range self.Values {
+		values[idx] = strconv.FormatInt(self.Values[idx], 10)
+	}
+	return values
 }
 
 func (self *IntegerEnumerationValidator) Validate(pv interface{}, attributes map[string]interface{}) (bool, error) {
