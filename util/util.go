@@ -27,6 +27,20 @@ func CloseWith(closer io.Closer) {
 	}
 }
 
+// RollbackWith 捕获错误并打印
+func RollbackWith(closer interface {
+	Rollback() error
+}) {
+	if err := closer.Rollback(); err != nil {
+		if err == sql.ErrTxDone {
+			return
+		}
+
+		log.Println("[WARN]", err)
+		panic(err)
+	}
+}
+
 func ToJSON(a interface{}) string {
 	bs, _ := json.Marshal(a)
 	if len(bs) == 0 {
