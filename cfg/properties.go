@@ -87,8 +87,8 @@ func readString(s string, breakIfEqualChar bool) (string, string) {
 				return buf.String(), txt[idx:]
 			}
 			buf.WriteRune(c)
-		case '\\':
-			return "", ""
+			//		case '\\':
+			//			return "", ""
 		default:
 			if unicode.IsSpace(c) {
 				return buf.String(), txt[idx+1:]

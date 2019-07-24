@@ -62,6 +62,7 @@ d#5= d#5
   d10 = d10  
   d11 = a${d10}b
   d12 = a${d11}b
+  pa=c:\a.txt
 `
 
 	excepted := map[string]string{"c": "b",
@@ -78,7 +79,9 @@ d#5= d#5
 		"daemon.port": "51791",
 		"d10":         "d10",
 		"d11":         "ad10b",
-		"d12":         "aad10bb"}
+		"d12":         "aad10bb",
+		"pa":          "c:\\a.txt",
+	}
 
 	actual, e := Read(strings.NewReader(input))
 	if e != nil {
