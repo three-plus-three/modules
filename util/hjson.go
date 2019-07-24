@@ -43,6 +43,9 @@ func FromHjsonFile(filename string, target interface{}) error {
 	if err != nil {
 		return err
 	}
+	if bytes.HasPrefix(bs, []byte{0xEF, 0xBB, 0xBF}) {
+		bs = bs[3:]
+	}
 	bs, err = HjsonToJSON(bs)
 	if err != nil {
 		return err
