@@ -494,6 +494,10 @@ func ReadLayout(filename string, args map[string]interface{}) (Layout, error) {
 		return nil, errors.Wrap(err, "read layout fail")
 	}
 
+	if bytes.HasPrefix(bs, []byte{0xEF, 0xBB, 0xBF}) {
+		bs = bs[3:]
+	}
+
 	t, err := template.New("default").Funcs(template.FuncMap{
 		"join": urlutil.Join,
 	}).Parse(string(bs))
