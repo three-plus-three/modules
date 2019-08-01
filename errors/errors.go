@@ -34,6 +34,15 @@ func NotFound(id interface{}, typ ...string) *ApplicationError {
 	return NewApplicationError(http.StatusNotFound, "record with type is '"+typ[0]+"' and id is '"+fmt.Sprint(id)+"' isn't found")
 }
 
+//  NotFound 创建一个 ErrNotFound
+func NotFoundWithMessage(msg string) *ApplicationError {
+	if msg == "" {
+		return NewApplicationError(http.StatusNotFound, "not found")
+	}
+
+	return NewApplicationError(http.StatusNotFound, msg)
+}
+
 //  New 创建一个 error
 func New(msg string) error {
 	return native.New(msg)
