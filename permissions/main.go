@@ -324,7 +324,7 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (tool
 			}
 
 			if u.(*user).IsDisabled() {
-				return nil, errors.New("user with name is " + userName + " is disabled")
+				return nil, errors.New("user with name is '" + userName + "' is disabled")
 			}
 			return u, nil
 		}
@@ -350,13 +350,13 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (tool
 			um.usercacheIt(u)
 			return u, nil
 		default:
-			return nil, errors.Wrap(err, "query user with name is "+userName+"fail")
+			return nil, errors.Wrap(err, "query user with name is '"+userName+"' fail")
 		}
 	}
 
 	if !includeDisabled {
 		if u.IsDisabled() {
-			return nil, errors.New("user with name is " + userName + " is disabled")
+			return nil, errors.New("user with name is '" + userName + "' is disabled")
 		}
 	}
 
