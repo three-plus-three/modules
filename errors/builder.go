@@ -1,57 +1,62 @@
 package errors
 
+import (
+	"fmt"
+
+	"github.com/runner-mei/errors"
+)
+
 type ErrorBuilder struct {
 	code      int
 	message   string
-	fields    map[string]interface{}
-	internals []*ApplicationError
+	fields    map[string]errors.ValidationError
+	internals []ApplicationError
 }
 
 func (err *ErrorBuilder) WithInternalError(e error) *ErrorBuilder {
 	if rerr, ok := e.(*ApplicationError); ok {
 		if rerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
-			return err.WithInternalErrors(rerr.Internals)
+			err.internals = append(err.internals, rerr.Internals...)
+			return err
 		}
-		err.internals = append(err.internals, rerr)
+		err.internals = append(err.internals, *rerr)
 		return err
 	}
-	err.internals = append(err.internals, ToApplicationError(e))
+	err.internals = append(err.internals, *ToApplicationError(e))
 	return err
 }
 
 func (err *ErrorBuilder) WithInternalErrors(internals []*ApplicationError) *ErrorBuilder {
-	if len(err.internals) <= 0 {
-		err.internals = internals
-		return err
-	}
 	if len(internals) > 0 {
-		err.internals = append(err.internals, internals...)
+		for _, e := range internals {
+			err.internals = append(err.internals, *e)
+		}
 	}
 	return err
 }
 
 func (err *ErrorBuilder) WithField(nm string, v interface{}) *ErrorBuilder {
 	if nil == err.fields {
-		err.fields = map[string]interface{}{}
+		err.fields = map[string]errors.ValidationError{}
 	}
-	err.fields[nm] = v
+	err.fields[nm] = errors.ValidationError{Message: fmt.Sprint(v)}
 	return err
 }
 
-func (err *ErrorBuilder) Fields() map[string]interface{} {
+func (err *ErrorBuilder) Fields() map[string]errors.ValidationError {
 	return err.fields
 }
 
-func (err *ErrorBuilder) FieldsWithDefault() map[string]interface{} {
+func (err *ErrorBuilder) FieldsWithDefault() map[string]errors.ValidationError {
 	if nil == err.fields {
-		err.fields = map[string]interface{}{}
+		err.fields = map[string]errors.ValidationError{}
 	}
 	return err.fields
 }
 
 func (err *ErrorBuilder) Build() *ApplicationError {
-	var fields map[string]interface{}
-	var internals []*ApplicationError
+	var fields map[string]errors.ValidationError
+	var internals []ApplicationError
 	if len(err.fields) > 0 {
 		fields = err.fields
 	}
@@ -61,10 +66,10 @@ func (err *ErrorBuilder) Build() *ApplicationError {
 	}
 
 	return &ApplicationError{
-		ErrCode:    err.code,
-		ErrMessage: err.message,
-		Fields:     fields,
-		Internals:  internals,
+		Code:      err.code,
+		Message:   err.message,
+		Fields:    fields,
+		Internals: internals,
 	}
 }
 
@@ -76,23 +81,23 @@ func Build(code int, msg string) *ErrorBuilder {
 }
 
 func ReBuildFromRuntimeError(e RuntimeError) *ErrorBuilder {
-	var fields map[string]interface{}
-	var internals []*ApplicationError
+	var fields map[string]errors.ValidationError
+	var internals []ApplicationError
 	if err, ok := e.(*ApplicationError); ok {
 		if len(err.Fields) > 0 {
-			fields = map[string]interface{}{}
+			fields = map[string]errors.ValidationError{}
 			for k, v := range err.Fields {
 				fields[k] = v
 			}
 		}
 
 		if len(err.Internals) > 0 {
-			internals = make([]*ApplicationError, len(err.Internals))
+			internals = make([]ApplicationError, len(err.Internals))
 			copy(internals, err.Internals)
 		}
 	}
 	return &ErrorBuilder{
-		code:      e.Code(),
+		code:      e.ErrorCode(),
 		message:   e.Error(),
 		fields:    fields,
 		internals: internals,

@@ -119,10 +119,10 @@ func (self *ResultImpl) SetError(code int, msg string) *ResultImpl {
 	}
 
 	if nil == self.Eerror {
-		self.Eerror = &errors.ApplicationError{ErrCode: code, ErrMessage: msg}
+		self.Eerror = errors.NewApplicationError(code, msg)
 	} else {
-		self.Eerror.ErrCode = code
-		self.Eerror.ErrMessage = msg
+		self.Eerror.Code = code
+		self.Eerror.Message = msg
 	}
 	return self
 }
@@ -145,20 +145,20 @@ func (self *ResultImpl) SetLastInsertId(id interface{}) *ResultImpl {
 
 func (self *ResultImpl) ErrorCode() int {
 	if nil != self.Eerror {
-		return self.Eerror.ErrCode
+		return self.Eerror.Code
 	}
 	return -1
 }
 
 func (self *ResultImpl) ErrorMessage() string {
 	if nil != self.Eerror {
-		return self.Eerror.ErrMessage
+		return self.Eerror.Message
 	}
 	return ""
 }
 
 func (self *ResultImpl) HasError() bool {
-	return nil != self.Eerror && (0 != self.Eerror.ErrCode || 0 != len(self.Eerror.ErrMessage))
+	return nil != self.Eerror && (0 != self.Eerror.Code || 0 != len(self.Eerror.Message))
 }
 
 func (self *ResultImpl) Error() errors.RuntimeError {
@@ -228,8 +228,8 @@ func (self *ResultImpl) ToMap() map[string]interface{} {
 
 	if nil != self.Eerror {
 		res["error"] = map[string]interface{}{
-			"code":    self.Eerror.ErrCode,
-			"message": self.Eerror.ErrMessage,
+			"code":    self.Eerror.Code,
+			"message": self.Eerror.Message,
 		}
 	}
 	if nil != self.Ewarnings {

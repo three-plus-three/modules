@@ -13,7 +13,7 @@ const (
 	ErrCodeNotAcceptable  = http.StatusNotAcceptable*1000 + 1
 	ErrCodeNotImplemented = http.StatusNotImplemented*1000 + 1
 	//  StatusResetContent 不可使用，有问题
-	ErrCodePending          = http.StatusResetContent*1000 + 1
+	//  ErrCodePending          = http.StatusResetContent*1000 + 1
 	ErrCodePending2         = 570*1000 + 1
 	ErrCodeIsRequired       = http.StatusBadRequest*1000 + 900
 	ErrCodeNetworkError     = 560000

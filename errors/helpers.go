@@ -1,55 +1,57 @@
 package errors
 
 import (
-	"database/sql"
-	"net/http"
-	"strings"
-	"unicode"
+	"github.com/runner-mei/errors"
 )
 
-// IsTimeoutError 是不是一个超时错误
-func IsTimeoutError(e error) bool {
-	if he, ok := e.(HTTPError); ok {
-		return he.HTTPCode() == ErrTimeout.HTTPCode()
-	}
+var IsPendingError = errors.IsPendingError
+var IsTimeoutError = errors.IsTimeoutError
+var IsNotFound = errors.IsNotFound
+var IsEmptyError = errors.IsEmptyError
 
-	if ex, ok := e.(RuntimeError); ok {
-		return ErrTimeout.Code() == ex.Code() ||
-			ErrTimeout.HTTPCode() == ex.Code() ||
-			ErrTimeout.HTTPCode() == ex.Code()/1000
-	}
+//// IsTimeoutError 是不是一个超时错误
+//func IsTimeoutError(e error) bool {
+//	if he, ok := e.(HTTPError); ok {
+//		return he.HTTPCode() == ErrTimeout.HTTPCode()
+//	}
 
-	s := e.Error()
-	if pos := strings.IndexFunc(s, unicode.IsSpace); pos > 0 {
-		se := s[pos+1:]
-		return se == "time out" || se == "timeout"
-	}
-	return s == "time out" || s == "timeout"
-}
+//	if ex, ok := e.(RuntimeError); ok {
+//		return ErrTimeout.ErrorCode() == ex.ErrorCode() ||
+//			ErrTimeout.HTTPCode() == ex.ErrorCode() ||
+//			ErrTimeout.HTTPCode() == ex.HTTPCode()
+//	}
 
-// IsNotFound 是不是一个未找到错误
-func IsNotFound(e error) bool {
-	if e == sql.ErrNoRows {
-		return true
-	}
-	if he, ok := e.(HTTPError); ok {
-		return he.HTTPCode() == http.StatusNotFound
-	}
-	re, ok := e.(RuntimeError)
-	return ok && re.HTTPCode() == http.StatusNotFound
-}
+//	s := e.Error()
+//	if pos := strings.IndexFunc(s, unicode.IsSpace); pos > 0 {
+//		se := s[pos+1:]
+//		return se == "time out" || se == "timeout"
+//	}
+//	return s == "time out" || s == "timeout"
+//}
 
-func IsEmptyError(e error) bool {
-	if he, ok := e.(HTTPError); ok {
-		return he.HTTPCode() == ErrResultEmpty.HTTPCode()
-	}
+//// IsNotFound 是不是一个未找到错误
+//func IsNotFound(e error) bool {
+//	if e == sql.ErrNoRows {
+//		return true
+//	}
+//	if he, ok := e.(HTTPError); ok {
+//		return he.HTTPCode() == http.StatusNotFound
+//	}
+//	re, ok := e.(RuntimeError)
+//	return ok && re.HTTPCode() == http.StatusNotFound
+//}
 
-	if ex, ok := e.(RuntimeError); ok {
-		return ErrCodeResultEmpty == ex.Code() ||
-			ErrCodeResultEmpty == ex.Code()/1000
-	}
-	if e.Error() == ErrResultEmpty.Error() {
-		return true
-	}
-	return false
-}
+//func IsEmptyError(e error) bool {
+//	if he, ok := e.(HTTPError); ok {
+//		return he.HTTPCode() == ErrResultEmpty.HTTPCode()
+//	}
+
+//	if ex, ok := e.(RuntimeError); ok {
+//		return ErrCodeResultEmpty == ex.ErrorCode() ||
+//			ErrCodeResultEmpty == ex.HTTPCode()
+//	}
+//	if e.Error() == ErrResultEmpty.Error() {
+//		return true
+//	}
+//	return false
+//}
