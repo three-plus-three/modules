@@ -12,6 +12,7 @@ import (
 )
 
 type ApplicationError = errors.Error
+type ValidationError = errors.ValidationError
 type HTTPError = errors.HTTPError
 
 //  RuntimeError 一个带 Code 的 error
