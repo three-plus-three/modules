@@ -7,10 +7,121 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 
-	"github.com/runner-mei/schd_job"
+	"github.com/kardianos/osext"
 )
+
+var (
+	Commands         = map[string]string{}
+	ExecutableFolder string
+)
+
+func init() {
+	executableFolder, e := osext.ExecutableFolder()
+	if nil != e {
+		return
+	}
+	ExecutableFolder = executableFolder
+}
+
+func abs(s string) string {
+	r, e := filepath.Abs(s)
+	if e != nil {
+		return s
+	}
+	return r
+}
+
+func LookPath(executableFolder string, alias ...string) (string, bool) {
+	var names []string
+	for _, aliasName := range alias {
+		if runtime.GOOS == "windows" {
+			names = append(names, aliasName, aliasName+".bat", aliasName+".com", aliasName+".exe")
+		} else {
+			names = append(names, aliasName, aliasName+".sh")
+		}
+	}
+
+	for _, nm := range names {
+		files := []string{nm,
+			filepath.Join("bin", nm),
+			filepath.Join("tools", nm),
+			filepath.Join("runtime_env", nm),
+			filepath.Join("..", nm),
+			filepath.Join("..", "bin", nm),
+			filepath.Join("..", "tools", nm),
+			filepath.Join("..", "runtime_env", nm),
+			filepath.Join(executableFolder, nm),
+			filepath.Join(executableFolder, "bin", nm),
+			filepath.Join(executableFolder, "tools", nm),
+			filepath.Join(executableFolder, "runtime_env", nm),
+			filepath.Join(executableFolder, "..", nm),
+			filepath.Join(executableFolder, "..", "bin", nm),
+			filepath.Join(executableFolder, "..", "tools", nm),
+			filepath.Join(executableFolder, "..", "runtime_env", nm)}
+		for _, file := range files {
+			// fmt.Println("====", file)
+			file = abs(file)
+			if st, e := os.Stat(file); nil == e && nil != st && !st.IsDir() {
+				//fmt.Println("1=====", file, e)
+				return file, true
+			}
+		}
+	}
+
+	for _, nm := range names {
+		_, err := exec.LookPath(nm)
+		if nil == err {
+			return nm, true
+		}
+	}
+	return "", false
+}
+
+func LoadCommands(executableFolder string) {
+	for _, nm := range []string{"snmpget", "snmpgetnext", "snmpdf", "snmpbulkget",
+		"snmpbulkwalk", "snmpdelta", "snmpnetstat", "snmpset", "snmpstatus",
+		"snmptable", "snmptest", "snmptools", "snmptranslate", "snmptrap", "snmpusm",
+		"snmpvacm", "snmpwalk", "wshell"} {
+		if pa, ok := LookPath(executableFolder, nm); ok {
+			Commands[nm] = pa
+		} else if pa, ok := LookPath(executableFolder, "netsnmp/"+nm); ok {
+			Commands[nm] = pa
+		} else if pa, ok := LookPath(executableFolder, "net-snmp/"+nm); ok {
+			Commands[nm] = pa
+		}
+	}
+
+	if pa, ok := LookPath(executableFolder, "tpt"); ok {
+		Commands["tpt"] = pa
+	}
+	if pa, ok := LookPath(executableFolder, "nmap/nping"); ok {
+		Commands["nping"] = pa
+	}
+	if pa, ok := LookPath(executableFolder, "nmap/nmap"); ok {
+		Commands["nmap"] = pa
+	}
+	if pa, ok := LookPath(executableFolder, "putty/plink", "ssh"); ok {
+		Commands["plink"] = pa
+		Commands["ssh"] = pa
+	}
+	if pa, ok := LookPath(executableFolder, "dig/dig", "dig"); ok {
+		Commands["dig"] = pa
+		Commands["runtime_env/dig/dig"] = pa
+	}
+	if pa, ok := LookPath(executableFolder, "ping"); ok {
+		Commands["ping"] = pa
+	}
+	if pa, ok := LookPath(executableFolder, "tracert"); ok {
+		Commands["tracert"] = pa
+	}
+	if pa, ok := LookPath(executableFolder, "traceroute"); ok {
+		Commands["traceroute"] = pa
+	}
+}
 
 // Job is an interface for submitted cron jobs.
 type Command struct {
@@ -96,11 +207,11 @@ func (job *Command) Run(ctx context.Context) error {
 	defer io.WriteString(out, "===============  end  ===============\r\n")
 
 	execPath := job.Execute
-	if s := schd_job.Commands[job.Execute]; s != "" {
+	if s := Commands[job.Execute]; s != "" {
 		s = execPath
 	}
 
-	executePath, found := schd_job.LookPath(schd_job.ExecutableFolder, execPath)
+	executePath, found := LookPath(ExecutableFolder, execPath)
 	if !found {
 		executePath = job.Execute
 	}
