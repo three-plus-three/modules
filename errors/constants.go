@@ -24,11 +24,33 @@ import (
 //	ErrCodeKeyNotFound      = http.StatusNotFound*1000 + 501
 //)
 
+var (
+	ErrTimeout        = errors.ErrTimeout
+	ErrNotFound       = errors.ErrNotFound
+	ErrDisabled       = errors.ErrDisabled
+	ErrNotAcceptable  = errors.ErrNotAcceptable
+	ErrNotImplemented = errors.ErrNotImplemented
+	ErrPending        = errors.ErrPending
+	ErrRequired       = errors.ErrRequired
+
+	ErrNetworkError     = errors.ErrNetworkError
+	ErrInterruptError   = errors.ErrInterruptError
+	ErrMultipleError    = errors.ErrMultipleError
+	ErrTableIsNotExists = errors.ErrTableIsNotExists
+	ErrResultEmpty      = errors.ErrResultEmpty
+	ErrKeyNotFound      = errors.ErrKeyNotFound
+
+	ErrReadResponseFail      = errors.ErrReadResponseFail
+	ErrUnmarshalResponseFail = errors.ErrUnmarshalResponseFail
+
+	ArgumentMissing = errors.ArgumentMissing
+	ArgumentEmpty   = errors.ArgumentEmpty
+)
+
 func ToHttpStatus(code int) int {
 	return errors.ToHttpCode(code)
 }
 
-var (
-	ErrTimeout     = errors.ErrTimeout
-	ErrResultEmpty = errors.ErrResultEmpty //NewApplicationError(ErrCodeResultEmpty, "results is empty")
-)
+func ToHttpCode(code int) int {
+	return errors.ToHttpCode(code)
+}
