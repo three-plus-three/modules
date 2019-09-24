@@ -15,7 +15,7 @@ type ErrorBuilder struct {
 
 func (err *ErrorBuilder) WithInternalError(e error) *ErrorBuilder {
 	if rerr, ok := e.(*ApplicationError); ok {
-		if rerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+		if rerr.HTTPCode() == ToHttpStatus(errors.ErrMultipleError.ErrorCode()) {
 			err.internals = append(err.internals, rerr.Internals...)
 			return err
 		}

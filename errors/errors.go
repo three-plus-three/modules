@@ -103,22 +103,22 @@ func ErrArray(errs []error, errMessage ...string) error {
 			return errs[0]
 		}
 
-		if aerr, ok := errs[0].(*ApplicationError); ok && aerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+		if aerr, ok := errs[0].(*ApplicationError); ok && aerr.HTTPCode() == errors.ErrMultipleError.HTTPCode() {
 			appError = aerr
 			errs = errs[1:]
-		} else if aerr, ok := errs[len(errs)-1].(*ApplicationError); ok && aerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+		} else if aerr, ok := errs[len(errs)-1].(*ApplicationError); ok && aerr.HTTPCode() == errors.ErrMultipleError.HTTPCode() {
 			appError = aerr
 			errs = errs[:len(errs)-1]
 		}
 	}
 
 	if appError == nil {
-		appError = &ApplicationError{Code: ErrCodeMultipleError, Message: message}
+		appError = &ApplicationError{Code: errors.ErrMultipleError.ErrorCode(), Message: message}
 	}
 
 	for _, e := range errs {
 		if me, ok := e.(*ApplicationError); ok {
-			if me.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) && me.Message == "" {
+			if me.HTTPCode() == errors.ErrMultipleError.HTTPCode() && me.Message == "" {
 				if len(me.Internals) > 0 {
 					appError.Internals = append(appError.Internals, me.Internals...)
 				}
@@ -213,7 +213,7 @@ func ConcatApplicationErrors(errs []*ApplicationError, errMessage ...string) *Ap
 		if message == "" {
 			panic("Concat Fail")
 		}
-		return NewApplicationError(ErrCodeInternalError, message)
+		return NewApplicationError(errors.ErrInterruptError.ErrorCode(), message)
 	}
 
 	var appError *ApplicationError
@@ -222,21 +222,21 @@ func ConcatApplicationErrors(errs []*ApplicationError, errMessage ...string) *Ap
 			return errs[0]
 		}
 
-		if aerr := errs[0]; aerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+		if aerr := errs[0]; aerr.HTTPCode() == errors.ErrMultipleError.HTTPCode() {
 			appError = aerr
 			errs = errs[1:]
-		} else if aerr := errs[len(errs)-1]; aerr.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) {
+		} else if aerr := errs[len(errs)-1]; aerr.HTTPCode() == errors.ErrMultipleError.HTTPCode() {
 			appError = aerr
 			errs = errs[:len(errs)-1]
 		}
 	}
 
 	if appError == nil {
-		appError = &ApplicationError{Code: ErrCodeMultipleError, Message: message}
+		appError = &ApplicationError{Code: errors.ErrMultipleError.ErrorCode(), Message: message}
 	}
 
 	for _, me := range errs {
-		if me.HTTPCode() == ToHttpStatus(ErrCodeMultipleError) && me.Message == "" {
+		if me.HTTPCode() == errors.ErrMultipleError.HTTPCode() && me.Message == "" {
 			if len(me.Internals) > 0 {
 				appError.Internals = append(appError.Internals, me.Internals...)
 			}
