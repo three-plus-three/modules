@@ -2,6 +2,8 @@ package errors
 
 import (
 	"net/http"
+
+	"github.com/runner-mei/errors"
 )
 
 // 错误码
@@ -25,13 +27,10 @@ const (
 )
 
 func ToHttpStatus(code int) int {
-	if code < 1000 {
-		return code
-	}
-	return code / 1000
+	return errors.ToHttpCode(code)
 }
 
 var (
-	ErrTimeout     = NewApplicationError(ErrCodeTimeout, "time out")
-	ErrResultEmpty = NewApplicationError(ErrCodeResultEmpty, "results is empty")
+	ErrTimeout     = errors.ErrTimeout
+	ErrResultEmpty = errors.ErrResultEmpty //NewApplicationError(ErrCodeResultEmpty, "results is empty")
 )
