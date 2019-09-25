@@ -26,6 +26,7 @@ type Options struct {
 	FlagSet              *flag.FlagSet
 	Name                 string
 	PrintIfFilesNotFound bool
+	NotPrintIfFilesFound bool
 	Args                 []string
 	NotRedirectStdLog    bool
 	IsTest               bool
@@ -213,8 +214,8 @@ func NewEnvironment(opt Options) (*Environment, error) {
 }
 
 func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
-	cfg := ReadConfigs(fs, opt.ConfigFiles, opt.Name, opt.PrintIfFilesNotFound)
-	if e := InitConfig(opt.FlagSet, cfg, opt.PrintIfFilesNotFound); nil != e {
+	cfg := ReadConfigs(fs, opt.ConfigFiles, opt.Name, !opt.NotPrintIfFilesFound, opt.PrintIfFilesNotFound)
+	if e := InitConfig(opt.FlagSet, cfg); nil != e {
 		return nil, e
 	}
 

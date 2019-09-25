@@ -175,7 +175,7 @@ func portWith(cfg map[string]string, key, value string) string {
 	return v
 }
 
-func LoadConfigs(fs FileSystem, nm string, dumpFilesIfNotFound bool) map[string]string {
+func LoadConfigs(fs FileSystem, nm string, dumpFilesIfFound, dumpFilesIfNotFound bool) map[string]string {
 	files := fs.SearchConfig(nm)
 	if 0 == len(files) {
 		if dumpFilesIfNotFound {
@@ -201,7 +201,9 @@ func LoadConfigs(fs FileSystem, nm string, dumpFilesIfNotFound bool) map[string]
 			return nil
 		}
 
-		log.Println("load properties '" + file + "'.")
+		if dumpFilesIfFound {
+			log.Println("load properties '" + file + "'.")
+		}
 
 		if nil == cfg {
 			cfg = props
@@ -218,8 +220,8 @@ func LoadConfigs(fs FileSystem, nm string, dumpFilesIfNotFound bool) map[string]
 // 	return LoadConfigsWith(fs, nm, flagSet, true)
 // }
 
-func ReadConfigs(fs FileSystem, files []string, nm string, dumpFilesIfNotFound bool) map[string]string {
-	cfg := LoadConfigs(fs, "app.properties", dumpFilesIfNotFound)
+func ReadConfigs(fs FileSystem, files []string, nm string, dumpFilesIfFound, dumpFilesIfNotFound bool) map[string]string {
+	cfg := LoadConfigs(fs, "app.properties", dumpFilesIfFound, dumpFilesIfNotFound)
 	if nil == cfg {
 		cfg = map[string]string{}
 	}
@@ -238,7 +240,9 @@ func ReadConfigs(fs FileSystem, files []string, nm string, dumpFilesIfNotFound b
 				continue
 			}
 
-			log.Println("[info] load config ok: ", file)
+			if dumpFilesIfFound {
+				log.Println("[info] load config ok: ", file)
+			}
 			if len(props) > 0 {
 				for k, v := range props {
 					cfg[k] = v
@@ -247,13 +251,13 @@ func ReadConfigs(fs FileSystem, files []string, nm string, dumpFilesIfNotFound b
 		}
 	}
 
-	localCfg := LoadConfigs(fs, nm+".properties", dumpFilesIfNotFound)
+	localCfg := LoadConfigs(fs, nm+".properties", dumpFilesIfFound, dumpFilesIfNotFound)
 	if nil != localCfg {
 		for k, v := range localCfg {
 			cfg[k] = v
 		}
 	}
-	engineCfg := LoadConfigs(fs, "engine.properties", dumpFilesIfNotFound)
+	engineCfg := LoadConfigs(fs, "engine.properties", dumpFilesIfFound, dumpFilesIfNotFound)
 	if nil != engineCfg {
 		for k, v := range engineCfg {
 			cfg[k] = v
@@ -262,17 +266,13 @@ func ReadConfigs(fs FileSystem, files []string, nm string, dumpFilesIfNotFound b
 	return cfg
 }
 
-// func LoadConfigsWith(fs FileSystem, nm string, flagSet *flag.FlagSet, dumpFilesIfNotFound bool) error {
-// 	return InitConfig(flagSet, ReadConfigs(fs, nm, dumpFilesIfNotFound), dumpFilesIfNotFound)
-// }
-
 var dbDefaults = map[string]string{}
 
 func SetDefaults(defaults map[string]string) {
 	dbDefaults = defaults
 }
 
-func InitConfig(flagSet *flag.FlagSet, cfg map[string]string, dumpFilesIfNotFound bool) error {
+func InitConfig(flagSet *flag.FlagSet, cfg map[string]string) error {
 	if nil == flagSet {
 		flagSet = flag.CommandLine
 	}
