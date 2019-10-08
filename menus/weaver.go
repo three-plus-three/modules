@@ -22,6 +22,8 @@ import (
 // ErrAlreadyClosed  server is closed
 var ErrAlreadyClosed = errors.New("server is closed")
 
+var EventName = "menus.changed"
+
 func NewWeaver(logger log.Logger, env *environment.Environment, sendEvent func(hub.Message), disabled []string, layout Layout, layouts map[string]Layout, hasLicense func(ctx string, menu toolbox.Menu) (bool, error)) (Weaver, error) {
 	weaver := &menuWeaver{Logger: logger,
 		env:        env,
