@@ -12,7 +12,6 @@ import (
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/hub"
-	hub_engine "github.com/three-plus-three/modules/hub/engine"
 	"github.com/three-plus-three/modules/toolbox"
 )
 
@@ -23,10 +22,10 @@ import (
 // ErrAlreadyClosed  server is closed
 var ErrAlreadyClosed = errors.New("server is closed")
 
-func NewWeaver(logger log.Logger, env *environment.Environment, core *hub_engine.Core, disabled []string, layout Layout, layouts map[string]Layout, hasLicense func(ctx string, menu toolbox.Menu) (bool, error)) (Weaver, error) {
+func NewWeaver(logger log.Logger, env *environment.Environment, sendEvent func(hub.Message), disabled []string, layout Layout, layouts map[string]Layout, hasLicense func(ctx string, menu toolbox.Menu) (bool, error)) (Weaver, error) {
 	weaver := &menuWeaver{Logger: logger,
 		env:        env,
-		core:       core,
+		sendEvent:  sendEvent,
 		disabled:   disabled,
 		layout:     layout,
 		layouts:    layouts,
@@ -67,7 +66,7 @@ type Layout interface {
 type menuWeaver struct {
 	Logger        log.Logger
 	env           *environment.Environment
-	core          *hub_engine.Core
+	sendEvent     func(hub.Message)
 	layout        Layout
 	layouts       map[string]Layout
 	customEnabled bool
@@ -191,8 +190,7 @@ func (weaver *menuWeaver) Update(app string, menuList []toolbox.Menu) error {
 	weaver.menuList = weaver.deleteByDisabled(weaver.menuList)
 	weaver.menuList = ClearDividerFromList(weaver.menuList)
 
-	weaver.core.CreateTopicIfNotExists("menus.changed").
-		Send(hub.Message([]byte(strconv.Itoa(len(menuList)))))
+	weaver.sendEvent(hub.CreateDataMessage([]byte(strconv.Itoa(len(menuList)))))
 
 	filename := weaver.env.Fs.FromTMP("app_menus.json")
 	if err = os.MkdirAll(filepath.Dir(filename), 0777); err != nil {

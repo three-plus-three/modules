@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/three-plus-three/modules/hub"
-	hub_engine "github.com/three-plus-three/modules/hub/engine"
 )
 
 //go:generate genny -pkg=permissions -in=../weaver/client.go -out=client-gen.go gen "ValueType=*PermissionData"
@@ -13,14 +12,14 @@ import (
 
 const PermissionEventName = "permissions.changed"
 
-func NewWeaver(core *hub_engine.Core) (Weaver, error) {
-	weaver := &memWeaver{core: core,
+func NewWeaver(sendEvent func(hub.Message)) (Weaver, error) {
+	weaver := &memWeaver{sendEvent: sendEvent,
 		byGroups: map[string]*PermissionData{}}
 	return weaver, nil
 }
 
 type memWeaver struct {
-	core *hub_engine.Core
+	sendEvent func(hub.Message)
 
 	mu       sync.RWMutex
 	all      PermissionData
@@ -73,8 +72,9 @@ func (weaver *memWeaver) Update(app string, data *PermissionData) error {
 	for _, group := range weaver.byGroups {
 		appendPermissionData(&weaver.all, group)
 	}
-	weaver.core.CreateTopicIfNotExists(PermissionEventName).
-		Send(hub.Message([]byte(strconv.Itoa(len(weaver.all.Permissions)))))
+
+	event := hub.CreateDataMessage([]byte(strconv.Itoa(len(weaver.all.Permissions))))
+	weaver.sendEvent(event)
 	return nil
 }
 
