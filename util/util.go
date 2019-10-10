@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -51,7 +52,11 @@ func ToJSON(a interface{}) string {
 
 func decodeHook(from reflect.Kind, to reflect.Kind, v interface{}) (interface{}, error) {
 	if from == reflect.String && to == reflect.Bool {
-		return v.(string) == "on", nil
+		s := v.(string)
+		if s == "off" || s == "false" || s == "FALSE" || s == "False" {
+			return false, nil
+		}
+		return s == "on" || s == "true" || s == "TRUE" || strings.ToLower(s) == "True", nil
 	}
 	return v, nil
 }
