@@ -186,15 +186,17 @@ func (job *Command) Run(ctx context.Context) error {
 	}
 	out, e := os.OpenFile(job.Logfile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	if nil != e {
-		job.Logfile = strings.Replace(job.Logfile, "/", "_", -1)
-		job.Logfile = strings.Replace(job.Logfile, "\\", "_", -1)
-		job.Logfile = strings.Replace(job.Logfile, "*", "_", -1)
-		job.Logfile = strings.Replace(job.Logfile, ":", "_", -1)
-		job.Logfile = strings.Replace(job.Logfile, "\"", "_", -1)
-		job.Logfile = strings.Replace(job.Logfile, "|", "_", -1)
-		job.Logfile = strings.Replace(job.Logfile, "?", "_", -1)
-		job.Logfile = strings.Replace(job.Logfile, ">", "_", -1)
-		job.Logfile = strings.Replace(job.Logfile, "<", "_", -1)
+		logfile := filepath.Base(job.Logfile)
+		logfile = strings.Replace(logfile, "/", "_", -1)
+		logfile = strings.Replace(logfile, "\\", "_", -1)
+		logfile = strings.Replace(logfile, "*", "_", -1)
+		logfile = strings.Replace(logfile, ":", "_", -1)
+		logfile = strings.Replace(logfile, "\"", "_", -1)
+		logfile = strings.Replace(logfile, "|", "_", -1)
+		logfile = strings.Replace(logfile, "?", "_", -1)
+		logfile = strings.Replace(logfile, ">", "_", -1)
+		logfile = strings.Replace(logfile, "<", "_", -1)
+		job.Logfile = filepath.Join(filepath.Dir(job.Logfile), logfile)
 
 		out, e = os.OpenFile(job.Logfile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 		if nil != e {
