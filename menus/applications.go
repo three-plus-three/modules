@@ -173,7 +173,7 @@ func UpdateProduct(env *environment.Environment,
 	so := env.GetServiceConfig(applicationID)
 	url := urlutil.Join(env.DaemonUrlPath, so.Name)
 	if applicationID == environment.ENV_HOME_PROXY_ID {
-		url = env.DaemonUrlPath
+		url = urlutil.Join(env.DaemonUrlPath, "web")
 	}
 
 	var count int64
