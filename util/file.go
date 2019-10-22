@@ -8,7 +8,7 @@ func ReadLines(filename string) ([][]byte, error) {
 		return nil, err
 	}
 
-	return SplitLines(bs)
+	return SplitLines(bs), nil
 }
 
 func ReadStringLines(filename string, ignoreEmpty bool) ([]string, error) {
@@ -17,11 +17,7 @@ func ReadStringLines(filename string, ignoreEmpty bool) ([]string, error) {
 		return nil, err
 	}
 
-	lines, err := SplitLines(bs)
-	if err != nil {
-		return nil, err
-	}
-
+	lines := SplitLines(bs)
 	ss := make([]string, 0, len(lines))
 	for idx := range lines {
 		if ignoreEmpty {
