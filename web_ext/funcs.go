@@ -405,13 +405,13 @@ func NewField(ctx interface{}, fieldSpec interface{}) forms.FieldInterface {
 			format = field.Format
 		}
 
-		if field.Annotations != nil {
-			if inputType := field.Annotations["input_type"]; inputType != nil {
-				if s, ok := inputType.(string); ok && s != "" {
-					format = s
-				}
-			}
-		}
+		//if field.Annotations != nil {
+		//	if inputType := field.Annotations["input_type"]; inputType != nil {
+		//		if s, ok := inputType.(string); ok && s != "" {
+		//			format = s
+		//		}
+		//	}
+		//}
 
 		switch strings.ToLower(format) {
 		case "select":
