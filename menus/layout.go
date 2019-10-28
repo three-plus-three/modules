@@ -33,6 +33,8 @@ func isMenu(category string) bool {
 	return category == ""
 }
 
+var hasOrphan = os.Getenv("is_devel_env") == "true"
+
 // LayoutItem 表示一个菜单
 type LayoutItem struct {
 	Category   string `json:"category" xorm:"category"`
@@ -375,14 +377,16 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 	}
 
 	results = ClearDividerFromList(results)
-	found := SearchMenuInTree(results, "nm.orphan")
-	if found != nil {
-		if len(found.Children) == 0 {
-			results = removeInTree(results, "nm.orphan")
-			results = ClearDividerFromList(results)
+
+	if hasOrphan {
+		found := SearchMenuInTree(results, "nm.orphan")
+		if found != nil {
+			if len(found.Children) == 0 {
+				results = removeInTree(results, "nm.orphan")
+				results = ClearDividerFromList(results)
+			}
 		}
 	}
-
 	return results, nil
 }
 

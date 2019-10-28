@@ -43,6 +43,21 @@ func SplitLines(bs []byte) [][]byte {
 	return lines
 }
 
+func SplitStringLines(bs []byte, ignoreEmpty bool) []string {
+	if len(bs) == 0 {
+		return nil
+	}
+	lines := SplitLines(bs)
+	ss := make([]string, 0, len(lines))
+	for idx := range lines {
+		if ignoreEmpty && len(lines[idx]) == 0 {
+			continue
+		}
+		ss = append(ss, string(lines[idx]))
+	}
+	return ss
+}
+
 func NewScanner(bs []byte) *bufio.Scanner {
 	r := InplaceReader(len(bs))
 	scanner := bufio.NewScanner(&r)
