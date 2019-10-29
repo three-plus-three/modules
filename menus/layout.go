@@ -290,22 +290,25 @@ func (layout *layoutImpl) Generate(byApps map[string][]toolbox.Menu) ([]toolbox.
 	if len(remains) > 0 {
 		var local = mergeByID(results, remains, nil)
 		if len(local) > 0 {
-			found := SearchMenuInTree(results, "nm.orphan")
-			if found == nil {
-				results = append(results, toolbox.Menu{
-					UID:   "nm.orphan",
-					Title: "其它",
-				})
 
-				found = &results[len(results)-1]
-			}
+			if hasOrphan {
+				found := SearchMenuInTree(results, "nm.orphan")
+				if found == nil {
+					results = append(results, toolbox.Menu{
+						UID:   "nm.orphan",
+						Title: "其它",
+					})
 
-			for idx := range local {
-				if isEmptyURL(local[idx].URL) {
-					continue
+					found = &results[len(results)-1]
 				}
 
-				found.Children = append(found.Children, local[idx])
+				for idx := range local {
+					if isEmptyURL(local[idx].URL) {
+						continue
+					}
+
+					found.Children = append(found.Children, local[idx])
+				}
 			}
 			// var buf bytes.Buffer
 			// buf.WriteString("下列菜单不能处理:")
