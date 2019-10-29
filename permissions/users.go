@@ -44,12 +44,12 @@ type User struct {
 	Name        string                 `json:"name" xorm:"name unique notnull"`
 	Nickname    string                 `json:"nickname" xorm:"nickname unique notnull"`
 	Password    string                 `json:"password,omitempty" xorm:"password null"`
-	Description string                 `json:"description,omitempty" xorm:"description"`
-	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb"`
-	Profiles    map[string]interface{} `json:"profiles" xorm:"profiles jsonb"`
-	Source      string                 `json:"source,omitempty" xorm:"source"`
+	Description string                 `json:"description,omitempty" xorm:"description null"`
+	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb null"`
+	Profiles    map[string]interface{} `json:"profiles" xorm:"profiles jsonb null"`
+	Source      string                 `json:"source,omitempty" xorm:"source null"`
 	// Type        int                    `json:"type,omitempty" xorm:"type"`
-	Disabled  bool       `json:"disabled,omitempty" xorm:"disabled"`
+	Disabled  bool       `json:"disabled,omitempty" xorm:"disabled null"`
 	LockedAt  *time.Time `json:"locked_at,omitempty" xorm:"locked_at null"`
 	CreatedAt time.Time  `json:"created_at,omitempty" xorm:"created_at created"`
 	UpdatedAt time.Time  `json:"updated_at,omitempty" xorm:"updated_at updated"`
