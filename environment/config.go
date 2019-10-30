@@ -140,10 +140,19 @@ func (self *Config) GetAsTime(keys []string, defaultValue time.Time) time.Time {
 	return as.TimeWithDefault(o, defaultValue)
 }
 
-// DurationWithDefault 读配置
+// ForEach 读配置
 func (self *Config) ForEach(cb func(key string, value interface{})) {
 	for k, v := range self.settings {
 		cb(k, v)
+	}
+}
+
+// ForEach 读配置
+func (self *Config) ForEachWithPrefix(prefix string, cb func(key string, value interface{})) {
+	for k, v := range self.settings {
+		if strings.HasPrefix(k, prefix) {
+			cb(k, v)
+		}
 	}
 }
 
