@@ -8,7 +8,7 @@ import (
 	"github.com/three-plus-three/modules/menus"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/sso/client/revel_sso"
-	"xorm.id/xorm"
+	"xorm.io/xorm"
 )
 
 // Lifecycle 表示一个运行周期，它包含了所有业务相关的对象

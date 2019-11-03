@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/runner-mei/orm"
-	"xorm.id/xorm"
+	"xorm.io/xorm"
 )
 
 const EnabledUsers = "( disabled IS NULL or disabled = false)"

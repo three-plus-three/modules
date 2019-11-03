@@ -8,7 +8,7 @@ import (
 	fixtures "github.com/AreaHQ/go-fixtures"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/environment/env_tests"
-	"xorm.id/xorm"
+	"xorm.io/xorm"
 )
 
 func TestUser(t *testing.T) {

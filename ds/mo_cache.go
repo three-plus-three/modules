@@ -15,7 +15,7 @@ import (
 	"github.com/three-plus-three/modules/ds/models"
 	merrors "github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/types"
-	"xorm.id/xorm"
+	"xorm.io/xorm"
 )
 
 func keyForNull(s string) string {
