@@ -201,7 +201,7 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			}
 		}
 
-		types.RegisterEnumerationProvider("sql", &types.DbProvider{DB: lifecycle.ModelEngine.DB()})
+		types.RegisterEnumerationProvider("sql", &types.DbProvider{DB: lifecycle.ModelEngine.DB().DB})
 		types.RegisterEnumerationProvider("usernames", &toolbox.UserProvider{UM: lifecycle.UserManager})
 		types.RegisterEnumerationProvider("usergroups", &toolbox.UsergroupProvider{UM: lifecycle.UserManager})
 

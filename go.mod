@@ -10,13 +10,11 @@ require (
 	github.com/agtorre/gocolorize v1.0.0 // indirect
 	github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a
 	github.com/cheekybits/genny v1.0.0
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/google/gops v0.3.6
 	github.com/grsmv/inflect v0.0.0-20140723132642-a28d3de3b3ad
 	github.com/hjson/hjson-go v3.0.0+incompatible
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/labstack/echo v3.3.10+incompatible
-	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mitchellh/go-ps v0.0.0-20190716172923-621e5597135b
 	github.com/mitchellh/mapstructure v1.1.2
