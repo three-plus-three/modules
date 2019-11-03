@@ -30,7 +30,7 @@ require (
 	github.com/runner-mei/errors v0.0.0-20191030090348-38af1672ff66
 	github.com/runner-mei/log v0.0.0-20191030043614-b36db325a74d
 	github.com/runner-mei/loong v0.0.0-20191029075849-0f3a7cc583da
-	github.com/runner-mei/orm v0.0.0-20191103030622-7c9deed35caf
+	github.com/runner-mei/orm v1.1.0
 	github.com/runner-mei/resty v0.0.0-20191102140647-fa73802f0b7f
 	github.com/runner-mei/snmpclient2 v1.1.0
 	github.com/three-plus-three/forms v0.0.0-20191018015256-f7b18b98b8e1
