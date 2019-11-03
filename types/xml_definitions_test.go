@@ -1,11 +1,12 @@
 package types
 
 import (
-	a "cn/com/hengwei/commons/assert"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"testing"
+
+	a "github.com/three-plus-three/modules/assert"
 )
 
 func TestOutXML(t *testing.T) {
