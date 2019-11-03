@@ -28,8 +28,8 @@ require (
 	github.com/runner-mei/GoBatis v1.1.1
 	github.com/runner-mei/command v0.0.0-20180116024942-77677390382b
 	github.com/runner-mei/errors v0.0.0-20191030090348-38af1672ff66
-	github.com/runner-mei/log v0.0.0-20191030043614-b36db325a74d
-	github.com/runner-mei/loong v0.0.0-20191029075849-0f3a7cc583da
+	github.com/runner-mei/log v1.0.0
+	github.com/runner-mei/loong v1.0.2
 	github.com/runner-mei/orm v1.1.0
 	github.com/runner-mei/resty v0.0.0-20191102140647-fa73802f0b7f
 	github.com/runner-mei/snmpclient2 v1.1.0
