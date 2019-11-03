@@ -1,7 +1,6 @@
 package web_ext
 
 import (
-	"github.com/go-xorm/xorm"
 	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/environment"
@@ -9,6 +8,7 @@ import (
 	"github.com/three-plus-three/modules/menus"
 	"github.com/three-plus-three/modules/toolbox"
 	"github.com/three-plus-three/sso/client/revel_sso"
+	"xorm.id/xorm"
 )
 
 // Lifecycle 表示一个运行周期，它包含了所有业务相关的对象

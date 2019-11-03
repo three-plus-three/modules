@@ -11,11 +11,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/ds/models"
 	merrors "github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/types"
+	"xorm.id/xorm"
 )
 
 func keyForNull(s string) string {

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/go-xorm/xorm"
 	"github.com/runner-mei/orm"
+	"xorm.id/xorm"
 )
 
 const EnabledUsers = "( disabled IS NULL or disabled = false)"

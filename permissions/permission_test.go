@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	fixtures "github.com/AreaHQ/go-fixtures"
-	"github.com/go-xorm/xorm"
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/environment/env_tests"
+	"xorm.id/xorm"
 )
 
 func TestUser(t *testing.T) {
