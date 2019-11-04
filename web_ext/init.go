@@ -91,6 +91,11 @@ func Init(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, pr
 			appSo.Port = "9000"
 		}
 
+		projectTitle := revel.Config.StringDefault("app.simpletitle", projectTitle)
+		if s := env.Config.StringWithDefault(appSo.Name+".app.simpletitle", ""); s != "" {
+			projectTitle = s
+		}
+
 		projectContext := appSo.Name
 		lifecycle.URLPrefix = env.DaemonUrlPath
 		lifecycle.URLRoot = env.DaemonUrlPath
@@ -184,10 +189,6 @@ func Init(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, pr
 		}
 		if applicationEnabled == "enabled" {
 			version := revel.Config.StringDefault("version", "1.0")
-			title := revel.Config.StringDefault("app.simpletitle", projectTitle)
-			if s := env.Config.StringWithDefault(appSo.Name+".app.simpletitle", ""); s != "" {
-				title = s
-			}
 			icon := revel.Config.StringDefault("app.icon", "")
 			if s := env.Config.StringWithDefault(appSo.Name+".app.icon", ""); s != "" {
 				icon = s
@@ -198,7 +199,7 @@ func Init(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, pr
 			}
 
 			err = menus.UpdateProduct(lifecycle.Env,
-				lifecycle.ApplicationID, version, title, icon, classes,
+				lifecycle.ApplicationID, version, projectTitle, icon, classes,
 				lifecycleData.ModelEngine.DB().DB)
 			if err != nil {
 				log.Println("UpdataProduct", err)
