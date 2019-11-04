@@ -132,9 +132,11 @@ func (self *Environment) GetEngineConfig() *EngineConfig {
 func NewEnvironment(opt Options) (*Environment, error) {
 	var fs *linuxFs
 	if runtime.GOOS == "windows" {
-		var rootDir string
-		if "" == opt.ConfDir {
-			if cwd, e := os.Getwd(); nil == e && util.FileExists(filepath.Join(cwd, "conf", "app.properties")) {
+		var rootDir = opt.ConfDir
+		if rootDir == "" {
+			if s := os.Getenv("hw_root_dir"); s != "" {
+				rootDir = s
+			} else if cwd, e := os.Getwd(); nil == e && util.FileExists(filepath.Join(cwd, "conf", "app.properties")) {
 				rootDir = cwd
 			} else if nil == e && util.FileExists(filepath.Join(cwd, "..", "conf", "app.properties")) {
 				rootDir = filepath.Clean(filepath.Join(cwd, ".."))
@@ -144,7 +146,7 @@ func NewEnvironment(opt Options) (*Environment, error) {
 				rootDir = filepath.Clean(filepath.Join(exeDir, ".."))
 			} else if opt.IsTest {
 				rootDir, _ = os.Getwd()
-			} else if rootDir = os.Getenv("hw_root_dir"); rootDir == "" {
+			} else if rootDir == "" {
 				found := false
 				for _, s := range []string{"../../../../cn/com/hengwei",
 					"../../../../../cn/com/hengwei",
@@ -171,16 +173,14 @@ func NewEnvironment(opt Options) (*Environment, error) {
 				}
 				opt.IsTest = true
 			}
-		} else {
-			if "<default>" == opt.ConfDir { // "<default>" 作为一个特殊的字符，自动使用当前目录
-				if cwd, e := os.Getwd(); nil == e {
-					rootDir = cwd
-				} else {
-					rootDir = "."
-				}
+		} else if rootDir == "<default>" || rootDir == "." { // "<default>" 作为一个特殊的字符，自动使用当前目录
+			if cwd, e := os.Getwd(); nil == e {
+				rootDir = cwd
 			} else {
-				rootDir = filepath.Join(opt.ConfDir, "..")
+				rootDir = "."
 			}
+		} else {
+			rootDir = filepath.Join(opt.ConfDir, "..")
 		}
 
 		fs = &linuxFs{
@@ -214,7 +214,16 @@ func NewEnvironment(opt Options) (*Environment, error) {
 }
 
 func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
-	cfg := ReadConfigs(fs, opt.ConfigFiles, opt.Name, !opt.NotPrintIfFilesFound, opt.PrintIfFilesNotFound)
+	projectName := opt.Name
+	if projectName == "" {
+		for _, so := range ServiceOptions {
+			if so.ID == opt.CurrentApplication {
+				projectName = so.Name
+			}
+		}
+	}
+
+	cfg := ReadConfigs(fs, opt.ConfigFiles, projectName, !opt.NotPrintIfFilesFound, opt.PrintIfFilesNotFound)
 	if e := InitConfig(opt.FlagSet, cfg); nil != e {
 		return nil, e
 	}
@@ -224,7 +233,7 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		CurrentApplication: opt.CurrentApplication,
 		//rootDir: opt.rootDir,
 		Fs:     fs,
-		Name:   opt.Name,
+		Name:   projectName,
 		Config: Config{settings: map[string]interface{}{}},
 	}
 	for k, v := range cfg {
@@ -307,7 +316,7 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		"© 2019 恒维信息技术(上海)有限公司, 保留所有版权。")
 
 	if err := agent.Listen(agent.Options{}); err != nil {
-		env.Logger.Warn("启动调试代理失败", zap.Error(err))
+		env.Logger.Warn("启动调试代理失败", log.Error(err))
 	}
 
 	return env, callHooks(env)

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -30,7 +29,7 @@ func init() {
 	revel.TimeZone = time.Local
 }
 
-func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
+func Init(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 	cb func(*Lifecycle) error, createMenuList func(*Lifecycle) ([]toolbox.Menu, error)) {
 
 	// Filters is the default set of global filters.
@@ -52,19 +51,14 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 	}
 
 	revel.OnAppStart(func() {
-		projectName := ""
-		for _, so := range environment.ServiceOptions {
-			if so.ID == serviceID {
-				projectName = so.Name
+		if env == nil {
+			initEnv, err := environment.NewEnvironment(environment.Options{CurrentApplication: serviceID})
+			if nil != err {
+				log.Println(err)
+				os.Exit(-1)
+				return
 			}
-		}
-
-		env, err := environment.NewEnvironment(environment.Options{Name: projectName,
-			ConfDir: filepath.Join(os.Getenv("hw_root_dir"), "conf")})
-		if nil != err {
-			log.Println(err)
-			os.Exit(-1)
-			return
+			env = initEnv
 		}
 
 		if revel.RunMode == "test" {
@@ -79,25 +73,25 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 			return
 		}
 
-		serviceObject := env.GetServiceConfig(serviceID)
+		appSo := env.GetServiceConfig(serviceID)
 		//wserviceObject := env.GetServiceConfig(environment.ENV_WSERVER_PROXY_ID)
 		if !revel.DevMode {
 			if fp := flag.Lookup("port"); nil != fp {
 				if fp.Value.String() == fp.DefValue {
-					revel.HTTPPort, _ = strconv.Atoi(serviceObject.Port)
+					revel.HTTPPort, _ = strconv.Atoi(appSo.Port)
 					revel.ServerEngineInit.Port = revel.HTTPPort
-					revel.ServerEngineInit.Network, revel.ServerEngineInit.Address = serviceObject.ListenAddr("", "")
+					revel.ServerEngineInit.Network, revel.ServerEngineInit.Address = appSo.ListenAddr("", "")
 				}
 			} else {
-				revel.HTTPPort, _ = strconv.Atoi(serviceObject.Port)
+				revel.HTTPPort, _ = strconv.Atoi(appSo.Port)
 				revel.ServerEngineInit.Port = revel.HTTPPort
-				revel.ServerEngineInit.Network, revel.ServerEngineInit.Address = serviceObject.ListenAddr("", "")
+				revel.ServerEngineInit.Network, revel.ServerEngineInit.Address = appSo.ListenAddr("", "")
 			}
 		} else {
-			serviceObject.Port = "9000"
+			appSo.Port = "9000"
 		}
 
-		projectContext := serviceObject.Name
+		projectContext := appSo.Name
 		lifecycle.URLPrefix = env.DaemonUrlPath
 		lifecycle.URLRoot = env.DaemonUrlPath
 		lifecycle.ApplicationContext = urlutil.Join(env.DaemonUrlPath, projectContext)
@@ -185,14 +179,26 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		initTemplateFuncs(lifecycle)
 
 		applicationEnabled := revel.Config.StringDefault("hengwei.menu.products", "enabled")
+		if mode := env.Config.StringWithDefault(appSo.Name+".menu.products", ""); mode != "" {
+			applicationEnabled = mode
+		}
 		if applicationEnabled == "enabled" {
 			version := revel.Config.StringDefault("version", "1.0")
 			title := revel.Config.StringDefault("app.simpletitle", projectTitle)
-			icon := revel.Config.StringDefault("app.icon", projectTitle)
+			if s := env.Config.StringWithDefault(appSo.Name+".app.simpletitle", ""); s != "" {
+				title = s
+			}
+			icon := revel.Config.StringDefault("app.icon", "")
+			if s := env.Config.StringWithDefault(appSo.Name+".app.icon", ""); s != "" {
+				icon = s
+			}
+			classes := revel.Config.StringDefault("hengwei.menu.classes", "")
+			if s := env.Config.StringWithDefault(appSo.Name+".menu.classes", ""); s != "" {
+				classes = s
+			}
 
 			err = menus.UpdateProduct(lifecycle.Env,
-				lifecycle.ApplicationID, version, title, icon,
-				revel.Config.StringDefault("hengwei.menu.classes", ""),
+				lifecycle.ApplicationID, version, title, icon, classes,
 				lifecycleData.ModelEngine.DB().DB)
 			if err != nil {
 				log.Println("UpdataProduct", err)
@@ -213,12 +219,27 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 	}, 0)
 
 	revel.OnAppStart(func() {
+		if env == nil {
+			initEnv, err := environment.NewEnvironment(environment.Options{CurrentApplication: serviceID})
+			if nil != err {
+				log.Println(err)
+				os.Exit(-1)
+				return
+			}
+			env = initEnv
+		}
+		appSo := env.GetServiceConfig(serviceID)
+		menuMode := revel.Config.StringDefault("hengwei.menu.mode", "")
+		if mode := env.Config.StringWithDefault(appSo.Name+".menu.mode", ""); mode != "" {
+			menuMode = mode
+		}
+
 		menuClient := menus.Connect(lifecycleData.Env,
 			serviceID,
 			menus.Callback(func() ([]toolbox.Menu, error) {
 				return createMenuList(lifecycleData)
 			}),
-			revel.Config.StringDefault("hengwei.menu.mode", ""),
+			menuMode,
 			"menus.changed",
 			urlutil.Join(lifecycleData.Env.DaemonUrlPath, "/menu/"),
 			mylog.New(os.Stderr).Named("menu"))
@@ -227,6 +248,9 @@ func Init(serviceID environment.ENV_PROXY_TYPE, projectTitle string,
 		lifecycleData.menuClient = menuClient
 
 		applicationEnabled := revel.Config.StringDefault("hengwei.menu.products", "enabled")
+		if mode := env.Config.StringWithDefault(appSo.Name+".menu.products", ""); mode != "" {
+			applicationEnabled = mode
+		}
 		if applicationEnabled == "enabled" {
 			lifecycleData.menuHook = menus.ProductsWrap(lifecycleData.Env,
 				lifecycleData.ApplicationID,
