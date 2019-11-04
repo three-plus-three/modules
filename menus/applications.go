@@ -184,13 +184,22 @@ func UpdateProduct(env *environment.Environment,
 
 	now := time.Now()
 	if count == 0 {
-
+		state := 1
+		stateStr := strings.ToLower(env.Config.StringWithDefault(so.Name + ".autostart"))
+		switch {
+		case "disabled", "", "off", "false":
+			state = 1
+		case "enabled", "on", "true":
+			state = 0
+		default:
+			return errors.New("config '" + so.Name + ".autostart' is invalid - " + stateStr)
+		}
 		if applicationID == environment.ENV_HOME_PROXY_ID {
 			_, err = db.Exec("INSERT INTO tpt_products (name, version, url, icon, title, classes, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
 				so.Name, version, url, icon, title, classes, now, now)
 		} else {
-			_, err = db.Exec("INSERT INTO tpt_products (state, name, version, url, icon, title, classes, created_at, updated_at) VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8)",
-				so.Name, version, url, icon, title, classes, now, now)
+			_, err = db.Exec("INSERT INTO tpt_products (state, name, version, url, icon, title, classes, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+				state, so.Name, version, url, icon, title, classes, now, now)
 		}
 	} else {
 		_, err = db.Exec("UPDATE tpt_products SET version=$1, url=$2, icon=$3, title=$4, classes=$5, updated_at=$6 WHERE name=$7",
