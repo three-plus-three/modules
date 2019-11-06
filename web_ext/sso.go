@@ -15,7 +15,10 @@ import (
 )
 
 func initSSO(env *environment.Environment) revel_sso.CheckFunc {
-	ssoURL := env.GetMasterConfig().URLFor(env.DaemonUrlPath, "/sso")
+	ssoURL := env.GetMasterConfig().URLFor(env.DaemonUrlPath, "sessions")
+	if mode := env.Config.StringWithDefault("users.login_url", ""); mode == "sso" {
+		ssoURL = env.GetMasterConfig().URLFor(env.DaemonUrlPath, "sso")
+	}
 	ssoClient, err := sso.NewClient(ssoURL)
 	if err != nil {
 		log.Println(err)
