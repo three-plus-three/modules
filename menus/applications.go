@@ -185,7 +185,7 @@ func UpdateProduct(env *environment.Environment,
 	now := time.Now()
 	if count == 0 {
 		state := 1
-		stateStr := strings.ToLower(env.Config.StringWithDefault(so.Name+".autostart", ""))
+		stateStr := strings.ToLower(env.Config.StringWithDefault(so.Name+".autostart.default", ""))
 		switch stateStr {
 		case "disabled", "", "off", "false":
 			state = 1
