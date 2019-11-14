@@ -5,17 +5,20 @@ import (
 	"sync/atomic"
 
 	"github.com/three-plus-three/modules/concurrency"
+	"github.com/three-plus-three/modules/users"
 )
 
-type Permissions struct {
-	PermissionGroup `xorm:"extends"`
-	PermissionIDs   []string `xorm:"-"`
-	PermissionTags  []string `xorm:"-"`
-}
+type Permissions = users.Permissions
+
+var _ users.PermGroupCache = &GroupCache{}
 
 type GroupCache struct {
 	concurrency.Tickable
 	permissions atomic.Value
+}
+
+func (cache *GroupCache) GetPermissionsByTag(tag string) ([]Permission, error) {
+	return GetPermissionsByTag(tag)
 }
 
 //从缓存中获取权限对象

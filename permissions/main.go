@@ -583,14 +583,14 @@ func (u *user) readProfiles() error {
 	}
 
 	if u.u.Profiles == nil {
-		u.u.Profiles = map[string]interface{}{}
+		u.u.Profiles = map[string]string{}
 	}
 	return nil
 }
 
-func (u *user) ReadProfile(key string) (interface{}, error) {
+func (u *user) ReadProfile(key string) (string, error) {
 	if err := u.readProfiles(); err != nil {
-		return nil, err
+		return "", err
 	}
 
 	return u.u.Profiles[key], nil

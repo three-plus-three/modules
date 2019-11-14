@@ -88,7 +88,7 @@ func TestUser(t *testing.T) {
 		return
 	}
 
-	if v != nil {
+	if v != "" {
 		t.Error("x=nil", v)
 	}
 	u.(*user).u.Profiles = nil
@@ -98,7 +98,7 @@ func TestUser(t *testing.T) {
 		return
 	}
 
-	if v != nil {
+	if v != "" {
 		t.Error("x=nil", v)
 	}
 }

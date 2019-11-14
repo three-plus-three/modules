@@ -15,54 +15,7 @@ import (
 	"github.com/three-plus-three/modules/toolbox"
 )
 
-type UserDao interface {
-	// @record_type Role
-	GetRoleByName(name string) func(*Role) error
-	// @record_type User
-	GetUserByID(id int64) func(*User) error
-	// @record_type User
-	GetUserByName(name string) func(*User) error
-	// @record_type UserGroup
-	GetUsergroupByID(id int64) func(*UserGroup) error
-	// @record_type UserGroup
-	GetUsergroupByName(name string) func(*UserGroup) error
-	// @record_type User
-	GetUsers() ([]User, error)
-	// @record_type UserGroup
-	GetUsergroups() ([]UserGroup, error)
-
-	// @default SELECT * FROM <tablename type="Role" as="roles" /> WHERE
-	//  exists (select * from <tablename type="UserAndRole" /> as users_roles
-	//     where users_roles.role_id = roles.id and users_roles.user_id = #{userID})
-	GetRolesByUser(userID int64) ([]Role, error)
-
-	// @default SELECT * FROM <tablename type="User" as="users" /> WHERE
-	//  exists (select * from <tablename type="UserAndUserGroup" /> as u2g
-	//     where u2g.user_id = users.id and u2g.group_id = #{groupID})
-	GetUserByGroup(groupID int64) ([]User, error)
-
-	// @default SELECT group_id FROM <tablename type="UserAndUserGroup" as="u2g" /> WHERE user_id = #{userID}
-	GetGroupIDsByUser(userID int64) ([]int64, error)
-
-	// @record_type PermissionGroupAndRole
-	GetPermissionAndRoles(roleIDs []int64) ([]PermissionGroupAndRole, error)
-
-	// @default SELECT value FROM <tablename type="UserProfile" /> WHERE id = #{userID} AND name = #{name}
-	ReadProfile(userID int64, name string) (string, error)
-
-	// @type insert
-	// @default INSERT INTO <tablename type="UserProfile" /> (id, name, value) VALUES(#{userID}, #{name}, #{value})
-	//     ON CONFLICT (id, name) DO UPDATE SET value = excluded.value
-	WriteProfile(userID int64, name, value string) error
-
-	// @default DELETE FROM <tablename type="UserProfile" /> WHERE id=#{userID} AND name=#{name}
-	DeleteProfile(userID int64, name string) (int64, error)
-
-	GetPermissions() ([]Permissions, error)
-	GetPermissionAndGroups() ([]PermissionAndGroup, error)
-}
-
-func CreateUserManager(db *sql.DB, driverName string, logger log.Logger) toolbox.UserManager {
+func CreateUserManager(driverName string, db *sql.DB, permCache PermGroupCache, logger log.Logger) toolbox.UserManager {
 	factory, err := gobatis.New(&gobatis.Config{
 		Tracer:     log.NewSQLTracer(logger),
 		TagPrefix:  "xorm",
@@ -82,13 +35,12 @@ func CreateUserManager(db *sql.DB, driverName string, logger log.Logger) toolbox
 	um := &userManager{
 		logger:               logger,
 		userDao:              userDao,
-		permissionGroupCache: &GroupCache{},
+		permissionGroupCache: permCache,
 		userByName:           cache.New(5*time.Minute, 10*time.Minute),
 		userByID:             cache.New(5*time.Minute, 10*time.Minute),
 		groupByID:            cache.New(5*time.Minute, 10*time.Minute),
 		groupByName:          cache.New(5*time.Minute, 10*time.Minute),
 	}
-	um.refresh()
 	um.ensureRoles()
 	return um
 }
@@ -96,7 +48,7 @@ func CreateUserManager(db *sql.DB, driverName string, logger log.Logger) toolbox
 type userManager struct {
 	logger               log.Logger
 	userDao              UserDao
-	permissionGroupCache *GroupCache
+	permissionGroupCache PermGroupCache
 	userByName           *cache.Cache
 	userByID             *cache.Cache
 	groupByName          *cache.Cache
@@ -107,13 +59,6 @@ type userManager struct {
 	adminRole   Role
 	visitorRole Role
 	guestRole   Role
-}
-
-func (um *userManager) refresh() {
-	refresh := func() {
-		um.lastErr.Set(um.permissionGroupCache.refresh(um.userDao))
-	}
-	um.permissionGroupCache.Init(5*time.Minute, refresh)
 }
 
 func (um *userManager) groupcacheIt(ug toolbox.UserGroup) {
@@ -669,7 +614,7 @@ func (u *user) hasPermissionInGroup(group *Permissions, permissionID string) boo
 
 	// 在本组中查找是不是有标签含有这个权限
 	for _, tag := range group.PermissionTags {
-		permissionList, err := GetPermissionsByTag(tag)
+		permissionList, err := u.um.permissionGroupCache.GetPermissionsByTag(tag)
 		if err != nil {
 			panic(err)
 		}

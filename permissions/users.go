@@ -1,21 +1,48 @@
 package permissions
 
 import (
-	"time"
-
-	"github.com/three-plus-three/modules/toolbox"
+	"github.com/three-plus-three/modules/users"
 )
 
-type OnlineUser struct {
-	UserID    int64     `json:"user_id" xorm:"user_id pk"`
-	Uuid      string    `json:"uuid,omitempty" xorm:"uuid unique"`
-	Address   string    `json:"address" xorm:"address"`
-	CreatedAt time.Time `json:"created_at,omitempty" xorm:"created_at created"`
-	UpdatedAt time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
+const (
+	UserNormal   = users.UserNormal
+	ItsmReporter = users.ItsmReporter
+)
+
+type OnlineUser = users.OnlineUser
+type User = users.User
+type UserProfile = users.UserProfile
+type UserAndUserGroup = users.UserAndUserGroup
+type UserGroup = users.UserGroup
+type Role = users.Role
+type UserAndRole = users.UserAndRole
+
+func KeyForUsersAndRoles(key string) string {
+	switch key {
+	case "id":
+		return "userAndRole.ID"
+	case "user_id":
+		return "userAndRole.UserID"
+	case "role_id":
+		return "userAndRole.RoleID"
+	}
+	return key
 }
 
-func (onlineUser *OnlineUser) TableName() string {
-	return "hengwei_online_users"
+func KeyForRoles(key string) string {
+	switch key {
+	case "id":
+		return "role.ID"
+	case "name":
+		return "role.Name"
+	case "description":
+		return "role.Description"
+	case "created_at":
+		return "role.CreatedAt"
+	case "updated_at":
+		return "role.UpdatedAt"
+	}
+	return key
 }
 
 func KeyForOnlineUsers(key string) string {
@@ -32,46 +59,6 @@ func KeyForOnlineUsers(key string) string {
 		return "onlineUser.UpdatedAt"
 	}
 	return key
-}
-
-const (
-	UserNormal   = 0
-	ItsmReporter = 1
-)
-
-type User struct {
-	ID          int64                  `json:"id" xorm:"id pk autoincr"`
-	Name        string                 `json:"name" xorm:"name unique notnull"`
-	Nickname    string                 `json:"nickname" xorm:"nickname unique notnull"`
-	Password    string                 `json:"password,omitempty" xorm:"password null"`
-	Description string                 `json:"description,omitempty" xorm:"description null"`
-	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb null"`
-	Profiles    map[string]interface{} `json:"profiles" xorm:"profiles jsonb null"`
-	Source      string                 `json:"source,omitempty" xorm:"source null"`
-	Signature   string                 `json:"signature,omitempty" xorm:"signature null"`
-	// Type        int                    `json:"type,omitempty" xorm:"type"`
-	Disabled  bool       `json:"disabled,omitempty" xorm:"disabled null"`
-	LockedAt  *time.Time `json:"locked_at,omitempty" xorm:"locked_at null"`
-	CreatedAt time.Time  `json:"created_at,omitempty" xorm:"created_at created"`
-	UpdatedAt time.Time  `json:"updated_at,omitempty" xorm:"updated_at updated"`
-}
-
-func (user *User) IsDisabled() bool {
-	return user.Disabled // || user.Type == ItsmReporter
-}
-
-func (user *User) TableName() string {
-	return "hengwei_users"
-}
-
-func (user *User) IsBuiltin() bool {
-	return user.Name == toolbox.UserAdmin ||
-		user.Name == toolbox.UserGuest ||
-		user.Name == toolbox.UserTPTNetwork
-}
-
-func (user *User) IsHidden() bool {
-	return user.Name == toolbox.UserTPTNetwork // || user.Type == ItsmReporter
 }
 
 func KeyForUsers(key string) string {
@@ -100,16 +87,6 @@ func KeyForUsers(key string) string {
 	return key
 }
 
-type UserAndUserGroup struct {
-	ID      int64 `json:"id" xorm:"id pk autoincr"`
-	UserID  int64 `json:"user_id" xorm:"user_id notnull"`
-	GroupID int64 `json:"group_id" xorm:"group_id notnull"`
-}
-
-func (userAndUserGroup *UserAndUserGroup) TableName() string {
-	return "hengwei_users_and_user_groups"
-}
-
 func KeyForUsersAndUserGroups(key string) string {
 	switch key {
 	case "id":
@@ -120,19 +97,6 @@ func KeyForUsersAndUserGroups(key string) string {
 		return "userAndUserGroup.GroupID"
 	}
 	return key
-}
-
-type UserGroup struct {
-	ID          int64     `json:"id" xorm:"id pk autoincr"`
-	Name        string    `json:"name" xorm:"name notnull"`
-	Description string    `json:"description" xorm:"description"`
-	ParentID    int64     `json:"parent_id" xorm:"parent_id"`
-	CreatedAt   time.Time `json:"created_at,omitempty" xorm:"created_at created"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty" xorm:"updated_at updated"`
-}
-
-func (userGroup *UserGroup) TableName() string {
-	return "hengwei_user_groups"
 }
 
 func KeyForUserGroups(key string) string {
