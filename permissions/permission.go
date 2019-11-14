@@ -10,32 +10,33 @@ import (
 	"github.com/three-plus-three/modules/environment"
 	"github.com/three-plus-three/modules/urlutil"
 	"github.com/three-plus-three/modules/users"
+	"github.com/three-plus-three/modules/users/usermodels"
 )
 
 // 常用的错误
 var (
-	ErrUnauthorized       = users.ErrUnauthorized
-	ErrCacheInvalid       = users.ErrCacheInvalid
-	ErrTagNotFound        = users.ErrTagNotFound
-	ErrPermissionNotFound = users.ErrPermissionNotFound
-	ErrAlreadyClosed      = users.ErrAlreadyClosed
+	ErrUnauthorized       = usermodels.ErrUnauthorized
+	ErrCacheInvalid       = usermodels.ErrCacheInvalid
+	ErrTagNotFound        = usermodels.ErrTagNotFound
+	ErrPermissionNotFound = usermodels.ErrPermissionNotFound
+	ErrAlreadyClosed      = usermodels.ErrAlreadyClosed
 )
 
-const PERMISSION_ID = users.PERMISSION_ID
-const PERMISSION_TAG = users.PERMISSION_TAG
-
-type PermissionGroup = users.PermissionGroup
-type PermissionAndGroup = users.PermissionAndGroup
-type PermissionGroupAndRole = users.PermissionGroupAndRole
+const PERMISSION_ID = usermodels.PERMISSION_ID
+const PERMISSION_TAG = usermodels.PERMISSION_TAG
 
 const CREATE = users.CREATE
 const DELETE = users.DELETE
 const UPDATE = users.UPDATE
 const QUERY = users.QUERY
 
-type Group = users.Group
-type Permission = users.Permission
-type Tag = users.Tag
+type PermissionGroup = usermodels.PermissionGroup
+type PermissionAndGroup = usermodels.PermissionAndGroup
+type PermissionGroupAndRole = usermodels.PermissionGroupAndRole
+
+type Group = usermodels.Group
+type Permission = usermodels.Permission
+type Tag = usermodels.Tag
 
 func KeyForPermissionGroups(key string) string {
 	switch key {

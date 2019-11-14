@@ -1,16 +1,15 @@
-package users
+package usermodels
 
 import (
 	"net/http"
 	"time"
 
-	"github.com/three-plus-three/modules/errors"
-	"github.com/three-plus-three/modules/toolbox"
+	"github.com/runner-mei/errors"
 )
 
 // 常用的错误
 var (
-	ErrUnauthorized       = errors.NewApplicationError(http.StatusUnauthorized, "user is unauthorized")
+	ErrUnauthorized       = errors.NewError(http.StatusUnauthorized, "user is unauthorized")
 	ErrCacheInvalid       = errors.New("permission cache is invald")
 	ErrTagNotFound        = errors.New("permission tag is not found")
 	ErrPermissionNotFound = errors.New("permission is not found")
@@ -46,11 +45,6 @@ type Tag struct {
 
 const PERMISSION_ID = 0
 const PERMISSION_TAG = 1
-
-const CREATE = toolbox.CREATE
-const DELETE = toolbox.DELETE
-const UPDATE = toolbox.UPDATE
-const QUERY = toolbox.QUERY
 
 type PermissionGroup struct {
 	ID          int64     `json:"id" xorm:"id pk autoincr"`
@@ -95,10 +89,4 @@ type Permissions struct {
 	PermissionGroup `xorm:"extends"`
 	PermissionIDs   []string `xorm:"-"`
 	PermissionTags  []string `xorm:"-"`
-}
-
-type PermGroupCache interface {
-	Get(groupID int64) *Permissions
-	GetChildren(groupID int64) []*Permissions
-	GetPermissionsByTag(tag string) ([]Permission, error)
 }

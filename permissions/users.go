@@ -1,21 +1,19 @@
 package permissions
 
-import (
-	"github.com/three-plus-three/modules/users"
-)
+import "github.com/three-plus-three/modules/users/usermodels"
 
 const (
-	UserNormal   = users.UserNormal
-	ItsmReporter = users.ItsmReporter
+	UserNormal   = usermodels.UserNormal
+	ItsmReporter = usermodels.ItsmReporter
 )
 
-type OnlineUser = users.OnlineUser
-type User = users.User
-type UserProfile = users.UserProfile
-type UserAndUserGroup = users.UserAndUserGroup
-type UserGroup = users.UserGroup
-type Role = users.Role
-type UserAndRole = users.UserAndRole
+type OnlineUser = usermodels.OnlineUser
+type User = usermodels.User
+type UserProfile = usermodels.UserProfile
+type UserAndUserGroup = usermodels.UserAndUserGroup
+type UserGroup = usermodels.UserGroup
+type Role = usermodels.Role
+type UserAndRole = usermodels.UserAndRole
 
 func KeyForUsersAndRoles(key string) string {
 	switch key {

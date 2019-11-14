@@ -6,9 +6,10 @@ import (
 
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/users"
+	"github.com/three-plus-three/modules/users/usermodels"
 )
 
-type Permissions = users.Permissions
+type Permissions = usermodels.Permissions
 
 var _ users.PermGroupCache = &GroupCache{}
 

@@ -1,6 +1,9 @@
-package users
+//go:generate gobatis users.go
+
+package usermodels
 
 import (
+	"context"
 	"time"
 
 	"github.com/three-plus-three/modules/toolbox"
@@ -59,14 +62,15 @@ type User struct {
 	Password    string                 `json:"password,omitempty" xorm:"password null"`
 	Description string                 `json:"description,omitempty" xorm:"description null"`
 	Attributes  map[string]interface{} `json:"attributes" xorm:"attributes jsonb null"`
-	Profiles    map[string]string      `json:"profiles" xorm:"profiles jsonb null"`
 	Source      string                 `json:"source,omitempty" xorm:"source null"`
 	Signature   string                 `json:"signature,omitempty" xorm:"signature null"`
+	Disabled    bool                   `json:"disabled,omitempty" xorm:"disabled null"`
+	LockedAt    *time.Time             `json:"locked_at,omitempty" xorm:"locked_at null"`
+	CreatedAt   time.Time              `json:"created_at,omitempty" xorm:"created_at created"`
+	UpdatedAt   time.Time              `json:"updated_at,omitempty" xorm:"updated_at updated"`
+
 	// Type        int                    `json:"type,omitempty" xorm:"type"`
-	Disabled  bool       `json:"disabled,omitempty" xorm:"disabled null"`
-	LockedAt  *time.Time `json:"locked_at,omitempty" xorm:"locked_at null"`
-	CreatedAt time.Time  `json:"created_at,omitempty" xorm:"created_at created"`
-	UpdatedAt time.Time  `json:"updated_at,omitempty" xorm:"updated_at updated"`
+	// Profiles    map[string]string      `json:"profiles" xorm:"profiles jsonb null"`
 }
 
 func (user *User) IsDisabled() bool {
@@ -121,6 +125,33 @@ func (userGroup *UserGroup) TableName() string {
 }
 
 type UserDao interface {
+	UserQueryer
+
+	CreateUser(ctx context.Context, user *User) (int64, error)
+
+	// @type update
+	// @default UPDATE <tablename type="User"/>(user_id, role_id)
+	//       SET disabled = true WHERE id=#{id}
+	DisableUser(ctx context.Context, id int64) error
+
+	// @type update
+	// @default UPDATE <tablename type="User"/>(user_id, role_id)
+	//       SET disabled = false WHERE id=#{id}
+	EnableUser(ctx context.Context, id int64) error
+
+	UpdateUser(ctx context.Context, id int64, user *User) (int64, error)
+
+	// @default INSERT INTO <tablename type="UserAndRole"/>(user_id, role_id)
+	//       VALUES(#{userid}, #{roleid})
+	//       ON CONFLICT (user_id, role_id)
+	//       DO UPDATE SET user_id=EXCLUDED.user_id, role_id=EXCLUDED.role_id
+	AddRoleToUser(ctx context.Context, userid, roleid int64) error
+
+	// @default DELETE FROM <tablename type="UserAndRole"/> WHERE user_id = #{userid} and role_id = #{roleid}
+	RemoveRoleFromUser(ctx context.Context, userid, roleid int64) error
+}
+
+type UserQueryer interface {
 	// @record_type Role
 	GetRoleByName(name string) func(*Role) error
 	// @record_type User
@@ -155,14 +186,15 @@ type UserDao interface {
 	// @default SELECT value FROM <tablename type="UserProfile" /> WHERE id = #{userID} AND name = #{name}
 	ReadProfile(userID int64, name string) (string, error)
 
-	// @type insert
 	// @default INSERT INTO <tablename type="UserProfile" /> (id, name, value) VALUES(#{userID}, #{name}, #{value})
 	//     ON CONFLICT (id, name) DO UPDATE SET value = excluded.value
 	WriteProfile(userID int64, name, value string) error
 
+	// @type delete
 	// @default DELETE FROM <tablename type="UserProfile" /> WHERE id=#{userID} AND name=#{name}
 	DeleteProfile(userID int64, name string) (int64, error)
 
 	GetPermissions() ([]Permissions, error)
+
 	GetPermissionAndGroups() ([]PermissionAndGroup, error)
 }

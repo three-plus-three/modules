@@ -66,7 +66,7 @@ func TestUser(t *testing.T) {
 	if fmt.Sprint(v) != "y" {
 		t.Error("x=y", v)
 	}
-	u.(*user).u.Profiles = nil
+	u.(*user).profiles = nil
 	v, err = u.ReadProfile("x")
 	if err != nil {
 		t.Error(err)
@@ -91,7 +91,7 @@ func TestUser(t *testing.T) {
 	if v != "" {
 		t.Error("x=nil", v)
 	}
-	u.(*user).u.Profiles = nil
+	u.(*user).profiles = nil
 	v, err = u.ReadProfile("x")
 	if err != nil {
 		t.Error(err)
