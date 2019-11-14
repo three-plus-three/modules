@@ -49,13 +49,13 @@ func UserIncludeDisabled() UserOption {
 // UserManager 用户管理
 type UserManager interface {
 	Users(opts ...UserOption) ([]User, error)
-	Groups(opts ...UserOption) ([]UserGroup, error)
+	Usergroups(opts ...UserOption) ([]UserGroup, error)
 
-	ByName(username string, opts ...UserOption) (User, error)
-	ByID(userID int64, opts ...UserOption) (User, error)
+	UserByName(username string, opts ...UserOption) (User, error)
+	UserByID(userID int64, opts ...UserOption) (User, error)
 
-	GroupByName(username string, opts ...UserOption) (UserGroup, error)
-	GroupByID(groupID int64, opts ...UserOption) (UserGroup, error)
+	UsergroupByName(username string, opts ...UserOption) (UserGroup, error)
+	UsergroupByID(groupID int64, opts ...UserOption) (UserGroup, error)
 }
 
 // UserGroup 用户组信息

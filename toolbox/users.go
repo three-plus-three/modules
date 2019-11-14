@@ -154,7 +154,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 	}
 
 	funcs["user_has_permission"] = func(ctx map[string]interface{}, user, permissionName, op string) bool {
-		u, err := um.ByName(user)
+		u, err := um.UserByName(user)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				return false
@@ -189,7 +189,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			return ""
 		}
 
-		u, err := um.ByID(uid, users.UserIncludeDisabled())
+		u, err := um.UserByID(uid, users.UserIncludeDisabled())
 		if err != nil && !errors.IsNotFound(err) {
 			panic(errors.Wrap(err, "load user with id is '"+fmt.Sprint(userID)+"' fail"))
 		}
@@ -225,7 +225,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			return ""
 		}
 
-		u, err := um.ByID(uid, users.UserIncludeDisabled())
+		u, err := um.UserByID(uid, users.UserIncludeDisabled())
 		if err != nil && !errors.IsNotFound(err) {
 			panic(errors.Wrap(err, "load user with id is '"+fmt.Sprint(userID)+"' fail"))
 		}
@@ -293,7 +293,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			userlist = uList
 		} else if group != 0 {
 			var err error
-			usergroup, err = um.GroupByID(group, opts...)
+			usergroup, err = um.UsergroupByID(group, opts...)
 			if err != nil {
 				panic(errors.Wrap(err, "load users of group("+strconv.FormatInt(group, 10)+") fail"))
 			}
@@ -329,7 +329,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			return ""
 		}
 
-		u, err := um.GroupByID(uid)
+		u, err := um.UsergroupByID(uid)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				panic(errors.New("usergroup id '" + fmt.Sprint(groupID) + "' isnot found"))
@@ -353,7 +353,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 		if len(includeDisabled) > 0 && includeDisabled[0] {
 			opts = []UserOption{users.UserIncludeDisabled()}
 		}
-		ugList, err := um.Groups(opts...)
+		ugList, err := um.Usergroups(opts...)
 		if err != nil {
 			panic(errors.Wrap(err, "load all users fail"))
 		}
@@ -408,7 +408,7 @@ type UsergroupProvider struct {
 }
 
 func (up *UsergroupProvider) Read(ctx, a interface{}) (interface{}, error) {
-	usergroups, err := up.UM.Groups()
+	usergroups, err := up.UM.Usergroups()
 	if err != nil {
 		return nil, err
 	}

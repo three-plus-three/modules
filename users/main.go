@@ -75,7 +75,7 @@ func (um *userManager) groupcacheIt(ug UserGroup) {
 	um.groupByID.SetDefault(strconv.FormatInt(ug.ID(), 10), ug)
 }
 
-func (um *userManager) Groups(opts ...UserOption) ([]UserGroup, error) {
+func (um *userManager) Usergroups(opts ...UserOption) ([]UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -102,7 +102,7 @@ func (um *userManager) Groups(opts ...UserOption) ([]UserGroup, error) {
 	return ugList, nil
 }
 
-func (um *userManager) GroupByName(groupname string, opts ...UserOption) (UserGroup, error) {
+func (um *userManager) UsergroupByName(groupname string, opts ...UserOption) (UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -122,7 +122,7 @@ func (um *userManager) GroupByName(groupname string, opts ...UserOption) (UserGr
 	return ug, nil
 }
 
-func (um *userManager) GroupByID(groupID int64, opts ...UserOption) (UserGroup, error) {
+func (um *userManager) UsergroupByID(groupID int64, opts ...UserOption) (UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -230,7 +230,7 @@ func (um *userManager) ensureRoles() {
 	}
 }
 
-func (um *userManager) ByName(userName string, opts ...UserOption) (User, error) {
+func (um *userManager) UserByName(userName string, opts ...UserOption) (User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -294,7 +294,7 @@ func (um *userManager) ByName(userName string, opts ...UserOption) (User, error)
 	return u, nil
 }
 
-func (um *userManager) ByID(userID int64, opts ...UserOption) (User, error) {
+func (um *userManager) UserByID(userID int64, opts ...UserOption) (User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}

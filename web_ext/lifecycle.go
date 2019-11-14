@@ -77,7 +77,7 @@ type userManager struct {
 	lifecycle *Lifecycle
 }
 
-func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, error) {
+func (um *userManager) Usergroups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, error) {
 	return []toolbox.UserGroup{}, nil
 }
 
@@ -85,19 +85,19 @@ func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error)
 	return []toolbox.User{}, nil
 }
 
-func (um *userManager) ByName(username string, opts ...toolbox.UserOption) (toolbox.User, error) {
+func (um *userManager) UserByName(username string, opts ...toolbox.UserOption) (toolbox.User, error) {
 	return &user{lifecycle: um.lifecycle, name: username}, nil
 }
 
-func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) (toolbox.User, error) {
+func (um *userManager) UserByID(userID int64, opts ...toolbox.UserOption) (toolbox.User, error) {
 	return nil, errors.NotFound(userID, "user")
 }
 
-func (um *userManager) GroupByName(groupname string, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+func (um *userManager) UsergroupByName(groupname string, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
 	return &usergroup{lifecycle: um.lifecycle, name: groupname}, nil
 }
 
-func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+func (um *userManager) UsergroupByID(groupID int64, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
 	return nil, errors.NotFound(groupID, "usergroup")
 }
 

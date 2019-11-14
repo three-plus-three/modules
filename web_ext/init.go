@@ -163,7 +163,7 @@ func Init(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, pr
 
 		lifecycle.UserManager = InitUser(lifecycle)
 		lifecycle.GetUser = func(username string, opts ...toolbox.UserOption) toolbox.User {
-			u, err := lifecycle.UserManager.ByName(username, opts...)
+			u, err := lifecycle.UserManager.UserByName(username, opts...)
 			if err != nil {
 				if errors.IsNotFound(err) {
 					return nil
