@@ -44,12 +44,5 @@ require (
 )
 
 replace (
-	github.com/AreaHQ/go-fixtures => github.com/runner-mei/go-fixtures v0.0.0-20161015121039-0c8d65b1a339
-	github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.2.0
-	github.com/ekanite/ekanite => github.com/runner-mei/ekanite v1.2.0
-	github.com/revel/cmd => github.com/runner-mei/revel_cmd v0.12.0
-	github.com/revel/revel => github.com/runner-mei/revel v0.12.0
-	github.com/superchalupa/go-redfish => github.com/runner-mei/go-redfish v0.0.0-20180620095514-1107c422344a
-
 	xorm.io/xorm => github.com/runner-mei/xorm v0.8.1
 )

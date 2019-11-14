@@ -187,6 +187,7 @@ github.com/three-plus-three/sessions v0.0.0-20190127084926-d1bedf90d9a2 h1:b8+ff
 github.com/three-plus-three/sessions v0.0.0-20190127084926-d1bedf90d9a2/go.mod h1:JKCEPvPyun3e5b+Ck8me7YTADkRYlBU9ynzi/0iWYAI=
 github.com/three-plus-three/sso v0.0.0-20191027121323-ef45d081defa h1:I4g19ecmVhPKaMPeWWO9KLzY5Xm4ENLmk0Qdq1oa1MU=
 github.com/three-plus-three/sso v0.0.0-20191027121323-ef45d081defa/go.mod h1:GO1WovvVrMNHKFfyn8ok8izB5Msshacg7UYjX3VD1RI=
+github.com/uber/jaeger-client-go v2.19.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
 github.com/uber/jaeger-lib v2.2.0+incompatible/go.mod h1:ComeNDZlWwrWnDv8aPp0Ba6+uUTzImX/AauajbLI56U=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=
 github.com/valyala/bytebufferpool v1.0.0/go.mod h1:6bBcMArwyJ5K/AmCkWv1jt77kVWyCJ6HpOuEn7z0Csc=
