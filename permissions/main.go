@@ -11,11 +11,11 @@ import (
 	"github.com/runner-mei/orm"
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/errors"
-	"github.com/three-plus-three/modules/toolbox"
+	"github.com/three-plus-three/modules/users"
 	"xorm.io/xorm"
 )
 
-func InitUser(engine *xorm.Engine) toolbox.UserManager {
+func InitUser(engine *xorm.Engine) users.UserManager {
 	um := &userManager{
 		db:                   &DB{DB: orm.DB{Engine: engine}},
 		permissionGroupCache: &GroupCache{},
@@ -26,24 +26,24 @@ func InitUser(engine *xorm.Engine) toolbox.UserManager {
 	}
 	um.refresh()
 
-	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleSuper}).One(&um.superRole); e != nil {
-		um.superRole.Name = toolbox.RoleSuper
-		log.Println("[warn] role", toolbox.RoleSuper, "isnot found -", e)
+	if e := um.db.Roles().Where(orm.Cond{"name": users.RoleSuper}).One(&um.superRole); e != nil {
+		um.superRole.Name = users.RoleSuper
+		log.Println("[warn] role", users.RoleSuper, "isnot found -", e)
 	}
 
-	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleAdministrator}).One(&um.adminRole); e != nil {
-		um.adminRole.Name = toolbox.RoleAdministrator
-		log.Println("[warn] role", toolbox.RoleAdministrator, "isnot found -", e)
+	if e := um.db.Roles().Where(orm.Cond{"name": users.RoleAdministrator}).One(&um.adminRole); e != nil {
+		um.adminRole.Name = users.RoleAdministrator
+		log.Println("[warn] role", users.RoleAdministrator, "isnot found -", e)
 	}
 
-	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleVisitor}).One(&um.visitorRole); e != nil {
-		um.visitorRole.Name = toolbox.RoleVisitor
-		log.Println("[warn] role", toolbox.RoleVisitor, "isnot found -", e)
+	if e := um.db.Roles().Where(orm.Cond{"name": users.RoleVisitor}).One(&um.visitorRole); e != nil {
+		um.visitorRole.Name = users.RoleVisitor
+		log.Println("[warn] role", users.RoleVisitor, "isnot found -", e)
 	}
 
-	if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleGuest}).One(&um.guestRole); e != nil {
-		um.guestRole.Name = toolbox.RoleGuest
-		log.Println("[warn] role", toolbox.RoleGuest, "isnot found -", e)
+	if e := um.db.Roles().Where(orm.Cond{"name": users.RoleGuest}).One(&um.guestRole); e != nil {
+		um.guestRole.Name = users.RoleGuest
+		log.Println("[warn] role", users.RoleGuest, "isnot found -", e)
 	}
 
 	return um
@@ -52,7 +52,7 @@ func InitUser(engine *xorm.Engine) toolbox.UserManager {
 type userGroup struct {
 	um       *userManager
 	ug       UserGroup
-	children []toolbox.User
+	children []users.User
 }
 
 func (ug *userGroup) ID() int64 {
@@ -63,14 +63,8 @@ func (ug *userGroup) Name() string {
 	return ug.ug.Name
 }
 
-func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
-	var includeDisabled bool
-	for _, opt := range opts {
-		switch opt.(type) {
-		case toolbox.UserIncludeDisabled:
-			includeDisabled = true
-		}
-	}
+func (ug *userGroup) Users(opts ...users.Option) ([]users.User, error) {
+	var includeDisabled = readOptions(opts...)
 
 	if ug.children == nil {
 
@@ -82,7 +76,7 @@ func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
 
 		ug.um.ensureRoles()
 
-		var uList = make([]toolbox.User, 0, len(innerList))
+		var uList = make([]users.User, 0, len(innerList))
 
 		for idx := range innerList {
 			u := &user{um: ug.um, u: innerList[idx]}
@@ -100,7 +94,7 @@ func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
 		return ug.children, nil
 	}
 
-	var enabledList = make([]toolbox.User, 0, len(ug.children))
+	var enabledList = make([]users.User, 0, len(ug.children))
 	for idx := range ug.children {
 		if !ug.children[idx].(*user).IsDisabled() {
 			enabledList = append(enabledList, ug.children[idx])
@@ -132,18 +126,18 @@ func (um *userManager) refresh() {
 	um.permissionGroupCache.Init(5*time.Minute, refresh)
 }
 
-func (um *userManager) groupcacheIt(ug toolbox.UserGroup) {
+func (um *userManager) groupcacheIt(ug users.UserGroup) {
 	um.groupByName.SetDefault(ug.Name(), ug)
 	um.groupByID.SetDefault(strconv.FormatInt(ug.ID(), 10), ug)
 }
 
-func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, error) {
+func (um *userManager) Usergroups(opts ...users.Option) ([]users.UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByName.Get("____all____"); found && o != nil {
-		if ugArray, ok := o.([]toolbox.UserGroup); ok && ugArray != nil {
+		if ugArray, ok := o.([]users.UserGroup); ok && ugArray != nil {
 			return ugArray, nil
 		}
 	}
@@ -154,7 +148,7 @@ func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, 
 		return nil, errors.Wrap(err, "query all usergroup fail")
 	}
 
-	var ugList = make([]toolbox.UserGroup, 0, len(innerList))
+	var ugList = make([]users.UserGroup, 0, len(innerList))
 	for idx := range innerList {
 		ug := &userGroup{um: um, ug: innerList[idx]}
 		ugList = append(ugList, ug)
@@ -165,13 +159,13 @@ func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, 
 	return ugList, nil
 }
 
-func (um *userManager) GroupByName(groupname string, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+func (um *userManager) UsergroupByName(groupname string, opts ...users.Option) (users.UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByName.Get(groupname); found && o != nil {
-		if ug, ok := o.(toolbox.UserGroup); ok && ug != nil {
+		if ug, ok := o.(users.UserGroup); ok && ug != nil {
 			return ug, nil
 		}
 	}
@@ -185,13 +179,13 @@ func (um *userManager) GroupByName(groupname string, opts ...toolbox.UserOption)
 	return ug, nil
 }
 
-func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+func (um *userManager) UsergroupByID(groupID int64, opts ...users.Option) (users.UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByID.Get(strconv.FormatInt(groupID, 10)); found && o != nil {
-		if ug, ok := o.(toolbox.UserGroup); ok && ug != nil {
+		if ug, ok := o.(users.UserGroup); ok && ug != nil {
 			return ug, nil
 		}
 	}
@@ -205,28 +199,22 @@ func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) (too
 	return ug, nil
 }
 
-func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
+func (um *userManager) Users(opts ...users.Option) ([]users.User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
-	var includeDisabled bool
-	for _, opt := range opts {
-		switch opt.(type) {
-		case toolbox.UserIncludeDisabled:
-			includeDisabled = true
-		}
-	}
+	var includeDisabled = readOptions(opts...)
 
 	if includeDisabled {
 		if o, found := um.userByName.Get("____all____"); found && o != nil {
-			if ugArray, ok := o.([]toolbox.User); ok && ugArray != nil {
+			if ugArray, ok := o.([]users.User); ok && ugArray != nil {
 				return ugArray, nil
 			}
 		}
 	} else {
 		if o, found := um.userByName.Get("____all_enabled____"); found && o != nil {
-			if ugArray, ok := o.([]toolbox.User); ok && ugArray != nil {
+			if ugArray, ok := o.([]users.User); ok && ugArray != nil {
 				return ugArray, nil
 			}
 		}
@@ -240,8 +228,8 @@ func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error)
 
 	um.ensureRoles()
 
-	var uList = make([]toolbox.User, 0, len(innerList))
-	var enabledList = make([]toolbox.User, 0, len(innerList))
+	var uList = make([]users.User, 0, len(innerList))
+	var enabledList = make([]users.User, 0, len(innerList))
 
 	for idx := range innerList {
 		u := &user{um: um, u: innerList[idx]}
@@ -264,39 +252,39 @@ func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error)
 	return enabledList, nil
 }
 
-func (um *userManager) usercacheIt(u toolbox.User) {
+func (um *userManager) usercacheIt(u users.User) {
 	um.userByName.SetDefault(u.Name(), u)
 	um.userByID.SetDefault(strconv.FormatInt(u.ID(), 10), u)
 }
 
 func (um *userManager) ensureRoles() {
 	if um.superRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleSuper}).One(&um.superRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleSuper, "isnot found -", e)
+		if e := um.db.Roles().Where(orm.Cond{"name": users.RoleSuper}).One(&um.superRole); e != nil {
+			log.Println("[warn] role", users.RoleSuper, "isnot found -", e)
 		} else {
 			um.userByID.Flush()
 			um.userByName.Flush()
 		}
 	}
 	if um.adminRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleAdministrator}).One(&um.adminRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleAdministrator, "isnot found -", e)
+		if e := um.db.Roles().Where(orm.Cond{"name": users.RoleAdministrator}).One(&um.adminRole); e != nil {
+			log.Println("[warn] role", users.RoleAdministrator, "isnot found -", e)
 		} else {
 			um.userByID.Flush()
 			um.userByName.Flush()
 		}
 	}
 	if um.visitorRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleVisitor}).One(&um.visitorRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleVisitor, "isnot found -", e)
+		if e := um.db.Roles().Where(orm.Cond{"name": users.RoleVisitor}).One(&um.visitorRole); e != nil {
+			log.Println("[warn] role", users.RoleVisitor, "isnot found -", e)
 		} else {
 			um.userByID.Flush()
 			um.userByName.Flush()
 		}
 	}
 	if um.guestRole.ID == 0 {
-		if e := um.db.Roles().Where(orm.Cond{"name": toolbox.RoleGuest}).One(&um.guestRole); e != nil {
-			log.Println("[warn] role", toolbox.RoleGuest, "isnot found -", e)
+		if e := um.db.Roles().Where(orm.Cond{"name": users.RoleGuest}).One(&um.guestRole); e != nil {
+			log.Println("[warn] role", users.RoleGuest, "isnot found -", e)
 		} else {
 			um.userByID.Flush()
 			um.userByName.Flush()
@@ -304,21 +292,15 @@ func (um *userManager) ensureRoles() {
 	}
 }
 
-func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (toolbox.User, error) {
+func (um *userManager) UserByName(userName string, opts ...users.Option) (users.User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
-	var includeDisabled bool
-	for _, opt := range opts {
-		switch opt.(type) {
-		case toolbox.UserIncludeDisabled:
-			includeDisabled = true
-		}
-	}
+	var includeDisabled = readOptions(opts...)
 
 	if o, found := um.userByName.Get(userName); found && o != nil {
-		if u, ok := o.(toolbox.User); ok && u != nil {
+		if u, ok := o.(users.User); ok && u != nil {
 			if includeDisabled {
 				return u, nil
 			}
@@ -336,16 +318,16 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (tool
 	err := um.db.Users().Where(orm.Cond{"name": userName}).Omit("profiles").One(&u.u)
 	if err != nil {
 		switch userName {
-		case toolbox.UserAdmin:
+		case users.UserAdmin:
 			u.u.Name = userName
-			u.roleNames = []string{toolbox.RoleAdministrator}
+			u.roleNames = []string{users.RoleAdministrator}
 			u.roles = []Role{um.adminRole}
 
 			um.usercacheIt(u)
 			return u, nil
-		case toolbox.UserGuest:
+		case users.UserGuest:
 			u.u.Name = userName
-			u.roleNames = []string{toolbox.RoleGuest}
+			u.roleNames = []string{users.RoleGuest}
 			u.roles = []Role{um.guestRole}
 			um.usercacheIt(u)
 			return u, nil
@@ -368,21 +350,15 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (tool
 	return u, nil
 }
 
-func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) (toolbox.User, error) {
+func (um *userManager) UserByID(userID int64, opts ...users.Option) (users.User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
-	var includeDisabled bool
-	for _, opt := range opts {
-		switch opt.(type) {
-		case toolbox.UserIncludeDisabled:
-			includeDisabled = true
-		}
-	}
+	var includeDisabled = readOptions(opts...)
 
 	if o, found := um.userByID.Get(strconv.FormatInt(userID, 10)); found && o != nil {
-		if u, ok := o.(toolbox.User); ok && u != nil {
+		if u, ok := o.(users.User); ok && u != nil {
 			if includeDisabled {
 				return u, nil
 			}
@@ -451,7 +427,7 @@ func (um *userManager) load(u *user) error {
 			}
 		}
 
-		if u.u.Name == toolbox.UserAdmin {
+		if u.u.Name == users.UserAdmin {
 			u.roles = append(u.roles, um.adminRole)
 
 			u.roleNames = nil
@@ -641,7 +617,7 @@ func (u *user) Data(key string) interface{} {
 }
 
 func (u *user) HasPermission(permissionID, op string) bool {
-	if u.Name() == toolbox.UserAdmin {
+	if u.Name() == users.UserAdmin {
 		return true
 	}
 
@@ -660,7 +636,7 @@ func (u *user) HasPermission(permissionID, op string) bool {
 			}
 		}
 	}
-	if u.um.visitorRole.ID != 0 && toolbox.QUERY == op {
+	if u.um.visitorRole.ID != 0 && users.QUERY == op {
 		for _, role := range u.roles {
 			if role.ID == u.um.visitorRole.ID {
 				return true
@@ -671,13 +647,13 @@ func (u *user) HasPermission(permissionID, op string) bool {
 	for _, pr := range u.permissionsAndRoles {
 		enableOperation := false
 		switch op {
-		case toolbox.CREATE:
+		case users.CREATE:
 			enableOperation = pr.CreateOperation
-		case toolbox.DELETE:
+		case users.DELETE:
 			enableOperation = pr.DeleteOperation
-		case toolbox.UPDATE:
+		case users.UPDATE:
 			enableOperation = pr.UpdateOperation
-		case toolbox.QUERY:
+		case users.QUERY:
 			enableOperation = pr.QueryOperation
 			if pr.CreateOperation ||
 				pr.DeleteOperation ||
@@ -739,4 +715,9 @@ func (u *user) hasPermissionInGroup(group *Permissions, permissionID string) boo
 		}
 	}
 	return false
+}
+
+func readOptions(opts ...users.Option) bool {
+	a := users.InternalApply(opts...)
+	return a.IncludeDisabled
 }

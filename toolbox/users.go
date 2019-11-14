@@ -45,7 +45,7 @@ const (
 )
 
 // UserOption 用户选项
-type UserOption = users.UserOption
+type UserOption = users.Option
 type UserManager = users.UserManager
 type User = users.User
 type UserGroup = users.UserGroup

@@ -75,7 +75,7 @@ func (um *userManager) groupcacheIt(ug UserGroup) {
 	um.groupByID.SetDefault(strconv.FormatInt(ug.ID(), 10), ug)
 }
 
-func (um *userManager) Usergroups(opts ...UserOption) ([]UserGroup, error) {
+func (um *userManager) Usergroups(opts ...Option) ([]UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -102,7 +102,7 @@ func (um *userManager) Usergroups(opts ...UserOption) ([]UserGroup, error) {
 	return ugList, nil
 }
 
-func (um *userManager) UsergroupByName(groupname string, opts ...UserOption) (UserGroup, error) {
+func (um *userManager) UsergroupByName(groupname string, opts ...Option) (UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -122,7 +122,7 @@ func (um *userManager) UsergroupByName(groupname string, opts ...UserOption) (Us
 	return ug, nil
 }
 
-func (um *userManager) UsergroupByID(groupID int64, opts ...UserOption) (UserGroup, error) {
+func (um *userManager) UsergroupByID(groupID int64, opts ...Option) (UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -142,7 +142,7 @@ func (um *userManager) UsergroupByID(groupID int64, opts ...UserOption) (UserGro
 	return ug, nil
 }
 
-func (um *userManager) Users(opts ...UserOption) ([]User, error) {
+func (um *userManager) Users(opts ...Option) ([]User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -230,7 +230,7 @@ func (um *userManager) ensureRoles() {
 	}
 }
 
-func (um *userManager) UserByName(userName string, opts ...UserOption) (User, error) {
+func (um *userManager) UserByName(userName string, opts ...Option) (User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -294,7 +294,7 @@ func (um *userManager) UserByName(userName string, opts ...UserOption) (User, er
 	return u, nil
 }
 
-func (um *userManager) UserByID(userID int64, opts ...UserOption) (User, error) {
+func (um *userManager) UserByID(userID int64, opts ...Option) (User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -661,7 +661,7 @@ func (ug *userGroup) Name() string {
 	return ug.ug.Name
 }
 
-func (ug *userGroup) Users(opts ...UserOption) ([]User, error) {
+func (ug *userGroup) Users(opts ...Option) ([]User, error) {
 	var includeDisabled bool
 	for _, opt := range opts {
 		switch opt.(type) {
@@ -705,4 +705,19 @@ func (ug *userGroup) Users(opts ...UserOption) ([]User, error) {
 	}
 
 	return enabledList, nil
+}
+
+type InternalOptions struct {
+	IncludeDisabled bool
+}
+
+func InternalApply(opts ...Option) InternalOptions {
+	var o InternalOptions
+	for _, opt := range opts {
+		switch opt.(type) {
+		case userIncludeDisabled:
+			o.IncludeDisabled = true
+		}
+	}
+	return o
 }

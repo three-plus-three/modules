@@ -39,7 +39,7 @@ func TestUser(t *testing.T) {
 		return
 	}
 
-	u, err := um.ByName("abc")
+	u, err := um.UserByName("abc")
 	if err != nil {
 		t.Error(err)
 		return
@@ -146,7 +146,7 @@ func TestHasPermission(t *testing.T) {
 
 	um := InitUser(modelEngine)
 
-	u, err := um.ByName("admin")
+	u, err := um.UserByName("admin")
 	if err != nil {
 		t.Error(err)
 		return
@@ -156,7 +156,7 @@ func TestHasPermission(t *testing.T) {
 		t.Error("admin 有任何权限")
 	}
 
-	u, err = um.ByName("adm")
+	u, err = um.UserByName("adm")
 	if err != nil {
 		t.Error(err)
 		return
@@ -170,7 +170,7 @@ func TestHasPermission(t *testing.T) {
 		t.Error("有 administrator 角色的用户有任何权限")
 	}
 
-	u, err = um.ByName("viewer")
+	u, err = um.UserByName("viewer")
 	if err != nil {
 		t.Error(err)
 		return
@@ -191,7 +191,7 @@ func TestHasPermission(t *testing.T) {
 		t.Error("有 visitor 角色的用户没有任何写权限")
 	}
 
-	u, err = um.ByName("t70")
+	u, err = um.UserByName("t70")
 	if err != nil {
 		t.Error(err)
 		return
@@ -225,7 +225,7 @@ func TestHasPermission(t *testing.T) {
 	if !u.HasPermission("p32", UPDATE) {
 		t.Error("1个用户有1个角色 关联父子关系的两个权限组 操作不相同 其权限不相同 查子组权限")
 	}
-	u, err = um.ByName("t71")
+	u, err = um.UserByName("t71")
 	if err != nil {
 		t.Error(err)
 		return
@@ -237,7 +237,7 @@ func TestHasPermission(t *testing.T) {
 	}
 
 	// user3 ->r3() ->r4() ->r5()
-	u, err = um.ByName("t72")
+	u, err = um.UserByName("t72")
 	if err != nil {
 		t.Error(err)
 		return
@@ -256,7 +256,7 @@ func TestHasPermission(t *testing.T) {
 		t.Error("1个用户有2个角色  关联有父子关系权限组  操作不相同   两组权限相同")
 	}
 
-	u, err = um.ByName("t73")
+	u, err = um.UserByName("t73")
 	if err != nil {
 		t.Error(err)
 		return
@@ -276,7 +276,7 @@ func TestHasPermission(t *testing.T) {
 		t.Error("1个用户有2个角色  角色1关联父子组  角色2关联父组 操作全不相同   父子组权限不相同 	查询的是父组权限")
 	}
 
-	u, err = um.ByName("A1")
+	u, err = um.UserByName("A1")
 	if err != nil {
 		t.Error(err)
 		return

@@ -36,26 +36,26 @@ const (
 	RoleGuest = usermodels.RoleGuest
 )
 
-// UserOption 用户选项
-type UserOption interface {
+// Option 用户选项
+type Option interface {
 	apply()
 }
 
 // UserIncludeDisabled 禁用的用户也返回
-func UserIncludeDisabled() UserOption {
+func UserIncludeDisabled() Option {
 	return userIncludeDisabled{}
 }
 
 // UserManager 用户管理
 type UserManager interface {
-	Users(opts ...UserOption) ([]User, error)
-	Usergroups(opts ...UserOption) ([]UserGroup, error)
+	Users(opts ...Option) ([]User, error)
+	Usergroups(opts ...Option) ([]UserGroup, error)
 
-	UserByName(username string, opts ...UserOption) (User, error)
-	UserByID(userID int64, opts ...UserOption) (User, error)
+	UserByName(username string, opts ...Option) (User, error)
+	UserByID(userID int64, opts ...Option) (User, error)
 
-	UsergroupByName(username string, opts ...UserOption) (UserGroup, error)
-	UsergroupByID(groupID int64, opts ...UserOption) (UserGroup, error)
+	UsergroupByName(username string, opts ...Option) (UserGroup, error)
+	UsergroupByID(groupID int64, opts ...Option) (UserGroup, error)
 }
 
 // UserGroup 用户组信息
@@ -66,7 +66,7 @@ type UserGroup interface {
 	Name() string
 
 	// 用户成员
-	Users(opts ...UserOption) ([]User, error)
+	Users(opts ...Option) ([]User, error)
 }
 
 // User 用户信息

@@ -7,6 +7,7 @@ import (
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/menus"
 	"github.com/three-plus-three/modules/toolbox"
+	"github.com/three-plus-three/modules/users"
 	"github.com/three-plus-three/sso/client/revel_sso"
 	"xorm.io/xorm"
 )
@@ -26,7 +27,7 @@ type Lifecycle struct {
 	ApplicationRoot    string
 
 	UserManager toolbox.UserManager
-	GetUser     func(userName string, opts ...toolbox.UserOption) toolbox.User
+	GetUser     func(userName string, opts ...users.Option) toolbox.User
 	CurrentUser func(c *revel.Controller) toolbox.User
 	CheckUser   revel_sso.CheckFunc
 	menuClient  menus.Client
@@ -77,27 +78,27 @@ type userManager struct {
 	lifecycle *Lifecycle
 }
 
-func (um *userManager) Usergroups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, error) {
+func (um *userManager) Usergroups(opts ...users.Option) ([]toolbox.UserGroup, error) {
 	return []toolbox.UserGroup{}, nil
 }
 
-func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
+func (um *userManager) Users(opts ...users.Option) ([]toolbox.User, error) {
 	return []toolbox.User{}, nil
 }
 
-func (um *userManager) UserByName(username string, opts ...toolbox.UserOption) (toolbox.User, error) {
+func (um *userManager) UserByName(username string, opts ...users.Option) (toolbox.User, error) {
 	return &user{lifecycle: um.lifecycle, name: username}, nil
 }
 
-func (um *userManager) UserByID(userID int64, opts ...toolbox.UserOption) (toolbox.User, error) {
+func (um *userManager) UserByID(userID int64, opts ...users.Option) (toolbox.User, error) {
 	return nil, errors.NotFound(userID, "user")
 }
 
-func (um *userManager) UsergroupByName(groupname string, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+func (um *userManager) UsergroupByName(groupname string, opts ...users.Option) (toolbox.UserGroup, error) {
 	return &usergroup{lifecycle: um.lifecycle, name: groupname}, nil
 }
 
-func (um *userManager) UsergroupByID(groupID int64, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+func (um *userManager) UsergroupByID(groupID int64, opts ...users.Option) (toolbox.UserGroup, error) {
 	return nil, errors.NotFound(groupID, "usergroup")
 }
 
@@ -117,7 +118,7 @@ func (ug *usergroup) Name() string {
 	return ug.name
 }
 
-func (ug *usergroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
+func (ug *usergroup) Users(opts ...users.Option) ([]toolbox.User, error) {
 	return nil, nil
 }
 
