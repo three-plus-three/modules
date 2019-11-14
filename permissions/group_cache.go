@@ -62,7 +62,7 @@ func (cache *GroupCache) getPermissions() map[int64]*Permissions {
 	return values
 }
 
-func (cache *GroupCache) refresh(userDao UserDao) error {
+func (cache *GroupCache) refresh(userDao usermodels.UserQueryer) error {
 	valueArray, err := userDao.GetPermissions()
 	if err != nil {
 		return errors.New("query permission groups fail: " + err.Error())

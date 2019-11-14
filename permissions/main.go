@@ -1,4 +1,3 @@
-//go:generate gobatis main.go
 package permissions
 
 import (
@@ -13,54 +12,8 @@ import (
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/toolbox"
+	"github.com/three-plus-three/modules/users/usermodels"
 )
-
-type UserDao interface {
-	// @record_type Role
-	GetRoleByName(name string) func(*Role) error
-	// @record_type User
-	GetUserByID(id int64) func(*User) error
-	// @record_type User
-	GetUserByName(name string) func(*User) error
-	// @record_type UserGroup
-	GetUsergroupByID(id int64) func(*UserGroup) error
-	// @record_type UserGroup
-	GetUsergroupByName(name string) func(*UserGroup) error
-	// @record_type User
-	GetUsers() ([]User, error)
-	// @record_type UserGroup
-	GetUsergroups() ([]UserGroup, error)
-
-	// @default SELECT * FROM <tablename type="Role" as="roles" /> WHERE
-	//  exists (select * from <tablename type="UserAndRole" /> as users_roles
-	//     where users_roles.role_id = roles.id and users_roles.user_id = #{userID})
-	GetRolesByUser(userID int64) ([]Role, error)
-
-	// @default SELECT * FROM <tablename type="User" as="users" /> WHERE
-	//  exists (select * from <tablename type="UserAndUserGroup" /> as u2g
-	//     where u2g.user_id = users.id and u2g.group_id = #{groupID})
-	GetUserByGroup(groupID int64) ([]User, error)
-
-	// @default SELECT group_id FROM <tablename type="UserAndUserGroup" as="u2g" /> WHERE user_id = #{userID}
-	GetGroupIDsByUser(userID int64) ([]int64, error)
-
-	// @record_type PermissionGroupAndRole
-	GetPermissionAndRoles(roleIDs []int64) ([]PermissionGroupAndRole, error)
-
-	// @default SELECT value FROM <tablename type="UserProfile" /> WHERE id = #{userID} AND name = #{name}
-	ReadProfile(userID int64, name string) (string, error)
-
-	// @type insert
-	// @default INSERT INTO <tablename type="UserProfile" /> (id, name, value) VALUES(#{userID}, #{name}, #{value})
-	//     ON CONFLICT (id, name) DO UPDATE SET value = excluded.value
-	WriteProfile(userID int64, name, value string) error
-
-	// @default DELETE FROM <tablename type="UserProfile" /> WHERE id=#{userID} AND name=#{name}
-	DeleteProfile(userID int64, name string) (int64, error)
-
-	GetPermissions() ([]Permissions, error)
-	GetPermissionAndGroups() ([]PermissionAndGroup, error)
-}
 
 func InitUser(db *sql.DB, driverName string, logger log.Logger) toolbox.UserManager {
 	factory, err := gobatis.New(&gobatis.Config{
@@ -77,7 +30,7 @@ func InitUser(db *sql.DB, driverName string, logger log.Logger) toolbox.UserMana
 		panic(err)
 	}
 	reference := factory.Reference()
-	userDao := NewUserDao(&reference)
+	userDao := usermodels.NewUserQueryer(&reference)
 
 	um := &userManager{
 		logger:               logger,
@@ -97,7 +50,7 @@ func InitUser(db *sql.DB, driverName string, logger log.Logger) toolbox.UserMana
 
 type userManager struct {
 	logger               log.Logger
-	userDao              UserDao
+	userDao              usermodels.UserQueryer
 	permissionGroupCache *GroupCache
 	userByName           *cache.Cache
 	userByID             *cache.Cache
