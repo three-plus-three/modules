@@ -1,7 +1,6 @@
 package permissions
 
 import (
-	"net/http"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -9,44 +8,90 @@ import (
 
 	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/environment"
-	"github.com/three-plus-three/modules/errors"
 	"github.com/three-plus-three/modules/urlutil"
+	"github.com/three-plus-three/modules/users"
+	"github.com/three-plus-three/modules/users/usermodels"
 )
 
 // 常用的错误
 var (
-	ErrUnauthorized       = errors.NewApplicationError(http.StatusUnauthorized, "user is unauthorized")
-	ErrCacheInvalid       = errors.New("permission cache is invald")
-	ErrTagNotFound        = errors.New("permission tag is not found")
-	ErrPermissionNotFound = errors.New("permission is not found")
-	ErrAlreadyClosed      = errors.New("server is closed")
+	ErrUnauthorized       = usermodels.ErrUnauthorized
+	ErrCacheInvalid       = usermodels.ErrCacheInvalid
+	ErrTagNotFound        = usermodels.ErrTagNotFound
+	ErrPermissionNotFound = usermodels.ErrPermissionNotFound
+	ErrAlreadyClosed      = usermodels.ErrAlreadyClosed
 )
 
-// Group 缺省组信息
-type Group struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+const PERMISSION_ID = usermodels.PERMISSION_ID
+const PERMISSION_TAG = usermodels.PERMISSION_TAG
 
-	Children       []Group  `json:"children,omitempty"`
-	PermissionIDs  []string `json:"permissions,omitempty"`
-	PermissionTags []string `json:"tags,omitempty"`
+const CREATE = users.CREATE
+const DELETE = users.DELETE
+const UPDATE = users.UPDATE
+const QUERY = users.QUERY
+
+type PermissionGroup = usermodels.PermissionGroup
+type PermissionAndGroup = usermodels.PermissionAndGroup
+type PermissionGroupAndRole = usermodels.PermissionGroupAndRole
+
+type Group = usermodels.Group
+type Permission = usermodels.Permission
+type Tag = usermodels.Tag
+
+func KeyForPermissionGroups(key string) string {
+	switch key {
+	case "id":
+		return "permissionGroup.ID"
+	case "name":
+		return "permissionGroup.Name"
+	case "description":
+		return "permissionGroup.Description"
+	case "parent_id":
+		return "permissionGroup.ParentID"
+	case "operation":
+		return "permissionGroup.Operation"
+	case "created_at":
+		return "permissionGroup.CreatedAt"
+	case "updated_at":
+		return "permissionGroup.UpdatedAt"
+	}
+	return key
 }
 
-// Permission 缺省权限对象
-type Permission struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description,emitempty"`
-	Tags        []string `json:"tags,emitempty"`
+func KeyForPermissionsAndGroups(key string) string {
+	switch key {
+	case "id":
+		return "permissionAndGroup.ID"
+	case "group_id":
+		return "permissionAndGroup.GroupID"
+	case "permission_object":
+		return "permissionAndGroup.PermissionObject"
+	case "type":
+		return "permissionAndGroup.Type"
+	}
+	return key
 }
 
-// Tag 标签对象
-type Tag struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description,emitempty"`
-
-	Children []Tag `json:"children,omitempty"`
+func KeyForPermissionGroupsAndRoles(key string) string {
+	switch key {
+	case "id":
+		return "permissionGroupAndRole.ID"
+	case "group_id":
+		return "permissionGroupAndRole.GroupID"
+	case "role_id":
+		return "permissionGroupAndRole.RoleID"
+	case "description":
+		return "permissionGroupAndRole.Description"
+	case "create_operation":
+		return "permissionGroupAndRole.CreateOperation"
+	case "update_operation":
+		return "permissionGroupAndRole.UpdateOperation"
+	case "delete_operation":
+		return "permissionGroupAndRole.DeleteOperation"
+	case "query_operation":
+		return "permissionGroupAndRole.QueryOperation"
+	}
+	return key
 }
 
 // GetPermissionsByTag 过滤后的权限对象

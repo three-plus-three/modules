@@ -1,4 +1,3 @@
-//go:generate gobatis main.go
 package users
 
 import (
@@ -12,57 +11,20 @@ import (
 	"github.com/runner-mei/log"
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/errors"
-	"github.com/three-plus-three/modules/toolbox"
+	"github.com/three-plus-three/modules/users/usermodels"
 )
 
-type UserDao interface {
-	// @record_type Role
-	GetRoleByName(name string) func(*Role) error
-	// @record_type User
-	GetUserByID(id int64) func(*User) error
-	// @record_type User
-	GetUserByName(name string) func(*User) error
-	// @record_type UserGroup
-	GetUsergroupByID(id int64) func(*UserGroup) error
-	// @record_type UserGroup
-	GetUsergroupByName(name string) func(*UserGroup) error
-	// @record_type User
-	GetUsers() ([]User, error)
-	// @record_type UserGroup
-	GetUsergroups() ([]UserGroup, error)
-
-	// @default SELECT * FROM <tablename type="Role" as="roles" /> WHERE
-	//  exists (select * from <tablename type="UserAndRole" /> as users_roles
-	//     where users_roles.role_id = roles.id and users_roles.user_id = #{userID})
-	GetRolesByUser(userID int64) ([]Role, error)
-
-	// @default SELECT * FROM <tablename type="User" as="users" /> WHERE
-	//  exists (select * from <tablename type="UserAndUserGroup" /> as u2g
-	//     where u2g.user_id = users.id and u2g.group_id = #{groupID})
-	GetUserByGroup(groupID int64) ([]User, error)
-
-	// @default SELECT group_id FROM <tablename type="UserAndUserGroup" as="u2g" /> WHERE user_id = #{userID}
-	GetGroupIDsByUser(userID int64) ([]int64, error)
-
-	// @record_type PermissionGroupAndRole
-	GetPermissionAndRoles(roleIDs []int64) ([]PermissionGroupAndRole, error)
-
-	// @default SELECT value FROM <tablename type="UserProfile" /> WHERE id = #{userID} AND name = #{name}
-	ReadProfile(userID int64, name string) (string, error)
-
-	// @type insert
-	// @default INSERT INTO <tablename type="UserProfile" /> (id, name, value) VALUES(#{userID}, #{name}, #{value})
-	//     ON CONFLICT (id, name) DO UPDATE SET value = excluded.value
-	WriteProfile(userID int64, name, value string) error
-
-	// @default DELETE FROM <tablename type="UserProfile" /> WHERE id=#{userID} AND name=#{name}
-	DeleteProfile(userID int64, name string) (int64, error)
-
-	GetPermissions() ([]Permissions, error)
-	GetPermissionAndGroups() ([]PermissionAndGroup, error)
+type PermGroupCache interface {
+	Get(groupID int64) *usermodels.Permissions
+	GetChildren(groupID int64) []*usermodels.Permissions
+	GetPermissionsByTag(tag string) ([]usermodels.Permission, error)
 }
 
-func CreateUserManager(db *sql.DB, driverName string, logger log.Logger) toolbox.UserManager {
+type userIncludeDisabled struct{}
+
+func (u userIncludeDisabled) apply() {}
+
+func CreateUserManager(driverName string, db *sql.DB, permCache PermGroupCache, logger log.Logger) UserManager {
 	factory, err := gobatis.New(&gobatis.Config{
 		Tracer:     log.NewSQLTracer(logger),
 		TagPrefix:  "xorm",
@@ -77,57 +39,49 @@ func CreateUserManager(db *sql.DB, driverName string, logger log.Logger) toolbox
 		panic(err)
 	}
 	reference := factory.Reference()
-	userDao := NewUserDao(&reference)
+	userDao := usermodels.NewUserQueryer(&reference)
 
 	um := &userManager{
 		logger:               logger,
 		userDao:              userDao,
-		permissionGroupCache: &GroupCache{},
+		permissionGroupCache: permCache,
 		userByName:           cache.New(5*time.Minute, 10*time.Minute),
 		userByID:             cache.New(5*time.Minute, 10*time.Minute),
 		groupByID:            cache.New(5*time.Minute, 10*time.Minute),
 		groupByName:          cache.New(5*time.Minute, 10*time.Minute),
 	}
-	um.refresh()
 	um.ensureRoles()
 	return um
 }
 
 type userManager struct {
 	logger               log.Logger
-	userDao              UserDao
-	permissionGroupCache *GroupCache
+	userDao              usermodels.UserQueryer
+	permissionGroupCache PermGroupCache
 	userByName           *cache.Cache
 	userByID             *cache.Cache
 	groupByName          *cache.Cache
 	groupByID            *cache.Cache
 	lastErr              concurrency.ErrorValue
 
-	superRole   Role
-	adminRole   Role
-	visitorRole Role
-	guestRole   Role
+	superRole   usermodels.Role
+	adminRole   usermodels.Role
+	visitorRole usermodels.Role
+	guestRole   usermodels.Role
 }
 
-func (um *userManager) refresh() {
-	refresh := func() {
-		um.lastErr.Set(um.permissionGroupCache.refresh(um.userDao))
-	}
-	um.permissionGroupCache.Init(5*time.Minute, refresh)
-}
-
-func (um *userManager) groupcacheIt(ug toolbox.UserGroup) {
+func (um *userManager) groupcacheIt(ug UserGroup) {
 	um.groupByName.SetDefault(ug.Name(), ug)
 	um.groupByID.SetDefault(strconv.FormatInt(ug.ID(), 10), ug)
 }
 
-func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, error) {
+func (um *userManager) Groups(opts ...UserOption) ([]UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByName.Get("____all____"); found && o != nil {
-		if ugArray, ok := o.([]toolbox.UserGroup); ok && ugArray != nil {
+		if ugArray, ok := o.([]UserGroup); ok && ugArray != nil {
 			return ugArray, nil
 		}
 	}
@@ -137,7 +91,7 @@ func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, 
 		return nil, errors.Wrap(err, "query all usergroup fail")
 	}
 
-	var ugList = make([]toolbox.UserGroup, 0, len(innerList))
+	var ugList = make([]UserGroup, 0, len(innerList))
 	for idx := range innerList {
 		ug := &userGroup{um: um, ug: innerList[idx]}
 		ugList = append(ugList, ug)
@@ -148,13 +102,13 @@ func (um *userManager) Groups(opts ...toolbox.UserOption) ([]toolbox.UserGroup, 
 	return ugList, nil
 }
 
-func (um *userManager) GroupByName(groupname string, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+func (um *userManager) GroupByName(groupname string, opts ...UserOption) (UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByName.Get(groupname); found && o != nil {
-		if ug, ok := o.(toolbox.UserGroup); ok && ug != nil {
+		if ug, ok := o.(UserGroup); ok && ug != nil {
 			return ug, nil
 		}
 	}
@@ -168,13 +122,13 @@ func (um *userManager) GroupByName(groupname string, opts ...toolbox.UserOption)
 	return ug, nil
 }
 
-func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) (toolbox.UserGroup, error) {
+func (um *userManager) GroupByID(groupID int64, opts ...UserOption) (UserGroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByID.Get(strconv.FormatInt(groupID, 10)); found && o != nil {
-		if ug, ok := o.(toolbox.UserGroup); ok && ug != nil {
+		if ug, ok := o.(UserGroup); ok && ug != nil {
 			return ug, nil
 		}
 	}
@@ -188,7 +142,7 @@ func (um *userManager) GroupByID(groupID int64, opts ...toolbox.UserOption) (too
 	return ug, nil
 }
 
-func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
+func (um *userManager) Users(opts ...UserOption) ([]User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -196,20 +150,20 @@ func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error)
 	var includeDisabled bool
 	for _, opt := range opts {
 		switch opt.(type) {
-		case toolbox.UserIncludeDisabled:
+		case userIncludeDisabled:
 			includeDisabled = true
 		}
 	}
 
 	if includeDisabled {
 		if o, found := um.userByName.Get("____all____"); found && o != nil {
-			if ugArray, ok := o.([]toolbox.User); ok && ugArray != nil {
+			if ugArray, ok := o.([]User); ok && ugArray != nil {
 				return ugArray, nil
 			}
 		}
 	} else {
 		if o, found := um.userByName.Get("____all_enabled____"); found && o != nil {
-			if ugArray, ok := o.([]toolbox.User); ok && ugArray != nil {
+			if ugArray, ok := o.([]User); ok && ugArray != nil {
 				return ugArray, nil
 			}
 		}
@@ -222,8 +176,8 @@ func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error)
 
 	um.ensureRoles()
 
-	var uList = make([]toolbox.User, 0, len(innerList))
-	var enabledList = make([]toolbox.User, 0, len(innerList))
+	var uList = make([]User, 0, len(innerList))
+	var enabledList = make([]User, 0, len(innerList))
 
 	for idx := range innerList {
 		u := &user{um: um, u: innerList[idx]}
@@ -246,20 +200,20 @@ func (um *userManager) Users(opts ...toolbox.UserOption) ([]toolbox.User, error)
 	return enabledList, nil
 }
 
-func (um *userManager) usercacheIt(u toolbox.User) {
+func (um *userManager) usercacheIt(u User) {
 	um.userByName.SetDefault(u.Name(), u)
 	um.userByID.SetDefault(strconv.FormatInt(u.ID(), 10), u)
 }
 
 func (um *userManager) ensureRoles() {
 	for _, data := range []struct {
-		role *Role
+		role *usermodels.Role
 		name string
 	}{
-		{role: &um.superRole, name: toolbox.RoleSuper},
-		{role: &um.adminRole, name: toolbox.RoleAdministrator},
-		{role: &um.visitorRole, name: toolbox.RoleVisitor},
-		{role: &um.guestRole, name: toolbox.RoleGuest},
+		{role: &um.superRole, name: RoleSuper},
+		{role: &um.adminRole, name: RoleAdministrator},
+		{role: &um.visitorRole, name: RoleVisitor},
+		{role: &um.guestRole, name: RoleGuest},
 	} {
 		if data.role.ID != 0 {
 			continue
@@ -276,7 +230,7 @@ func (um *userManager) ensureRoles() {
 	}
 }
 
-func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (toolbox.User, error) {
+func (um *userManager) ByName(userName string, opts ...UserOption) (User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -284,13 +238,13 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (tool
 	var includeDisabled bool
 	for _, opt := range opts {
 		switch opt.(type) {
-		case toolbox.UserIncludeDisabled:
+		case userIncludeDisabled:
 			includeDisabled = true
 		}
 	}
 
 	if o, found := um.userByName.Get(userName); found && o != nil {
-		if u, ok := o.(toolbox.User); ok && u != nil {
+		if u, ok := o.(User); ok && u != nil {
 			if includeDisabled {
 				return u, nil
 			}
@@ -308,17 +262,17 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (tool
 	err := um.userDao.GetUserByName(userName)(&u.u)
 	if err != nil {
 		switch userName {
-		case toolbox.UserAdmin:
+		case UserAdmin:
 			u.u.Name = userName
-			u.roleNames = []string{toolbox.RoleAdministrator}
-			u.roles = []Role{um.adminRole}
+			u.roleNames = []string{RoleAdministrator}
+			u.roles = []usermodels.Role{um.adminRole}
 
 			um.usercacheIt(u)
 			return u, nil
-		case toolbox.UserGuest:
+		case UserGuest:
 			u.u.Name = userName
-			u.roleNames = []string{toolbox.RoleGuest}
-			u.roles = []Role{um.guestRole}
+			u.roleNames = []string{RoleGuest}
+			u.roles = []usermodels.Role{um.guestRole}
 			um.usercacheIt(u)
 			return u, nil
 		default:
@@ -340,7 +294,7 @@ func (um *userManager) ByName(userName string, opts ...toolbox.UserOption) (tool
 	return u, nil
 }
 
-func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) (toolbox.User, error) {
+func (um *userManager) ByID(userID int64, opts ...UserOption) (User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -348,13 +302,13 @@ func (um *userManager) ByID(userID int64, opts ...toolbox.UserOption) (toolbox.U
 	var includeDisabled bool
 	for _, opt := range opts {
 		switch opt.(type) {
-		case toolbox.UserIncludeDisabled:
+		case userIncludeDisabled:
 			includeDisabled = true
 		}
 	}
 
 	if o, found := um.userByID.Get(strconv.FormatInt(userID, 10)); found && o != nil {
-		if u, ok := o.(toolbox.User); ok && u != nil {
+		if u, ok := o.(User); ok && u != nil {
 			if includeDisabled {
 				return u, nil
 			}
@@ -413,7 +367,7 @@ func (um *userManager) load(u *user) error {
 			}
 		}
 
-		if u.u.Name == toolbox.UserAdmin {
+		if u.u.Name == UserAdmin {
 			u.roles = append(u.roles, um.adminRole)
 
 			u.roleNames = nil
@@ -445,9 +399,9 @@ func (um *userManager) load(u *user) error {
 
 type user struct {
 	um                  *userManager
-	permissionsAndRoles []PermissionGroupAndRole
-	u                   User
-	roles               []Role
+	permissionsAndRoles []usermodels.PermissionGroupAndRole
+	u                   usermodels.User
+	roles               []usermodels.Role
 	roleNames           []string
 	groups              []int64
 	profiles            map[string]string
@@ -593,7 +547,7 @@ func (u *user) Data(key string) interface{} {
 }
 
 func (u *user) HasPermission(permissionID, op string) bool {
-	if u.Name() == toolbox.UserAdmin {
+	if u.Name() == UserAdmin {
 		return true
 	}
 
@@ -612,7 +566,7 @@ func (u *user) HasPermission(permissionID, op string) bool {
 			}
 		}
 	}
-	if u.um.visitorRole.ID != 0 && toolbox.QUERY == op {
+	if u.um.visitorRole.ID != 0 && QUERY == op {
 		for _, role := range u.roles {
 			if role.ID == u.um.visitorRole.ID {
 				return true
@@ -623,13 +577,13 @@ func (u *user) HasPermission(permissionID, op string) bool {
 	for _, pr := range u.permissionsAndRoles {
 		enableOperation := false
 		switch op {
-		case toolbox.CREATE:
+		case CREATE:
 			enableOperation = pr.CreateOperation
-		case toolbox.DELETE:
+		case DELETE:
 			enableOperation = pr.DeleteOperation
-		case toolbox.UPDATE:
+		case UPDATE:
 			enableOperation = pr.UpdateOperation
-		case toolbox.QUERY:
+		case QUERY:
 			enableOperation = pr.QueryOperation
 			if pr.CreateOperation ||
 				pr.DeleteOperation ||
@@ -659,7 +613,7 @@ func (u *user) hasPermission(groupID int64, permissionID string) bool {
 	return u.hasPermissionInGroup(group, permissionID)
 }
 
-func (u *user) hasPermissionInGroup(group *Permissions, permissionID string) bool {
+func (u *user) hasPermissionInGroup(group *usermodels.Permissions, permissionID string) bool {
 	// 在本组中查找是不是有这个权限
 	for _, id := range group.PermissionIDs {
 		if permissionID == id {
@@ -669,7 +623,7 @@ func (u *user) hasPermissionInGroup(group *Permissions, permissionID string) boo
 
 	// 在本组中查找是不是有标签含有这个权限
 	for _, tag := range group.PermissionTags {
-		permissionList, err := GetPermissionsByTag(tag)
+		permissionList, err := u.um.permissionGroupCache.GetPermissionsByTag(tag)
 		if err != nil {
 			panic(err)
 		}
@@ -695,8 +649,8 @@ func (u *user) hasPermissionInGroup(group *Permissions, permissionID string) boo
 
 type userGroup struct {
 	um       *userManager
-	ug       UserGroup
-	children []toolbox.User
+	ug       usermodels.UserGroup
+	children []User
 }
 
 func (ug *userGroup) ID() int64 {
@@ -707,11 +661,11 @@ func (ug *userGroup) Name() string {
 	return ug.ug.Name
 }
 
-func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
+func (ug *userGroup) Users(opts ...UserOption) ([]User, error) {
 	var includeDisabled bool
 	for _, opt := range opts {
 		switch opt.(type) {
-		case toolbox.UserIncludeDisabled:
+		case userIncludeDisabled:
 			includeDisabled = true
 		}
 	}
@@ -725,7 +679,7 @@ func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
 
 		ug.um.ensureRoles()
 
-		var uList = make([]toolbox.User, 0, len(innerList))
+		var uList = make([]User, 0, len(innerList))
 
 		for idx := range innerList {
 			u := &user{um: ug.um, u: innerList[idx]}
@@ -743,7 +697,7 @@ func (ug *userGroup) Users(opts ...toolbox.UserOption) ([]toolbox.User, error) {
 		return ug.children, nil
 	}
 
-	var enabledList = make([]toolbox.User, 0, len(ug.children))
+	var enabledList = make([]User, 0, len(ug.children))
 	for idx := range ug.children {
 		if !ug.children[idx].(*user).IsDisabled() {
 			enabledList = append(enabledList, ug.children[idx])

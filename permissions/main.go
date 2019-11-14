@@ -480,6 +480,7 @@ type user struct {
 	roles               []Role
 	roleNames           []string
 	groups              []int64
+	profiles            map[string]string
 }
 
 func (u *user) IsDisabled() bool {
@@ -539,7 +540,7 @@ func (u *user) WriteProfile(key, value string) error {
 	}
 
 	if value == "" {
-		if len(u.u.Profiles) == 0 {
+		if len(u.profiles) == 0 {
 			return nil
 		}
 
@@ -548,12 +549,12 @@ func (u *user) WriteProfile(key, value string) error {
 		if err != nil {
 			return errors.Wrap(err, "WriteProfile")
 		}
-		delete(u.u.Profiles, key)
+		delete(u.profiles, key)
 		return nil
 	}
 
 	updateStr := `UPDATE hengwei_users SET profiles = profiles || jsonb_build_object($1::text, $2::text) WHERE id = $3`
-	if len(u.u.Profiles) == 0 {
+	if len(u.profiles) == 0 {
 		updateStr = `UPDATE hengwei_users SET profiles = jsonb_build_object($1::text, $2::text) WHERE id = $3`
 	}
 
@@ -561,12 +562,12 @@ func (u *user) WriteProfile(key, value string) error {
 	if err != nil {
 		return errors.Wrap(err, "WriteProfile")
 	}
-	u.u.Profiles[key] = value
+	u.profiles[key] = value
 	return nil
 }
 
 func (u *user) readProfiles() error {
-	if u.u.Profiles != nil {
+	if u.profiles != nil {
 		return nil
 	}
 
@@ -576,24 +577,24 @@ func (u *user) readProfiles() error {
 		return errors.Wrap(err, "readProfiles")
 	}
 	if len(txt) != 0 {
-		err = json.Unmarshal(txt, &u.u.Profiles)
+		err = json.Unmarshal(txt, &u.profiles)
 		if err != nil {
 			return errors.Wrap(err, "readProfiles")
 		}
 	}
 
-	if u.u.Profiles == nil {
-		u.u.Profiles = map[string]interface{}{}
+	if u.profiles == nil {
+		u.profiles = map[string]string{}
 	}
 	return nil
 }
 
-func (u *user) ReadProfile(key string) (interface{}, error) {
+func (u *user) ReadProfile(key string) (string, error) {
 	if err := u.readProfiles(); err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return u.u.Profiles[key], nil
+	return u.profiles[key], nil
 }
 
 func (u *user) Roles() []string {

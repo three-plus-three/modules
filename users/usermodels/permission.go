@@ -1,10 +1,50 @@
-package users
+package usermodels
 
 import (
+	"net/http"
 	"time"
 
-	"github.com/three-plus-three/modules/toolbox"
+	"github.com/runner-mei/errors"
 )
+
+// 常用的错误
+var (
+	ErrUnauthorized       = errors.NewError(http.StatusUnauthorized, "user is unauthorized")
+	ErrCacheInvalid       = errors.New("permission cache is invald")
+	ErrTagNotFound        = errors.New("permission tag is not found")
+	ErrPermissionNotFound = errors.New("permission is not found")
+	ErrAlreadyClosed      = errors.New("server is closed")
+)
+
+// Group 缺省组信息
+type Group struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+
+	Children       []Group  `json:"children,omitempty"`
+	PermissionIDs  []string `json:"permissions,omitempty"`
+	PermissionTags []string `json:"tags,omitempty"`
+}
+
+// Permission 缺省权限对象
+type Permission struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description,emitempty"`
+	Tags        []string `json:"tags,emitempty"`
+}
+
+// Tag 标签对象
+type Tag struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description,emitempty"`
+
+	Children []Tag `json:"children,omitempty"`
+}
+
+const PERMISSION_ID = 0
+const PERMISSION_TAG = 1
 
 type PermissionGroup struct {
 	ID          int64     `json:"id" xorm:"id pk autoincr"`
@@ -20,26 +60,6 @@ func (pg *PermissionGroup) TableName() string {
 	return "hengwei_permission_groups"
 }
 
-func KeyForPermissionGroups(key string) string {
-	switch key {
-	case "id":
-		return "permissionGroup.ID"
-	case "name":
-		return "permissionGroup.Name"
-	case "description":
-		return "permissionGroup.Description"
-	case "parent_id":
-		return "permissionGroup.ParentID"
-	case "operation":
-		return "permissionGroup.Operation"
-	case "created_at":
-		return "permissionGroup.CreatedAt"
-	case "updated_at":
-		return "permissionGroup.UpdatedAt"
-	}
-	return key
-}
-
 type PermissionAndGroup struct {
 	ID               int64  `json:"id" xorm:"id pk autoincr"`
 	GroupID          int64  `json:"group_id" xorm:"group_id notnull"`
@@ -47,31 +67,9 @@ type PermissionAndGroup struct {
 	Type             int64  `json:"type" xorm:"type notnull"`
 }
 
-const PERMISSION_ID = 0
-const PERMISSION_TAG = 1
-
 func (pag *PermissionAndGroup) TableName() string {
 	return "hengwei_permissions_and_groups"
 }
-
-func KeyForPermissionsAndGroups(key string) string {
-	switch key {
-	case "id":
-		return "permissionAndGroup.ID"
-	case "group_id":
-		return "permissionAndGroup.GroupID"
-	case "permission_object":
-		return "permissionAndGroup.PermissionObject"
-	case "type":
-		return "permissionAndGroup.Type"
-	}
-	return key
-}
-
-const CREATE = toolbox.CREATE
-const DELETE = toolbox.DELETE
-const UPDATE = toolbox.UPDATE
-const QUERY = toolbox.QUERY
 
 type PermissionGroupAndRole struct {
 	ID              int64 `json:"id" xorm:"id pk autoincr"`
@@ -87,24 +85,8 @@ func (gap *PermissionGroupAndRole) TableName() string {
 	return "hengwei_permission_groups_and_roles"
 }
 
-func KeyForPermissionGroupsAndRoles(key string) string {
-	switch key {
-	case "id":
-		return "permissionGroupAndRole.ID"
-	case "group_id":
-		return "permissionGroupAndRole.GroupID"
-	case "role_id":
-		return "permissionGroupAndRole.RoleID"
-	case "description":
-		return "permissionGroupAndRole.Description"
-	case "create_operation":
-		return "permissionGroupAndRole.CreateOperation"
-	case "update_operation":
-		return "permissionGroupAndRole.UpdateOperation"
-	case "delete_operation":
-		return "permissionGroupAndRole.DeleteOperation"
-	case "query_operation":
-		return "permissionGroupAndRole.QueryOperation"
-	}
-	return key
+type Permissions struct {
+	PermissionGroup `xorm:"extends"`
+	PermissionIDs   []string `xorm:"-"`
+	PermissionTags  []string `xorm:"-"`
 }
