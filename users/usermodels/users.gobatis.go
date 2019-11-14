@@ -461,9 +461,9 @@ type UserDaoImpl struct {
 	session gobatis.SqlSession
 }
 
-func (impl *UserDaoImpl) GetUserByGroup(groupID int64) ([]User, error) {
+func (impl *UserDaoImpl) GetUserByGroup(ctx context.Context, groupID int64) ([]User, error) {
 	var instances []User
-	results := impl.session.Select(context.Background(), "UserDao.GetUserByGroup",
+	results := impl.session.Select(ctx, "UserDao.GetUserByGroup",
 		[]string{
 			"groupID",
 		},
@@ -477,9 +477,9 @@ func (impl *UserDaoImpl) GetUserByGroup(groupID int64) ([]User, error) {
 	return instances, nil
 }
 
-func (impl *UserDaoImpl) GetGroupIDsByUser(userID int64) ([]int64, error) {
+func (impl *UserDaoImpl) GetGroupIDsByUser(ctx context.Context, userID int64) ([]int64, error) {
 	var instances []int64
-	results := impl.session.Select(context.Background(), "UserDao.GetGroupIDsByUser",
+	results := impl.session.Select(ctx, "UserDao.GetGroupIDsByUser",
 		[]string{
 			"userID",
 		},
@@ -493,9 +493,11 @@ func (impl *UserDaoImpl) GetGroupIDsByUser(userID int64) ([]int64, error) {
 	return instances, nil
 }
 
-func (impl *UserDaoImpl) GetUsers() ([]User, error) {
+func (impl *UserDaoImpl) GetUsers(ctx context.Context) ([]User, error) {
 	var instances []User
-	results := impl.session.Select(context.Background(), "UserDao.GetUsers", nil, nil)
+	results := impl.session.Select(ctx, "UserDao.GetUsers",
+		[]string{},
+		[]interface{}{})
 	err := results.ScanSlice(&instances)
 	if err != nil {
 		return nil, err
@@ -503,12 +505,12 @@ func (impl *UserDaoImpl) GetUsers() ([]User, error) {
 	return instances, nil
 }
 
-func (impl *UserDaoImpl) ReadProfile(userID int64, name string) (string, error) {
+func (impl *UserDaoImpl) ReadProfile(ctx context.Context, userID int64, name string) (string, error) {
 	var instance string
 	var nullable gobatis.Nullable
 	nullable.Value = &instance
 
-	err := impl.session.SelectOne(context.Background(), "UserDao.ReadProfile",
+	err := impl.session.SelectOne(ctx, "UserDao.ReadProfile",
 		[]string{
 			"userID",
 			"name",
@@ -527,8 +529,8 @@ func (impl *UserDaoImpl) ReadProfile(userID int64, name string) (string, error) 
 	return instance, nil
 }
 
-func (impl *UserDaoImpl) DeleteProfile(userID int64, name string) (int64, error) {
-	return impl.session.Delete(context.Background(), "UserDao.DeleteProfile",
+func (impl *UserDaoImpl) DeleteProfile(ctx context.Context, userID int64, name string) (int64, error) {
+	return impl.session.Delete(ctx, "UserDao.DeleteProfile",
 		[]string{
 			"userID",
 			"name",
@@ -539,8 +541,8 @@ func (impl *UserDaoImpl) DeleteProfile(userID int64, name string) (int64, error)
 		})
 }
 
-func (impl *UserDaoImpl) GetUserByID(id int64) func(*User) error {
-	result := impl.session.SelectOne(context.Background(), "UserDao.GetUserByID",
+func (impl *UserDaoImpl) GetUserByID(ctx context.Context, id int64) func(*User) error {
+	result := impl.session.SelectOne(ctx, "UserDao.GetUserByID",
 		[]string{
 			"id",
 		},
@@ -552,9 +554,11 @@ func (impl *UserDaoImpl) GetUserByID(id int64) func(*User) error {
 	}
 }
 
-func (impl *UserDaoImpl) GetPermissionAndGroups() ([]PermissionAndGroup, error) {
+func (impl *UserDaoImpl) GetPermissionAndGroups(ctx context.Context) ([]PermissionAndGroup, error) {
 	var instances []PermissionAndGroup
-	results := impl.session.Select(context.Background(), "UserDao.GetPermissionAndGroups", nil, nil)
+	results := impl.session.Select(ctx, "UserDao.GetPermissionAndGroups",
+		[]string{},
+		[]interface{}{})
 	err := results.ScanSlice(&instances)
 	if err != nil {
 		return nil, err
@@ -562,8 +566,8 @@ func (impl *UserDaoImpl) GetPermissionAndGroups() ([]PermissionAndGroup, error) 
 	return instances, nil
 }
 
-func (impl *UserDaoImpl) WriteProfile(userID int64, name string, value string) error {
-	_, err := impl.session.Update(context.Background(), "UserDao.WriteProfile",
+func (impl *UserDaoImpl) WriteProfile(ctx context.Context, userID int64, name string, value string) error {
+	_, err := impl.session.Update(ctx, "UserDao.WriteProfile",
 		[]string{
 			"userID",
 			"name",
@@ -577,9 +581,9 @@ func (impl *UserDaoImpl) WriteProfile(userID int64, name string, value string) e
 	return err
 }
 
-func (impl *UserDaoImpl) GetRolesByUser(userID int64) ([]Role, error) {
+func (impl *UserDaoImpl) GetRolesByUser(ctx context.Context, userID int64) ([]Role, error) {
 	var instances []Role
-	results := impl.session.Select(context.Background(), "UserDao.GetRolesByUser",
+	results := impl.session.Select(ctx, "UserDao.GetRolesByUser",
 		[]string{
 			"userID",
 		},
@@ -593,8 +597,8 @@ func (impl *UserDaoImpl) GetRolesByUser(userID int64) ([]Role, error) {
 	return instances, nil
 }
 
-func (impl *UserDaoImpl) GetRoleByName(name string) func(*Role) error {
-	result := impl.session.SelectOne(context.Background(), "UserDao.GetRoleByName",
+func (impl *UserDaoImpl) GetRoleByName(ctx context.Context, name string) func(*Role) error {
+	result := impl.session.SelectOne(ctx, "UserDao.GetRoleByName",
 		[]string{
 			"name",
 		},
@@ -606,8 +610,8 @@ func (impl *UserDaoImpl) GetRoleByName(name string) func(*Role) error {
 	}
 }
 
-func (impl *UserDaoImpl) GetUsergroupByName(name string) func(*UserGroup) error {
-	result := impl.session.SelectOne(context.Background(), "UserDao.GetUsergroupByName",
+func (impl *UserDaoImpl) GetUsergroupByName(ctx context.Context, name string) func(*UserGroup) error {
+	result := impl.session.SelectOne(ctx, "UserDao.GetUsergroupByName",
 		[]string{
 			"name",
 		},
@@ -619,8 +623,8 @@ func (impl *UserDaoImpl) GetUsergroupByName(name string) func(*UserGroup) error 
 	}
 }
 
-func (impl *UserDaoImpl) GetUserByName(name string) func(*User) error {
-	result := impl.session.SelectOne(context.Background(), "UserDao.GetUserByName",
+func (impl *UserDaoImpl) GetUserByName(ctx context.Context, name string) func(*User) error {
+	result := impl.session.SelectOne(ctx, "UserDao.GetUserByName",
 		[]string{
 			"name",
 		},
@@ -632,8 +636,8 @@ func (impl *UserDaoImpl) GetUserByName(name string) func(*User) error {
 	}
 }
 
-func (impl *UserDaoImpl) GetUsergroupByID(id int64) func(*UserGroup) error {
-	result := impl.session.SelectOne(context.Background(), "UserDao.GetUsergroupByID",
+func (impl *UserDaoImpl) GetUsergroupByID(ctx context.Context, id int64) func(*UserGroup) error {
+	result := impl.session.SelectOne(ctx, "UserDao.GetUsergroupByID",
 		[]string{
 			"id",
 		},
@@ -645,9 +649,9 @@ func (impl *UserDaoImpl) GetUsergroupByID(id int64) func(*UserGroup) error {
 	}
 }
 
-func (impl *UserDaoImpl) GetPermissionAndRoles(roleIDs []int64) ([]PermissionGroupAndRole, error) {
+func (impl *UserDaoImpl) GetPermissionAndRoles(ctx context.Context, roleIDs []int64) ([]PermissionGroupAndRole, error) {
 	var instances []PermissionGroupAndRole
-	results := impl.session.Select(context.Background(), "UserDao.GetPermissionAndRoles",
+	results := impl.session.Select(ctx, "UserDao.GetPermissionAndRoles",
 		[]string{
 			"roleIDs",
 		},
@@ -661,9 +665,11 @@ func (impl *UserDaoImpl) GetPermissionAndRoles(roleIDs []int64) ([]PermissionGro
 	return instances, nil
 }
 
-func (impl *UserDaoImpl) GetUsergroups() ([]UserGroup, error) {
+func (impl *UserDaoImpl) GetUsergroups(ctx context.Context) ([]UserGroup, error) {
 	var instances []UserGroup
-	results := impl.session.Select(context.Background(), "UserDao.GetUsergroups", nil, nil)
+	results := impl.session.Select(ctx, "UserDao.GetUsergroups",
+		[]string{},
+		[]interface{}{})
 	err := results.ScanSlice(&instances)
 	if err != nil {
 		return nil, err
@@ -671,9 +677,11 @@ func (impl *UserDaoImpl) GetUsergroups() ([]UserGroup, error) {
 	return instances, nil
 }
 
-func (impl *UserDaoImpl) GetPermissions() ([]Permissions, error) {
+func (impl *UserDaoImpl) GetPermissions(ctx context.Context) ([]Permissions, error) {
 	var instances []Permissions
-	results := impl.session.Select(context.Background(), "UserDao.GetPermissions", nil, nil)
+	results := impl.session.Select(ctx, "UserDao.GetPermissions",
+		[]string{},
+		[]interface{}{})
 	err := results.ScanSlice(&instances)
 	if err != nil {
 		return nil, err
@@ -1152,8 +1160,8 @@ type UserQueryerImpl struct {
 	session gobatis.SqlSession
 }
 
-func (impl *UserQueryerImpl) GetRoleByName(name string) func(*Role) error {
-	result := impl.session.SelectOne(context.Background(), "UserQueryer.GetRoleByName",
+func (impl *UserQueryerImpl) GetRoleByName(ctx context.Context, name string) func(*Role) error {
+	result := impl.session.SelectOne(ctx, "UserQueryer.GetRoleByName",
 		[]string{
 			"name",
 		},
@@ -1165,8 +1173,8 @@ func (impl *UserQueryerImpl) GetRoleByName(name string) func(*Role) error {
 	}
 }
 
-func (impl *UserQueryerImpl) GetUserByID(id int64) func(*User) error {
-	result := impl.session.SelectOne(context.Background(), "UserQueryer.GetUserByID",
+func (impl *UserQueryerImpl) GetUserByID(ctx context.Context, id int64) func(*User) error {
+	result := impl.session.SelectOne(ctx, "UserQueryer.GetUserByID",
 		[]string{
 			"id",
 		},
@@ -1178,8 +1186,8 @@ func (impl *UserQueryerImpl) GetUserByID(id int64) func(*User) error {
 	}
 }
 
-func (impl *UserQueryerImpl) GetUserByName(name string) func(*User) error {
-	result := impl.session.SelectOne(context.Background(), "UserQueryer.GetUserByName",
+func (impl *UserQueryerImpl) GetUserByName(ctx context.Context, name string) func(*User) error {
+	result := impl.session.SelectOne(ctx, "UserQueryer.GetUserByName",
 		[]string{
 			"name",
 		},
@@ -1191,8 +1199,8 @@ func (impl *UserQueryerImpl) GetUserByName(name string) func(*User) error {
 	}
 }
 
-func (impl *UserQueryerImpl) GetUsergroupByID(id int64) func(*UserGroup) error {
-	result := impl.session.SelectOne(context.Background(), "UserQueryer.GetUsergroupByID",
+func (impl *UserQueryerImpl) GetUsergroupByID(ctx context.Context, id int64) func(*UserGroup) error {
+	result := impl.session.SelectOne(ctx, "UserQueryer.GetUsergroupByID",
 		[]string{
 			"id",
 		},
@@ -1204,8 +1212,8 @@ func (impl *UserQueryerImpl) GetUsergroupByID(id int64) func(*UserGroup) error {
 	}
 }
 
-func (impl *UserQueryerImpl) GetUsergroupByName(name string) func(*UserGroup) error {
-	result := impl.session.SelectOne(context.Background(), "UserQueryer.GetUsergroupByName",
+func (impl *UserQueryerImpl) GetUsergroupByName(ctx context.Context, name string) func(*UserGroup) error {
+	result := impl.session.SelectOne(ctx, "UserQueryer.GetUsergroupByName",
 		[]string{
 			"name",
 		},
@@ -1217,9 +1225,11 @@ func (impl *UserQueryerImpl) GetUsergroupByName(name string) func(*UserGroup) er
 	}
 }
 
-func (impl *UserQueryerImpl) GetUsers() ([]User, error) {
+func (impl *UserQueryerImpl) GetUsers(ctx context.Context) ([]User, error) {
 	var instances []User
-	results := impl.session.Select(context.Background(), "UserQueryer.GetUsers", nil, nil)
+	results := impl.session.Select(ctx, "UserQueryer.GetUsers",
+		[]string{},
+		[]interface{}{})
 	err := results.ScanSlice(&instances)
 	if err != nil {
 		return nil, err
@@ -1227,9 +1237,11 @@ func (impl *UserQueryerImpl) GetUsers() ([]User, error) {
 	return instances, nil
 }
 
-func (impl *UserQueryerImpl) GetUsergroups() ([]UserGroup, error) {
+func (impl *UserQueryerImpl) GetUsergroups(ctx context.Context) ([]UserGroup, error) {
 	var instances []UserGroup
-	results := impl.session.Select(context.Background(), "UserQueryer.GetUsergroups", nil, nil)
+	results := impl.session.Select(ctx, "UserQueryer.GetUsergroups",
+		[]string{},
+		[]interface{}{})
 	err := results.ScanSlice(&instances)
 	if err != nil {
 		return nil, err
@@ -1237,9 +1249,9 @@ func (impl *UserQueryerImpl) GetUsergroups() ([]UserGroup, error) {
 	return instances, nil
 }
 
-func (impl *UserQueryerImpl) GetRolesByUser(userID int64) ([]Role, error) {
+func (impl *UserQueryerImpl) GetRolesByUser(ctx context.Context, userID int64) ([]Role, error) {
 	var instances []Role
-	results := impl.session.Select(context.Background(), "UserQueryer.GetRolesByUser",
+	results := impl.session.Select(ctx, "UserQueryer.GetRolesByUser",
 		[]string{
 			"userID",
 		},
@@ -1253,9 +1265,9 @@ func (impl *UserQueryerImpl) GetRolesByUser(userID int64) ([]Role, error) {
 	return instances, nil
 }
 
-func (impl *UserQueryerImpl) GetUserByGroup(groupID int64) ([]User, error) {
+func (impl *UserQueryerImpl) GetUserByGroup(ctx context.Context, groupID int64) ([]User, error) {
 	var instances []User
-	results := impl.session.Select(context.Background(), "UserQueryer.GetUserByGroup",
+	results := impl.session.Select(ctx, "UserQueryer.GetUserByGroup",
 		[]string{
 			"groupID",
 		},
@@ -1269,9 +1281,9 @@ func (impl *UserQueryerImpl) GetUserByGroup(groupID int64) ([]User, error) {
 	return instances, nil
 }
 
-func (impl *UserQueryerImpl) GetGroupIDsByUser(userID int64) ([]int64, error) {
+func (impl *UserQueryerImpl) GetGroupIDsByUser(ctx context.Context, userID int64) ([]int64, error) {
 	var instances []int64
-	results := impl.session.Select(context.Background(), "UserQueryer.GetGroupIDsByUser",
+	results := impl.session.Select(ctx, "UserQueryer.GetGroupIDsByUser",
 		[]string{
 			"userID",
 		},
@@ -1285,9 +1297,9 @@ func (impl *UserQueryerImpl) GetGroupIDsByUser(userID int64) ([]int64, error) {
 	return instances, nil
 }
 
-func (impl *UserQueryerImpl) GetPermissionAndRoles(roleIDs []int64) ([]PermissionGroupAndRole, error) {
+func (impl *UserQueryerImpl) GetPermissionAndRoles(ctx context.Context, roleIDs []int64) ([]PermissionGroupAndRole, error) {
 	var instances []PermissionGroupAndRole
-	results := impl.session.Select(context.Background(), "UserQueryer.GetPermissionAndRoles",
+	results := impl.session.Select(ctx, "UserQueryer.GetPermissionAndRoles",
 		[]string{
 			"roleIDs",
 		},
@@ -1301,12 +1313,12 @@ func (impl *UserQueryerImpl) GetPermissionAndRoles(roleIDs []int64) ([]Permissio
 	return instances, nil
 }
 
-func (impl *UserQueryerImpl) ReadProfile(userID int64, name string) (string, error) {
+func (impl *UserQueryerImpl) ReadProfile(ctx context.Context, userID int64, name string) (string, error) {
 	var instance string
 	var nullable gobatis.Nullable
 	nullable.Value = &instance
 
-	err := impl.session.SelectOne(context.Background(), "UserQueryer.ReadProfile",
+	err := impl.session.SelectOne(ctx, "UserQueryer.ReadProfile",
 		[]string{
 			"userID",
 			"name",
@@ -1325,8 +1337,8 @@ func (impl *UserQueryerImpl) ReadProfile(userID int64, name string) (string, err
 	return instance, nil
 }
 
-func (impl *UserQueryerImpl) WriteProfile(userID int64, name string, value string) error {
-	_, err := impl.session.Update(context.Background(), "UserQueryer.WriteProfile",
+func (impl *UserQueryerImpl) WriteProfile(ctx context.Context, userID int64, name string, value string) error {
+	_, err := impl.session.Update(ctx, "UserQueryer.WriteProfile",
 		[]string{
 			"userID",
 			"name",
@@ -1340,8 +1352,8 @@ func (impl *UserQueryerImpl) WriteProfile(userID int64, name string, value strin
 	return err
 }
 
-func (impl *UserQueryerImpl) DeleteProfile(userID int64, name string) (int64, error) {
-	return impl.session.Delete(context.Background(), "UserQueryer.DeleteProfile",
+func (impl *UserQueryerImpl) DeleteProfile(ctx context.Context, userID int64, name string) (int64, error) {
+	return impl.session.Delete(ctx, "UserQueryer.DeleteProfile",
 		[]string{
 			"userID",
 			"name",
@@ -1352,9 +1364,11 @@ func (impl *UserQueryerImpl) DeleteProfile(userID int64, name string) (int64, er
 		})
 }
 
-func (impl *UserQueryerImpl) GetPermissions() ([]Permissions, error) {
+func (impl *UserQueryerImpl) GetPermissions(ctx context.Context) ([]Permissions, error) {
 	var instances []Permissions
-	results := impl.session.Select(context.Background(), "UserQueryer.GetPermissions", nil, nil)
+	results := impl.session.Select(ctx, "UserQueryer.GetPermissions",
+		[]string{},
+		[]interface{}{})
 	err := results.ScanSlice(&instances)
 	if err != nil {
 		return nil, err
@@ -1362,9 +1376,11 @@ func (impl *UserQueryerImpl) GetPermissions() ([]Permissions, error) {
 	return instances, nil
 }
 
-func (impl *UserQueryerImpl) GetPermissionAndGroups() ([]PermissionAndGroup, error) {
+func (impl *UserQueryerImpl) GetPermissionAndGroups(ctx context.Context) ([]PermissionAndGroup, error) {
 	var instances []PermissionAndGroup
-	results := impl.session.Select(context.Background(), "UserQueryer.GetPermissionAndGroups", nil, nil)
+	results := impl.session.Select(ctx, "UserQueryer.GetPermissionAndGroups",
+		[]string{},
+		[]interface{}{})
 	err := results.ScanSlice(&instances)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package permissions
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -63,7 +64,7 @@ func (ug *userGroup) Name() string {
 	return ug.ug.Name
 }
 
-func (ug *userGroup) Users(opts ...users.Option) ([]users.User, error) {
+func (ug *userGroup) Users(ctx context.Context, opts ...users.Option) ([]users.User, error) {
 	var includeDisabled = readOptions(opts...)
 
 	if ug.children == nil {
@@ -126,18 +127,18 @@ func (um *userManager) refresh() {
 	um.permissionGroupCache.Init(5*time.Minute, refresh)
 }
 
-func (um *userManager) groupcacheIt(ug users.UserGroup) {
+func (um *userManager) groupcacheIt(ug users.Usergroup) {
 	um.groupByName.SetDefault(ug.Name(), ug)
 	um.groupByID.SetDefault(strconv.FormatInt(ug.ID(), 10), ug)
 }
 
-func (um *userManager) Usergroups(opts ...users.Option) ([]users.UserGroup, error) {
+func (um *userManager) Usergroups(ctx context.Context, opts ...users.Option) ([]users.Usergroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByName.Get("____all____"); found && o != nil {
-		if ugArray, ok := o.([]users.UserGroup); ok && ugArray != nil {
+		if ugArray, ok := o.([]users.Usergroup); ok && ugArray != nil {
 			return ugArray, nil
 		}
 	}
@@ -148,7 +149,7 @@ func (um *userManager) Usergroups(opts ...users.Option) ([]users.UserGroup, erro
 		return nil, errors.Wrap(err, "query all usergroup fail")
 	}
 
-	var ugList = make([]users.UserGroup, 0, len(innerList))
+	var ugList = make([]users.Usergroup, 0, len(innerList))
 	for idx := range innerList {
 		ug := &userGroup{um: um, ug: innerList[idx]}
 		ugList = append(ugList, ug)
@@ -159,13 +160,13 @@ func (um *userManager) Usergroups(opts ...users.Option) ([]users.UserGroup, erro
 	return ugList, nil
 }
 
-func (um *userManager) UsergroupByName(groupname string, opts ...users.Option) (users.UserGroup, error) {
+func (um *userManager) UsergroupByName(ctx context.Context, groupname string, opts ...users.Option) (users.Usergroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByName.Get(groupname); found && o != nil {
-		if ug, ok := o.(users.UserGroup); ok && ug != nil {
+		if ug, ok := o.(users.Usergroup); ok && ug != nil {
 			return ug, nil
 		}
 	}
@@ -179,13 +180,13 @@ func (um *userManager) UsergroupByName(groupname string, opts ...users.Option) (
 	return ug, nil
 }
 
-func (um *userManager) UsergroupByID(groupID int64, opts ...users.Option) (users.UserGroup, error) {
+func (um *userManager) UsergroupByID(ctx context.Context, groupID int64, opts ...users.Option) (users.Usergroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByID.Get(strconv.FormatInt(groupID, 10)); found && o != nil {
-		if ug, ok := o.(users.UserGroup); ok && ug != nil {
+		if ug, ok := o.(users.Usergroup); ok && ug != nil {
 			return ug, nil
 		}
 	}
@@ -199,7 +200,7 @@ func (um *userManager) UsergroupByID(groupID int64, opts ...users.Option) (users
 	return ug, nil
 }
 
-func (um *userManager) Users(opts ...users.Option) ([]users.User, error) {
+func (um *userManager) Users(ctx context.Context, opts ...users.Option) ([]users.User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -292,7 +293,7 @@ func (um *userManager) ensureRoles() {
 	}
 }
 
-func (um *userManager) UserByName(userName string, opts ...users.Option) (users.User, error) {
+func (um *userManager) UserByName(ctx context.Context, userName string, opts ...users.Option) (users.User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -350,7 +351,7 @@ func (um *userManager) UserByName(userName string, opts ...users.Option) (users.
 	return u, nil
 }
 
-func (um *userManager) UserByID(userID int64, opts ...users.Option) (users.User, error) {
+func (um *userManager) UserByID(ctx context.Context, userID int64, opts ...users.Option) (users.User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}

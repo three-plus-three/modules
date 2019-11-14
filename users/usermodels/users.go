@@ -182,48 +182,48 @@ type UserDao interface {
 
 type UserQueryer interface {
 	// @record_type Role
-	GetRoleByName(name string) func(*Role) error
+	GetRoleByName(ctx context.Context, name string) func(*Role) error
 	// @record_type User
-	GetUserByID(id int64) func(*User) error
+	GetUserByID(ctx context.Context, id int64) func(*User) error
 	// @record_type User
-	GetUserByName(name string) func(*User) error
+	GetUserByName(ctx context.Context, name string) func(*User) error
 	// @record_type UserGroup
-	GetUsergroupByID(id int64) func(*UserGroup) error
+	GetUsergroupByID(ctx context.Context, id int64) func(*UserGroup) error
 	// @record_type UserGroup
-	GetUsergroupByName(name string) func(*UserGroup) error
+	GetUsergroupByName(ctx context.Context, name string) func(*UserGroup) error
 	// @record_type User
-	GetUsers() ([]User, error)
+	GetUsers(ctx context.Context) ([]User, error)
 	// @record_type UserGroup
-	GetUsergroups() ([]UserGroup, error)
+	GetUsergroups(ctx context.Context) ([]UserGroup, error)
 
 	// @default SELECT * FROM <tablename type="Role" as="roles" /> WHERE
 	//  exists (select * from <tablename type="UserAndRole" /> as users_roles
 	//     where users_roles.role_id = roles.id and users_roles.user_id = #{userID})
-	GetRolesByUser(userID int64) ([]Role, error)
+	GetRolesByUser(ctx context.Context, userID int64) ([]Role, error)
 
 	// @default SELECT * FROM <tablename type="User" as="users" /> WHERE
 	//  exists (select * from <tablename type="UserAndUserGroup" /> as u2g
 	//     where u2g.user_id = users.id and u2g.group_id = #{groupID})
-	GetUserByGroup(groupID int64) ([]User, error)
+	GetUserByGroup(ctx context.Context, groupID int64) ([]User, error)
 
 	// @default SELECT group_id FROM <tablename type="UserAndUserGroup" as="u2g" /> WHERE user_id = #{userID}
-	GetGroupIDsByUser(userID int64) ([]int64, error)
+	GetGroupIDsByUser(ctx context.Context, userID int64) ([]int64, error)
 
 	// @record_type PermissionGroupAndRole
-	GetPermissionAndRoles(roleIDs []int64) ([]PermissionGroupAndRole, error)
+	GetPermissionAndRoles(ctx context.Context, roleIDs []int64) ([]PermissionGroupAndRole, error)
 
 	// @default SELECT value FROM <tablename type="UserProfile" /> WHERE id = #{userID} AND name = #{name}
-	ReadProfile(userID int64, name string) (string, error)
+	ReadProfile(ctx context.Context, userID int64, name string) (string, error)
 
 	// @default INSERT INTO <tablename type="UserProfile" /> (id, name, value) VALUES(#{userID}, #{name}, #{value})
 	//     ON CONFLICT (id, name) DO UPDATE SET value = excluded.value
-	WriteProfile(userID int64, name, value string) error
+	WriteProfile(ctx context.Context, userID int64, name, value string) error
 
 	// @type delete
 	// @default DELETE FROM <tablename type="UserProfile" /> WHERE id=#{userID} AND name=#{name}
-	DeleteProfile(userID int64, name string) (int64, error)
+	DeleteProfile(ctx context.Context, userID int64, name string) (int64, error)
 
-	GetPermissions() ([]Permissions, error)
+	GetPermissions(ctx context.Context) ([]Permissions, error)
 
-	GetPermissionAndGroups() ([]PermissionAndGroup, error)
+	GetPermissionAndGroups(ctx context.Context) ([]PermissionAndGroup, error)
 }

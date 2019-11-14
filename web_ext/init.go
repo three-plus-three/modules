@@ -1,6 +1,7 @@
 package web_ext
 
 import (
+	"context"
 	"crypto/sha1"
 	"flag"
 	"fmt"
@@ -163,7 +164,7 @@ func Init(env *environment.Environment, serviceID environment.ENV_PROXY_TYPE, pr
 
 		lifecycle.UserManager = InitUser(lifecycle)
 		lifecycle.GetUser = func(username string, opts ...toolbox.UserOption) toolbox.User {
-			u, err := lifecycle.UserManager.UserByName(username, opts...)
+			u, err := lifecycle.UserManager.UserByName(context.Background(), username, opts...)
 			if err != nil {
 				if errors.IsNotFound(err) {
 					return nil

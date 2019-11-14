@@ -1,6 +1,8 @@
 package web_ext
 
 import (
+	"context"
+
 	"github.com/revel/revel"
 	"github.com/three-plus-three/modules/concurrency"
 	"github.com/three-plus-three/modules/environment"
@@ -78,27 +80,27 @@ type userManager struct {
 	lifecycle *Lifecycle
 }
 
-func (um *userManager) Usergroups(opts ...users.Option) ([]toolbox.UserGroup, error) {
-	return []toolbox.UserGroup{}, nil
+func (um *userManager) Usergroups(ctx context.Context, opts ...users.Option) ([]toolbox.Usergroup, error) {
+	return []toolbox.Usergroup{}, nil
 }
 
-func (um *userManager) Users(opts ...users.Option) ([]toolbox.User, error) {
+func (um *userManager) Users(ctx context.Context, opts ...users.Option) ([]toolbox.User, error) {
 	return []toolbox.User{}, nil
 }
 
-func (um *userManager) UserByName(username string, opts ...users.Option) (toolbox.User, error) {
+func (um *userManager) UserByName(ctx context.Context, username string, opts ...users.Option) (toolbox.User, error) {
 	return &user{lifecycle: um.lifecycle, name: username}, nil
 }
 
-func (um *userManager) UserByID(userID int64, opts ...users.Option) (toolbox.User, error) {
+func (um *userManager) UserByID(ctx context.Context, userID int64, opts ...users.Option) (toolbox.User, error) {
 	return nil, errors.NotFound(userID, "user")
 }
 
-func (um *userManager) UsergroupByName(groupname string, opts ...users.Option) (toolbox.UserGroup, error) {
+func (um *userManager) UsergroupByName(ctx context.Context, groupname string, opts ...users.Option) (toolbox.Usergroup, error) {
 	return &usergroup{lifecycle: um.lifecycle, name: groupname}, nil
 }
 
-func (um *userManager) UsergroupByID(groupID int64, opts ...users.Option) (toolbox.UserGroup, error) {
+func (um *userManager) UsergroupByID(ctx context.Context, groupID int64, opts ...users.Option) (toolbox.Usergroup, error) {
 	return nil, errors.NotFound(groupID, "usergroup")
 }
 
@@ -118,7 +120,7 @@ func (ug *usergroup) Name() string {
 	return ug.name
 }
 
-func (ug *usergroup) Users(opts ...users.Option) ([]toolbox.User, error) {
+func (ug *usergroup) Users(ctx context.Context, opts ...users.Option) ([]toolbox.User, error) {
 	return nil, nil
 }
 

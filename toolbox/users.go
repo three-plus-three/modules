@@ -1,6 +1,7 @@
 package toolbox
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -48,7 +49,7 @@ const (
 type UserOption = users.Option
 type UserManager = users.UserManager
 type User = users.User
-type UserGroup = users.UserGroup
+type Usergroup = users.Usergroup
 
 type CurrentUserFunc func(ctx map[string]interface{}) (User, error)
 
@@ -154,7 +155,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 	}
 
 	funcs["user_has_permission"] = func(ctx map[string]interface{}, user, permissionName, op string) bool {
-		u, err := um.UserByName(user)
+		u, err := um.UserByName(context.Background(), user)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				return false
@@ -189,7 +190,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			return ""
 		}
 
-		u, err := um.UserByID(uid, users.UserIncludeDisabled())
+		u, err := um.UserByID(context.Background(), uid, users.UserIncludeDisabled())
 		if err != nil && !errors.IsNotFound(err) {
 			panic(errors.Wrap(err, "load user with id is '"+fmt.Sprint(userID)+"' fail"))
 		}
@@ -225,7 +226,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			return ""
 		}
 
-		u, err := um.UserByID(uid, users.UserIncludeDisabled())
+		u, err := um.UserByID(context.Background(), uid, users.UserIncludeDisabled())
 		if err != nil && !errors.IsNotFound(err) {
 			panic(errors.Wrap(err, "load user with id is '"+fmt.Sprint(userID)+"' fail"))
 		}
@@ -245,7 +246,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			panic(errors.New("bad usernames arguments - " + fmt.Sprint(args)))
 		}
 
-		var usergroup UserGroup
+		var usergroup Usergroup
 		var group int64
 		var opts = []UserOption{}
 		for idx, arg := range args {
@@ -277,7 +278,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 					panic(fmt.Errorf("bad usernames argument(%d) - %s", idx, arg))
 				}
 				group = i64
-			case UserGroup:
+			case Usergroup:
 				usergroup = v
 			default:
 				panic(fmt.Errorf("bad usernames argument(%d) - %s", idx, arg))
@@ -286,23 +287,23 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 
 		var userlist []User
 		if usergroup != nil {
-			uList, err := usergroup.Users(opts...)
+			uList, err := usergroup.Users(context.Background(), opts...)
 			if err != nil {
 				panic(errors.Wrap(err, "load users of group("+usergroup.Name()+") fail"))
 			}
 			userlist = uList
 		} else if group != 0 {
 			var err error
-			usergroup, err = um.UsergroupByID(group, opts...)
+			usergroup, err = um.UsergroupByID(context.Background(), group, opts...)
 			if err != nil {
 				panic(errors.Wrap(err, "load users of group("+strconv.FormatInt(group, 10)+") fail"))
 			}
-			userlist, err = usergroup.Users(opts...)
+			userlist, err = usergroup.Users(context.Background(), opts...)
 			if err != nil {
 				panic(errors.Wrap(err, "load users of group("+usergroup.Name()+") fail"))
 			}
 		} else {
-			uList, err := um.Users(opts...)
+			uList, err := um.Users(context.Background(), opts...)
 			if err != nil {
 				panic(errors.Wrap(err, "load all users fail"))
 			}
@@ -329,7 +330,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 			return ""
 		}
 
-		u, err := um.UsergroupByID(uid)
+		u, err := um.UsergroupByID(context.Background(), uid)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				panic(errors.New("usergroup id '" + fmt.Sprint(groupID) + "' isnot found"))
@@ -353,7 +354,7 @@ func InitUserFuncs(um UserManager, currentUser CurrentUserFunc, funcs map[string
 		if len(includeDisabled) > 0 && includeDisabled[0] {
 			opts = []UserOption{users.UserIncludeDisabled()}
 		}
-		ugList, err := um.Usergroups(opts...)
+		ugList, err := um.Usergroups(context.Background(), opts...)
 		if err != nil {
 			panic(errors.Wrap(err, "load all users fail"))
 		}
@@ -390,7 +391,7 @@ type UserProvider struct {
 }
 
 func (up *UserProvider) Read(ctx, a interface{}) (interface{}, error) {
-	users, err := up.UM.Users()
+	users, err := up.UM.Users(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +409,7 @@ type UsergroupProvider struct {
 }
 
 func (up *UsergroupProvider) Read(ctx, a interface{}) (interface{}, error) {
-	usergroups, err := up.UM.Usergroups()
+	usergroups, err := up.UM.Usergroups(context.Background())
 	if err != nil {
 		return nil, err
 	}

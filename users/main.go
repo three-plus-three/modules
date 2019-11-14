@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strconv"
@@ -50,7 +51,7 @@ func CreateUserManager(driverName string, db *sql.DB, permCache PermGroupCache, 
 		groupByID:            cache.New(5*time.Minute, 10*time.Minute),
 		groupByName:          cache.New(5*time.Minute, 10*time.Minute),
 	}
-	um.ensureRoles()
+	um.ensureRoles(context.Background())
 	return um
 }
 
@@ -70,28 +71,28 @@ type userManager struct {
 	guestRole   usermodels.Role
 }
 
-func (um *userManager) groupcacheIt(ug UserGroup) {
+func (um *userManager) groupcacheIt(ug Usergroup) {
 	um.groupByName.SetDefault(ug.Name(), ug)
 	um.groupByID.SetDefault(strconv.FormatInt(ug.ID(), 10), ug)
 }
 
-func (um *userManager) Usergroups(opts ...Option) ([]UserGroup, error) {
+func (um *userManager) Usergroups(ctx context.Context, opts ...Option) ([]Usergroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByName.Get("____all____"); found && o != nil {
-		if ugArray, ok := o.([]UserGroup); ok && ugArray != nil {
+		if ugArray, ok := o.([]Usergroup); ok && ugArray != nil {
 			return ugArray, nil
 		}
 	}
 
-	var innerList, err = um.userDao.GetUsergroups()
+	var innerList, err = um.userDao.GetUsergroups(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "query all usergroup fail")
 	}
 
-	var ugList = make([]UserGroup, 0, len(innerList))
+	var ugList = make([]Usergroup, 0, len(innerList))
 	for idx := range innerList {
 		ug := &userGroup{um: um, ug: innerList[idx]}
 		ugList = append(ugList, ug)
@@ -102,19 +103,19 @@ func (um *userManager) Usergroups(opts ...Option) ([]UserGroup, error) {
 	return ugList, nil
 }
 
-func (um *userManager) UsergroupByName(groupname string, opts ...Option) (UserGroup, error) {
+func (um *userManager) UsergroupByName(ctx context.Context, groupname string, opts ...Option) (Usergroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByName.Get(groupname); found && o != nil {
-		if ug, ok := o.(UserGroup); ok && ug != nil {
+		if ug, ok := o.(Usergroup); ok && ug != nil {
 			return ug, nil
 		}
 	}
 
 	var ug = &userGroup{um: um}
-	err := um.userDao.GetUsergroupByName(groupname)(&ug.ug)
+	err := um.userDao.GetUsergroupByName(ctx, groupname)(&ug.ug)
 	if err != nil {
 		return nil, errors.Wrap(err, "query usergroup with name is "+groupname+"fail")
 	}
@@ -122,19 +123,19 @@ func (um *userManager) UsergroupByName(groupname string, opts ...Option) (UserGr
 	return ug, nil
 }
 
-func (um *userManager) UsergroupByID(groupID int64, opts ...Option) (UserGroup, error) {
+func (um *userManager) UsergroupByID(ctx context.Context, groupID int64, opts ...Option) (Usergroup, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
 
 	if o, found := um.groupByID.Get(strconv.FormatInt(groupID, 10)); found && o != nil {
-		if ug, ok := o.(UserGroup); ok && ug != nil {
+		if ug, ok := o.(Usergroup); ok && ug != nil {
 			return ug, nil
 		}
 	}
 
 	var ug = &userGroup{um: um}
-	err := um.userDao.GetUsergroupByID(groupID)(&ug.ug)
+	err := um.userDao.GetUsergroupByID(ctx, groupID)(&ug.ug)
 	if err != nil {
 		return nil, errors.Wrap(err, "query usergroup with id is "+fmt.Sprint(groupID)+"fail")
 	}
@@ -142,7 +143,7 @@ func (um *userManager) UsergroupByID(groupID int64, opts ...Option) (UserGroup, 
 	return ug, nil
 }
 
-func (um *userManager) Users(opts ...Option) ([]User, error) {
+func (um *userManager) Users(ctx context.Context, opts ...Option) ([]User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -169,19 +170,19 @@ func (um *userManager) Users(opts ...Option) ([]User, error) {
 		}
 	}
 
-	innerList, err := um.userDao.GetUsers()
+	innerList, err := um.userDao.GetUsers(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "query all usergroup fail")
 	}
 
-	um.ensureRoles()
+	um.ensureRoles(ctx)
 
 	var uList = make([]User, 0, len(innerList))
 	var enabledList = make([]User, 0, len(innerList))
 
 	for idx := range innerList {
 		u := &user{um: um, u: innerList[idx]}
-		if err := um.load(u); err != nil {
+		if err := um.load(ctx, u); err != nil {
 			return nil, err
 		}
 		uList = append(uList, u)
@@ -205,7 +206,7 @@ func (um *userManager) usercacheIt(u User) {
 	um.userByID.SetDefault(strconv.FormatInt(u.ID(), 10), u)
 }
 
-func (um *userManager) ensureRoles() {
+func (um *userManager) ensureRoles(ctx context.Context) {
 	for _, data := range []struct {
 		role *usermodels.Role
 		name string
@@ -219,7 +220,7 @@ func (um *userManager) ensureRoles() {
 			continue
 		}
 
-		err := um.userDao.GetRoleByName(data.name)(data.role)
+		err := um.userDao.GetRoleByName(ctx, data.name)(data.role)
 		if err != nil {
 			data.role.Name = data.name
 			um.logger.Warn("role isnot found", log.String("role", data.name), log.Error(err))
@@ -230,7 +231,7 @@ func (um *userManager) ensureRoles() {
 	}
 }
 
-func (um *userManager) UserByName(userName string, opts ...Option) (User, error) {
+func (um *userManager) UserByName(ctx context.Context, userName string, opts ...Option) (User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -256,10 +257,10 @@ func (um *userManager) UserByName(userName string, opts ...Option) (User, error)
 		}
 	}
 
-	um.ensureRoles()
+	um.ensureRoles(ctx)
 
 	var u = &user{um: um}
-	err := um.userDao.GetUserByName(userName)(&u.u)
+	err := um.userDao.GetUserByName(ctx, userName)(&u.u)
 	if err != nil {
 		switch userName {
 		case UserAdmin:
@@ -286,7 +287,7 @@ func (um *userManager) UserByName(userName string, opts ...Option) (User, error)
 		}
 	}
 
-	err = um.load(u)
+	err = um.load(ctx, u)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +295,7 @@ func (um *userManager) UserByName(userName string, opts ...Option) (User, error)
 	return u, nil
 }
 
-func (um *userManager) UserByID(userID int64, opts ...Option) (User, error) {
+func (um *userManager) UserByID(ctx context.Context, userID int64, opts ...Option) (User, error) {
 	if e := um.lastErr.Get(); e != nil {
 		return nil, e
 	}
@@ -320,10 +321,10 @@ func (um *userManager) UserByID(userID int64, opts ...Option) (User, error) {
 		}
 	}
 
-	um.ensureRoles()
+	um.ensureRoles(ctx)
 
 	var u = &user{um: um}
-	err := um.userDao.GetUserByID(userID)(&u.u)
+	err := um.userDao.GetUserByID(ctx, userID)(&u.u)
 	if err != nil {
 		return nil, errors.Wrap(err, "query user with id is "+fmt.Sprint(userID)+"fail")
 	}
@@ -334,7 +335,7 @@ func (um *userManager) UserByID(userID int64, opts ...Option) (User, error) {
 		}
 	}
 
-	err = um.load(u)
+	err = um.load(ctx, u)
 	if err != nil {
 		return nil, err
 	}
@@ -342,9 +343,9 @@ func (um *userManager) UserByID(userID int64, opts ...Option) (User, error) {
 	return u, nil
 }
 
-func (um *userManager) load(u *user) error {
+func (um *userManager) load(ctx context.Context, u *user) error {
 	var err error
-	u.roles, err = um.userDao.GetRolesByUser(u.ID())
+	u.roles, err = um.userDao.GetRolesByUser(ctx, u.ID())
 	if err != nil {
 		return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
 	}
@@ -383,14 +384,14 @@ func (um *userManager) load(u *user) error {
 	}
 
 	if len(roleIDs) > 0 {
-		u.permissionsAndRoles, err = um.userDao.GetPermissionAndRoles(roleIDs)
+		u.permissionsAndRoles, err = um.userDao.GetPermissionAndRoles(ctx, roleIDs)
 		//err = um.db.PermissionGroupsAndRoles().Where(orm.Cond{"role_id IN": roleIDs}).All(&u.permissionsAndRoles)
 		if err != nil {
 			return errors.Wrap(err, "query permissions and roles with user is "+u.Name()+" fail")
 		}
 	}
 
-	u.groups, err = um.userDao.GetGroupIDsByUser(u.ID())
+	u.groups, err = um.userDao.GetGroupIDsByUser(ctx, u.ID())
 	if err != nil {
 		return errors.Wrap(err, "query user and usergroup with user is "+u.Name()+" fail")
 	}
@@ -460,7 +461,7 @@ func (u *user) IsMemberOf(group int64) bool {
 
 func (u *user) WriteProfile(key, value string) error {
 	if value == "" {
-		_, err := u.um.userDao.DeleteProfile(u.ID(), key)
+		_, err := u.um.userDao.DeleteProfile(context.Background(), u.ID(), key)
 		if err != nil {
 			return errors.Wrap(err, "DeleteProfile")
 		}
@@ -470,7 +471,7 @@ func (u *user) WriteProfile(key, value string) error {
 		return nil
 	}
 
-	err := u.um.userDao.WriteProfile(u.ID(), key, value)
+	err := u.um.userDao.WriteProfile(context.Background(), u.ID(), key, value)
 	if err != nil {
 		return errors.Wrap(err, "WriteProfile")
 	}
@@ -488,7 +489,7 @@ func (u *user) ReadProfile(key string) (string, error) {
 			return value, nil
 		}
 	}
-	value, err := u.um.userDao.ReadProfile(u.ID(), key)
+	value, err := u.um.userDao.ReadProfile(context.Background(), u.ID(), key)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", nil
@@ -661,7 +662,7 @@ func (ug *userGroup) Name() string {
 	return ug.ug.Name
 }
 
-func (ug *userGroup) Users(opts ...Option) ([]User, error) {
+func (ug *userGroup) Users(ctx context.Context, opts ...Option) ([]User, error) {
 	var includeDisabled bool
 	for _, opt := range opts {
 		switch opt.(type) {
@@ -671,19 +672,18 @@ func (ug *userGroup) Users(opts ...Option) ([]User, error) {
 	}
 
 	if ug.children == nil {
-
-		innerList, err := ug.um.userDao.GetUserByGroup(ug.ID())
+		innerList, err := ug.um.userDao.GetUserByGroup(ctx, ug.ID())
 		if err != nil {
 			return nil, errors.Wrap(err, "query all usergroup fail")
 		}
 
-		ug.um.ensureRoles()
+		ug.um.ensureRoles(ctx)
 
 		var uList = make([]User, 0, len(innerList))
 
 		for idx := range innerList {
 			u := &user{um: ug.um, u: innerList[idx]}
-			if err := ug.um.load(u); err != nil {
+			if err := ug.um.load(ctx, u); err != nil {
 				return nil, err
 			}
 			uList = append(uList, u)

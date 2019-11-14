@@ -1,6 +1,10 @@
 package users
 
-import "github.com/three-plus-three/modules/users/usermodels"
+import (
+	"context"
+
+	"github.com/three-plus-three/modules/users/usermodels"
+)
 
 // Action
 const (
@@ -48,25 +52,25 @@ func UserIncludeDisabled() Option {
 
 // UserManager 用户管理
 type UserManager interface {
-	Users(opts ...Option) ([]User, error)
-	Usergroups(opts ...Option) ([]UserGroup, error)
+	Users(ctx context.Context, opts ...Option) ([]User, error)
+	Usergroups(ctx context.Context, opts ...Option) ([]Usergroup, error)
 
-	UserByName(username string, opts ...Option) (User, error)
-	UserByID(userID int64, opts ...Option) (User, error)
+	UserByName(ctx context.Context, username string, opts ...Option) (User, error)
+	UserByID(ctx context.Context, userID int64, opts ...Option) (User, error)
 
-	UsergroupByName(username string, opts ...Option) (UserGroup, error)
-	UsergroupByID(groupID int64, opts ...Option) (UserGroup, error)
+	UsergroupByName(ctx context.Context, username string, opts ...Option) (Usergroup, error)
+	UsergroupByID(ctx context.Context, groupID int64, opts ...Option) (Usergroup, error)
 }
 
-// UserGroup 用户组信息
-type UserGroup interface {
+// Usergroup 用户组信息
+type Usergroup interface {
 	ID() int64
 
 	// 用户登录名
 	Name() string
 
 	// 用户成员
-	Users(opts ...Option) ([]User, error)
+	Users(ctx context.Context, opts ...Option) ([]User, error)
 }
 
 // User 用户信息
