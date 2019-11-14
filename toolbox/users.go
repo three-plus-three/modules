@@ -98,7 +98,7 @@ type User interface {
 
 	// Profile 是用于保存用户在界面上的一些个性化数据
 	// ReadProfile 读 profiles
-	ReadProfile(key string) (interface{}, error)
+	ReadProfile(key string) (string, error)
 
 	// 用户扩展属性
 	Data(key string) interface{}

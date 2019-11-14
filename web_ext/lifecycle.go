@@ -169,8 +169,8 @@ func (u *user) WriteProfile(key, value string) error {
 	return nil
 }
 
-func (u *user) ReadProfile(key string) (interface{}, error) {
-	return nil, nil
+func (u *user) ReadProfile(key string) (string, error) {
+	return "", nil
 }
 
 func (u *user) Data(key string) interface{} {
