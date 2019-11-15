@@ -112,3 +112,5 @@ type User interface {
 	// 本用户是不是指定的用户组的成员
 	IsMemberOf(int64) bool
 }
+
+type ReadCurrentUserFunc func(context.Context) (User, error)
