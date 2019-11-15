@@ -2,7 +2,10 @@ package userext
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
+	"github.com/runner-mei/errors"
 	"github.com/runner-mei/loong"
 	"github.com/three-plus-three/modules/users"
 )
@@ -18,4 +21,20 @@ func UserFromContext(ctx context.Context) users.ReadCurrentUserFunc {
 	}
 	f, _ := o.(users.ReadCurrentUserFunc)
 	return f
+}
+
+func ReadUserFromContext(ctx context.Context) (users.User, error) {
+	o := loong.UserFromContext(ctx)
+	if o == nil {
+		return nil, errors.NewError(http.StatusUnauthorized, "user isnot exists because session is unauthorized")
+	}
+	f, ok := o.(users.ReadCurrentUserFunc)
+	if ok {
+		return f(ctx)
+	}
+	u, ok := o.(users.User)
+	if ok {
+		return u, nil
+	}
+	return nil, errors.NewError(http.StatusInternalServerError, fmt.Sprintf("user is unknown type - %T", o))
 }

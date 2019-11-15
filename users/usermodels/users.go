@@ -70,7 +70,7 @@ type User struct {
 	UpdatedAt   time.Time              `json:"updated_at,omitempty" xorm:"updated_at updated"`
 
 	// Type        int                    `json:"type,omitempty" xorm:"type"`
-	// Profiles    map[string]string      `json:"profiles" xorm:"profiles jsonb null"`
+	Reserved1 map[string]string `json:"profiles" xorm:"profiles jsonb null"`
 }
 
 func (user *User) IsDisabled() bool {
