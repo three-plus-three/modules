@@ -410,15 +410,18 @@ func ReadInputChoices(db Queryer, query string, args ...interface{}) ([][2]strin
 	return opts, nil
 }
 
+type contextProviderKeyType struct{}
+
+func (c contextProviderKeyType) String() string {
+	return "context-provider-key"
+}
+
+var ContextProviderKey = contextProviderKeyType{}
+
 // ContextProvider 一个从上下文中读 枚举值 的扩展接口
 type ContextProvider struct{}
 
 func (dp *ContextProvider) Read(ctx, a interface{}) (interface{}, error) {
-	var dict, ok = ctx.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("ContextProvider: ctx is unknow type - %T %#v", ctx, ctx)
-	}
-
 	var action string
 	switch v := a.(type) {
 	case string:
@@ -436,6 +439,27 @@ func (dp *ContextProvider) Read(ctx, a interface{}) (interface{}, error) {
 		}
 	default:
 		return nil, fmt.Errorf("DbProvider: args is unknow type - %T %#v", a, a)
+	}
+
+	var dict, ok = ctx.(map[string]interface{})
+	if !ok {
+		c, ok := ctx.(context.Context)
+		if ok {
+			o := c.Value(ContextProviderKey)
+			if o == nil {
+				return nil, fmt.Errorf("DbProvider: args is unknow type - %T %#v", a, a)
+			}
+			values, ok := o.(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("DbProvider: args is unknow type - %T %#v", o, o)
+			}
+			results := values[action]
+			if results == nil {
+				return nil, fmt.Errorf("DbProvider: key %q isnot exists", action)
+			}
+			return results, nil
+		}
+		return nil, fmt.Errorf("ContextProvider: ctx is unknow type - %T %#v", ctx, ctx)
 	}
 
 	return dict[action], nil

@@ -39,6 +39,10 @@ func CreateUserManager(driverName string, db *sql.DB, permCache PermGroupCache, 
 	if err != nil {
 		panic(err)
 	}
+	return Create(factory, permCache, logger)
+}
+
+func Create(factory *gobatis.SessionFactory, permCache PermGroupCache, logger log.Logger) UserManager {
 	reference := factory.Reference()
 	userDao := usermodels.NewUserQueryer(&reference)
 

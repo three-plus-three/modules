@@ -31,14 +31,16 @@ func CloseWith(closer io.Closer) {
 // RollbackWith 捕获错误并打印
 func RollbackWith(closer interface {
 	Rollback() error
-}) {
+}, noPanic ...bool) {
 	if err := closer.Rollback(); err != nil {
 		if err == sql.ErrTxDone {
 			return
 		}
 
 		log.Println("[WARN]", err)
-		panic(err)
+		if len(noPanic) == 0 || !noPanic[0] {
+			panic(err)
+		}
 	}
 }
 
