@@ -33,12 +33,12 @@ var (
 	ErrPending        = errors.ErrPending
 	ErrRequired       = errors.ErrRequired
 
-	ErrNetworkError     = errors.ErrNetworkError
-	ErrInterruptError   = errors.ErrInterruptError
-	ErrMultipleError    = errors.ErrMultipleError
-	ErrTableIsNotExists = errors.ErrTableIsNotExists
-	ErrResultEmpty      = errors.ErrResultEmpty
-	ErrKeyNotFound      = errors.ErrKeyNotFound
+	ErrNetworkError   = errors.ErrNetworkError
+	ErrInterruptError = errors.ErrInterruptError
+	ErrMultipleError  = errors.ErrMultipleError
+	ErrTableNotExists = errors.ErrTableNotExists
+	ErrResultEmpty    = errors.ErrResultEmpty
+	ErrKeyNotFound    = errors.ErrKeyNotFound
 
 	ErrReadResponseFail      = errors.ErrReadResponseFail
 	ErrUnmarshalResponseFail = errors.ErrUnmarshalResponseFail

@@ -198,9 +198,9 @@ func RuntimeWrap(e error, s string, args ...interface{}) RuntimeError {
 	return &ApplicationError{Cause: e, Code: http.StatusInternalServerError, Message: msg}
 }
 
-// BadArgument 创建一个 ErrBadArgument
-func BadArgument(msg string) *ApplicationError {
-	return errors.BadArgument(msg)
+// BadArgumentWithMessage 创建一个 ErrBadArgument
+func BadArgumentWithMessage(msg string) *ApplicationError {
+	return errors.BadArgumentWithMessage(msg)
 }
 
 func ConcatApplicationErrors(errs []*ApplicationError, errMessage ...string) *ApplicationError {
