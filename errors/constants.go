@@ -37,6 +37,7 @@ var (
 	ErrInterruptError   = errors.ErrInterruptError
 	ErrMultipleError    = errors.ErrMultipleError
 	ErrTableIsNotExists = errors.ErrTableIsNotExists
+	ErrTableNotExists   = errors.ErrTableIsNotExists
 	ErrResultEmpty      = errors.ErrResultEmpty
 	ErrKeyNotFound      = errors.ErrKeyNotFound
 
