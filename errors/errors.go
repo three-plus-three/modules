@@ -200,7 +200,10 @@ func RuntimeWrap(e error, s string, args ...interface{}) RuntimeError {
 
 // BadArgument 创建一个 ErrBadArgument
 func BadArgument(msg string) *ApplicationError {
-	return errors.BadArgument(msg)
+	return errors.BadArgumentWithMessage(msg)
+}
+func BadArgumentWithMessage(msg string) *ApplicationError {
+	return errors.BadArgumentWithMessage(msg)
 }
 
 func ConcatApplicationErrors(errs []*ApplicationError, errMessage ...string) *ApplicationError {

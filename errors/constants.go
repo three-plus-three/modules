@@ -36,8 +36,8 @@ var (
 	ErrNetworkError     = errors.ErrNetworkError
 	ErrInterruptError   = errors.ErrInterruptError
 	ErrMultipleError    = errors.ErrMultipleError
-	ErrTableIsNotExists = errors.ErrTableIsNotExists
-	ErrTableNotExists   = errors.ErrTableIsNotExists
+	ErrTableIsNotExists = errors.ErrTableNotExists
+	ErrTableNotExists   = errors.ErrTableNotExists
 	ErrResultEmpty      = errors.ErrResultEmpty
 	ErrKeyNotFound      = errors.ErrKeyNotFound
 
