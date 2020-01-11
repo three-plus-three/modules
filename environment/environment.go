@@ -34,8 +34,10 @@ type Options struct {
 
 // Environment
 type Environment struct {
-	HeaderTitleText string
-	FooterTitleText string
+	HeaderTitleText      string
+	FooterTitleText      string
+	LoginHeaderTitleText string
+	LoginFooterTitleText string
 
 	Fs FileSystem
 
@@ -314,6 +316,18 @@ func NewEnvironmentWithFS(fs FileSystem, opt Options) (*Environment, error) {
 		env.Fs.FromData("resources/profiles/footer.txt"),
 		filepath.Join(os.Getenv("hw_root_dir"), "data/resources/profiles/footer.txt")},
 		"© 2019 恒维信息技术(上海)有限公司, 保留所有版权。")
+
+	env.LoginHeaderTitleText = ReadFileWithDefault([]string{
+		env.Fs.FromDataConfig("resources/profiles/login-title.txt"),
+		env.Fs.FromData("resources/profiles/login-title.txt"),
+		filepath.Join(os.Getenv("hw_root_dir"), "data/resources/profiles/login-title.txt")},
+		env.HeaderTitleText)
+
+	env.LoginFooterTitleText = ReadFileWithDefault([]string{
+		env.Fs.FromDataConfig("resources/profiles/login-footer.txt"),
+		env.Fs.FromData("resources/profiles/login-footer.txt"),
+		filepath.Join(os.Getenv("hw_root_dir"), "data/resources/profiles/login-footer.txt")},
+		env.FooterTitleText)
 
 	if err := agent.Listen(agent.Options{}); err != nil {
 		env.Logger.Warn("启动调试代理失败", log.Error(err))
