@@ -43,6 +43,4 @@ require (
 	xorm.io/xorm v0.8.0
 )
 
-replace (
-	xorm.io/xorm => github.com/runner-mei/xorm v0.8.1
-)
+replace xorm.io/xorm => github.com/runner-mei/xorm v0.8.1

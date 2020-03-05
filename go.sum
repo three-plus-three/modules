@@ -2,6 +2,7 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.37.4 h1:glPeL3BQJsbF6aIIYfZizMwc5LTYz250bDMjttbBGAU=
 cloud.google.com/go v0.37.4/go.mod h1:NHPJ89PdicEuT9hdPXMROBD91xc5uRDxsMtSB16k7hw=
+github.com/AreaHQ/go-fixtures v0.0.0-20160603063519-9384cea840d9/go.mod h1:Dlti+FUDM7/OomqkbR8mGYiwBLOsFZAiELTLc8TVpo0=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/GeertJohan/go.incremental v1.0.0/go.mod h1:6fAjUhbVuX1KcMD3c8TEgVUqmo4seqhv0i0kdATSkM0=
@@ -139,6 +140,7 @@ github.com/prometheus/common v0.2.0/go.mod h1:TNfzLD0ON7rHzMJeJkieUDPYmFC7Snx/y8
 github.com/prometheus/procfs v0.0.0-20181005140218-185b4288413d/go.mod h1:c3At6R/oaqEKCNdg8wHV1ftS6bRYblBhIjjI8uT2IGk=
 github.com/prometheus/procfs v0.0.0-20190117184657-bf6a532e95b1/go.mod h1:c3At6R/oaqEKCNdg8wHV1ftS6bRYblBhIjjI8uT2IGk=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
+github.com/revel/revel v0.21.0/go.mod h1:VZWJnHjpDEtuGUuZJ2NO42XryitrtwsdVaJxfDeo5yc=
 github.com/robfig/config v0.0.0-20141207224736-0f78529c8c7e h1:3/9k/etUfgykjM3Rx8X0echJzo7gNNeND/ubPkqYw1k=
 github.com/robfig/config v0.0.0-20141207224736-0f78529c8c7e/go.mod h1:Zerq1qYbCKtIIU9QgPydffGlpYfZ8KI/si49wuTLY/Q=
 github.com/robfig/pathtree v0.0.0-20140121041023-41257a1839e9 h1:UfIkqMA/eAkbd4vGO76WgCzF4ER1biu0H85Ndx76Zl8=
@@ -156,16 +158,16 @@ github.com/runner-mei/jaeger-client-go v2.19.1+incompatible/go.mod h1:O/HE92MGGx
 github.com/runner-mei/log v0.0.0-20191030043614-b36db325a74d h1:ziwdSgEC4lJRJls17Stq+tPcwM4k/j0T+UB9GzbJhP4=
 github.com/runner-mei/log v0.0.0-20191030043614-b36db325a74d/go.mod h1:yyWfw0HOYyKnEBHLWiKJFdHmo47QOetYqiS79vnfAJs=
 github.com/runner-mei/log v1.0.0 h1:8o+or+GF3jwU6ZOVnK7CJSP0fjQMd8P4+2hTeAxBQ5A=
+github.com/runner-mei/log v1.0.0 h1:8o+or+GF3jwU6ZOVnK7CJSP0fjQMd8P4+2hTeAxBQ5A=
+github.com/runner-mei/log v1.0.0/go.mod h1:0MveRoRDnCixGyy6HUWm7+aAA+AjcLV0JU3EHg0sEJM=
 github.com/runner-mei/log v1.0.0/go.mod h1:0MveRoRDnCixGyy6HUWm7+aAA+AjcLV0JU3EHg0sEJM=
 github.com/runner-mei/loong v0.0.0-20191029075849-0f3a7cc583da h1:WPeuT7BMtfe41z4D82QTI65zlYVYfTa0VvU1puR05mc=
 github.com/runner-mei/loong v0.0.0-20191029075849-0f3a7cc583da/go.mod h1:mDmtbeQLPXByPRTBR5yhUF+tqoSBJ3nV1pnzz/KSVHs=
+github.com/runner-mei/loong v1.0.2 h1:C1pUYeBXGoyDCZ9e++pkAPqIPzjnAgGh23IU/9I81Fk=
+github.com/runner-mei/loong v1.0.2/go.mod h1:nuZTSkb2Y/BC8xsGVDIo0G+fQQFune/J+LBK9WlY2Sk=
 github.com/runner-mei/loong v1.0.2/go.mod h1:nuZTSkb2Y/BC8xsGVDIo0G+fQQFune/J+LBK9WlY2Sk=
 github.com/runner-mei/orm v0.0.0-20191103030622-7c9deed35caf h1:w6thj0My+sEe6Q1VTXFRVv63baW/7fNnru9euieFrsM=
 github.com/runner-mei/orm v0.0.0-20191103030622-7c9deed35caf/go.mod h1:C/jNDK2oAtpPLz/aKZtiO8h2oIWaca2ZF/VeHM/YiYQ=
-github.com/runner-mei/log v1.0.0 h1:8o+or+GF3jwU6ZOVnK7CJSP0fjQMd8P4+2hTeAxBQ5A=
-github.com/runner-mei/log v1.0.0/go.mod h1:0MveRoRDnCixGyy6HUWm7+aAA+AjcLV0JU3EHg0sEJM=
-github.com/runner-mei/loong v1.0.2 h1:C1pUYeBXGoyDCZ9e++pkAPqIPzjnAgGh23IU/9I81Fk=
-github.com/runner-mei/loong v1.0.2/go.mod h1:nuZTSkb2Y/BC8xsGVDIo0G+fQQFune/J+LBK9WlY2Sk=
 github.com/runner-mei/orm v1.1.0 h1:bsExRZ0o6r7A6sp9EFjmCvuCY1vMFStjufv8m2TyuHw=
 github.com/runner-mei/orm v1.1.0/go.mod h1:Kr68EjqMRYbNlfZiJDKEeYVmlcYY6YtqTmB73PUyPlE=
 github.com/runner-mei/resty v0.0.0-20191102140647-fa73802f0b7f h1:TjtdzP+dPyQhlsHLEDF+efkTMT4/lFRoXfAie0mEoRg=
