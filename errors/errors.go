@@ -24,6 +24,10 @@ type RuntimeError interface {
 
 var _ RuntimeError = &ApplicationError{}
 
+func NewError(code int, msg string) *ApplicationError {
+	return &ApplicationError{Code: code, Message: msg}
+}
+
 // NewApplicationError 创建一个 ApplicationError
 func NewApplicationError(code int, msg string) *ApplicationError {
 	return &ApplicationError{Code: code, Message: msg}
